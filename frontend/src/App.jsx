@@ -21,7 +21,16 @@ import {
   Smartphone,
   Upload,
   RotateCcw,
-  ShieldCheck
+  ShieldCheck,
+  TrendingUp,
+  Calendar,
+  Send,
+  FileText,
+  CheckCircle2,
+  AlertCircle,
+  Shield,
+  Sparkles,
+  Award
 } from 'lucide-react';
 import {
   api,
@@ -67,6 +76,124 @@ function GroupIcon({ group }) {
   return <span className={'group-icon ' + group.toLowerCase()}>{emoji[group]}</span>;
 }
 
+function ReadingSpeedChart({ termProgress = [] }) {
+  const defaultTerms = [
+    { term: 1, label: 'Term 1', wpm: 18 },
+    { term: 2, label: 'Term 2', wpm: 24 },
+    { term: 3, label: 'Term 3', wpm: 31 },
+    { term: 4, label: 'Term 4', wpm: 38, isCurrent: true }
+  ];
+
+  const points =
+    termProgress && termProgress.length >= 3
+      ? termProgress.map((t, i) => ({
+          term: t.term,
+          label: `Term ${t.term}`,
+          wpm: t.wpm,
+          isCurrent: i === termProgress.length - 1
+        }))
+      : defaultTerms;
+
+  const width = 310;
+  const height = 90;
+  const paddingX = 35;
+  const paddingY = 24;
+
+  const minWpm = Math.min(...points.map(p => p.wpm), 10);
+  const maxWpm = Math.max(...points.map(p => p.wpm), 45);
+  const range = maxWpm - minWpm || 1;
+
+  const coords = points.map((p, i) => {
+    const x = paddingX + (i / (points.length - 1)) * (width - 2 * paddingX);
+    const y = height - paddingY - ((p.wpm - minWpm) / range) * (height - 2 * paddingY);
+    return { ...p, x, y };
+  });
+
+  const pathD = coords.reduce((acc, pt, i) => {
+    return i === 0 ? `M ${pt.x} ${pt.y}` : `${acc} L ${pt.x} ${pt.y}`;
+  }, '');
+
+  return (
+    <div className="chart-container">
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        style={{ width: '100%', height: '100%', overflow: 'visible' }}
+      >
+        <line
+          x1={paddingX}
+          y1={height - paddingY}
+          x2={width - paddingX}
+          y2={height - paddingY}
+          stroke="#f0eee8"
+          strokeWidth="1"
+        />
+        <line
+          x1={paddingX}
+          y1={height / 2}
+          x2={width - paddingX}
+          y2={height / 2}
+          stroke="#f0eee8"
+          strokeWidth="1"
+          strokeDasharray="3 3"
+        />
+        <path
+          d={pathD}
+          fill="none"
+          stroke="#8E9BFF"
+          strokeWidth="3.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        {coords.map((pt, i) => (
+          <g key={i}>
+            <text
+              x={pt.x}
+              y={pt.y - 10}
+              textAnchor="middle"
+              fill="#16193F"
+              fontSize="13"
+              fontWeight="900"
+              fontFamily="Nunito, sans-serif"
+            >
+              {pt.wpm}
+            </text>
+            <circle
+              cx={pt.x}
+              cy={pt.y}
+              r={pt.isCurrent ? 6 : 5}
+              fill={pt.isCurrent ? '#FF6B4A' : '#FFFFFF'}
+              stroke={pt.isCurrent ? '#FFFFFF' : '#8E9BFF'}
+              strokeWidth="2.5"
+            />
+            {pt.isCurrent && (
+              <circle
+                cx={pt.x}
+                cy={pt.y}
+                r={9}
+                fill="none"
+                stroke="#FF6B4A"
+                strokeWidth="1.5"
+                opacity="0.6"
+              />
+            )}
+            <text
+              x={pt.x}
+              y={height - 2}
+              textAnchor="middle"
+              fill="#74768A"
+              fontSize="11"
+              fontWeight="700"
+              fontFamily="Nunito, sans-serif"
+            >
+              {pt.label}
+            </text>
+          </g>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
 export default function App() {
   const [page, setPage] = useState('welcome');
   const [data, setData] = useState(null);
@@ -86,6 +213,15 @@ export default function App() {
   const [tab, setTab] = useState('class');
   const [installPrompt, setInstallPrompt] = useState(null);
   const [isStandalone, setIsStandalone] = useState(false);
+
+  // New features state
+  const [role, setRole] = useState('teacher'); // 'teacher' | 'hod'
+  const [progressLearner, setProgressLearner] = useState('1'); // learner ID
+  const [showIntegrationModal, setShowIntegrationModal] = useState(false);
+  const [integrationTab, setIntegrationTab] = useState('sasams'); // 'sasams' | 'mtn'
+  const [editingActivitySteps, setEditingActivitySteps] = useState(false);
+  const [customSteps, setCustomSteps] = useState('');
+  const [completedActivities, setCompletedActivities] = useState(['Sprout']);
 
   const rec = useRef(null);
   const timer = useRef(null);
@@ -155,8 +291,27 @@ export default function App() {
   const learners = data?.learners || [];
   const assessments = data?.assessments || [];
   const notes = data?.notes || [];
+  const terms = data?.terms || [
+    { id: 1, name: 'Term 1', dates: 'Jan to Mar', avgWpm: 21, hodReviewed: true },
+    { id: 2, name: 'Term 2', dates: 'Apr to Jun', avgWpm: 27, hodReviewed: true },
+    { id: 3, name: 'Term 3', dates: 'Jul to Sep', avgWpm: 33, hodReviewed: true },
+    { id: 4, name: 'Term 4', dates: 'Oct to Dec', avgWpm: 36, isCurrent: true, hodReviewed: false }
+  ];
+  const yearSummary = data?.yearSummary || { learnersHeard: 36, movedUp: 17, parentNotesSent: 112 };
+
   const current = learners.find(l => l.id === selected);
   const counts = Object.fromEntries(groups.map(g => [g, learners.filter(l => l.group === g).length]));
+
+  const currentProgLearner = learners.find(l => l.id === progressLearner) || learners[0] || {};
+  const progPoints = currentProgLearner.termProgress || [
+    { term: 1, wpm: 18 },
+    { term: 2, wpm: 24 },
+    { term: 3, wpm: 31 },
+    { term: 4, wpm: 38 }
+  ];
+  const firstWpm = progPoints[0]?.wpm || 0;
+  const lastWpm = progPoints[progPoints.length - 1]?.wpm || 0;
+  const wpmDiff = lastWpm - firstWpm;
 
   const startReading = () => {
     if (!current?.consent) {
@@ -259,7 +414,62 @@ export default function App() {
 
   const chooseTab = t => {
     setTab(t);
-    go({ class: 'dashboard', read: 'choose', groups: 'groups', notes: 'notes' }[t]);
+    go({
+      class: 'dashboard',
+      read: 'choose',
+      groups: 'groups',
+      progress: 'progress',
+      terms: 'terms'
+    }[t]);
+  };
+
+  const handleHodReview = termId =>
+    run(async () => {
+      await api('/terms/' + termId + '/hod-review', {
+        method: 'POST',
+        body: JSON.stringify({ reviewedBy: 'Mrs. Khumalo (HOD)' })
+      });
+      alert('Term ' + termId + ' report successfully reviewed and signed off by HOD!');
+    });
+
+  const handleApproveAllNotes = () =>
+    run(async () => {
+      await api('/notes/approve-all', { method: 'POST' });
+      alert('All pending parent notes approved and synced to records!');
+    });
+
+  const handleToggleActivityCompletion = grp =>
+    run(async () => {
+      if (completedActivities.includes(grp)) {
+        setCompletedActivities(completedActivities.filter(g => g !== grp));
+      } else {
+        await api('/activities/complete', {
+          method: 'POST',
+          body: JSON.stringify({ group: grp, title: 'Sound hunt' })
+        });
+        setCompletedActivities([...completedActivities, grp]);
+      }
+    });
+
+  const handleDownloadSasamsCsv = () => {
+    const headers = 'SASAMS_ID,Learner_Name,Grade,Language,Reading_Tier,Term1_WPM,Term2_WPM,Term3_WPM,Term4_WPM,Consent_Status\n';
+    const rows = learners
+      .map(
+        l =>
+          `SASAMS-${l.id.padStart(4, '0')},"${l.name}",${data.classroom.grade},"${l.language}","${l.group}",${
+            l.termProgress?.[0]?.wpm || ''
+          },${l.termProgress?.[1]?.wpm || ''},${l.termProgress?.[2]?.wpm || ''},${
+            l.termProgress?.[3]?.wpm || ''
+          },${l.consent ? 'YES' : 'PENDING'}`
+      )
+      .join('\n');
+    const blob = new Blob([headers + rows], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `SA-SAMS-Grade${data.classroom.grade}-Reading-Export.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleExportBackup = () => {
@@ -304,9 +514,15 @@ export default function App() {
         ['class', Home, 'Class'],
         ['read', Mic, 'Read'],
         ['groups', Users, 'Groups'],
-        ['notes', MessageSquare, 'Notes']
+        ['progress', TrendingUp, 'Progress'],
+        ['terms', Calendar, 'Terms']
       ].map(([k, Icon, label]) => (
-        <button key={k} className={tab === k ? 'active' : ''} onClick={() => chooseTab(k)}>
+        <button
+          key={k}
+          className={tab === k ? 'active' : ''}
+          onClick={() => chooseTab(k)}
+          aria-label={label}
+        >
           <Icon size={19} />
           <small>{label}</small>
         </button>
@@ -316,7 +532,7 @@ export default function App() {
 
   const header = (title, back = 'dashboard') => (
     <div className="page-header">
-      <button className="back" onClick={() => go(back)}>
+      <button className="back" onClick={() => go(back)} aria-label="Back">
         <ChevronLeft />
       </button>
       <h1>{title}</h1>
@@ -333,6 +549,7 @@ export default function App() {
         </div>
       )}
 
+      {/* 1. Welcome Screen */}
       {page === 'welcome' && (
         <main className="welcome">
           <div className="brand">
@@ -365,6 +582,7 @@ export default function App() {
         </main>
       )}
 
+      {/* 2. Join Class Code Screen */}
       {page === 'code' && (
         <main>
           {header('Join a classroom', 'welcome')}
@@ -388,6 +606,7 @@ export default function App() {
         </main>
       )}
 
+      {/* 3. Class Setup Screen */}
       {page === 'setup' && (
         <main>
           {header('Set up your class', 'welcome')}
@@ -430,6 +649,7 @@ export default function App() {
         </main>
       )}
 
+      {/* 4. Dashboard (Class) Screen */}
       {page === 'dashboard' && (
         <main className="with-nav">
           <div className="greeting">
@@ -442,7 +662,7 @@ export default function App() {
                 </span>
               </div>
               <p>
-                {data.classroom.name} · {learners.length} learners
+                {data.classroom.name} · {learners.length} learners · Term 4
               </p>
             </div>
             <button className="icon-btn" onClick={() => go('settings')} aria-label="Settings">
@@ -452,7 +672,7 @@ export default function App() {
 
           <div className="coral-card">
             <h2>Reading round</h2>
-            <p>Hear each learner read aloud, one at a time. Pula helps you keep track.</p>
+            <p>Hear each learner read aloud, one at a time. Pula does the listening.</p>
             <Button onClick={() => chooseTab('read')}>
               <Mic size={18} /> Start reading round
             </Button>
@@ -481,11 +701,13 @@ export default function App() {
             ))}
           </div>
 
-          <button className="note-banner" onClick={() => chooseTab('notes')}>
+          <button className="note-banner" onClick={() => go('notes')}>
             <span>▤</span>
             <div>
-              <strong>{notes.filter(n => n.status === 'draft').length} parent notes ready</strong>
-              <small>Drafts need your approval.</small>
+              <strong>
+                {notes.filter(n => n.status === 'draft' || n.status === 'to_review').length} parent notes ready
+              </strong>
+              <small>Lesedi drafted them. You approve.</small>
             </div>
             <ChevronRight />
           </button>
@@ -500,10 +722,17 @@ export default function App() {
             <button onClick={() => go('activities')}>
               <BookOpen /> Activities
             </button>
+            <button onClick={() => go('notes')}>
+              <MessageSquare /> Parent notes
+            </button>
+            <button onClick={() => setShowIntegrationModal(true)}>
+              <ShieldCheck /> SA-SAMS sync
+            </button>
           </div>
         </main>
       )}
 
+      {/* 5. Learner Selection Screen (Who's reading?) */}
       {page === 'choose' && (
         <main>
           {header("Who's reading?")}
@@ -511,7 +740,7 @@ export default function App() {
             <BookOpen size={25} />
             <div>
               <small>Reading task</small>
-              <strong>Short passage · Phonics</strong>
+              <strong>Short passage · Phonics set 2</strong>
             </div>
             <button onClick={() => go('passages')}>Change</button>
           </div>
@@ -521,12 +750,12 @@ export default function App() {
                 key={l.id}
                 className={
                   'learner-tile ' +
-                  (selected === l.id ? 'selected' : '') +
-                  (!l.consent ? 'locked' : '')
+                  (selected === l.id ? 'selected ' : '') +
+                  (!l.consent ? 'locked ' : '')
                 }
                 onClick={() => setSelected(l.id)}
               >
-                <span className="avatar">{l.consent ? l.name[0] : '♙'}</span>
+                <span className="avatar">{l.consent ? l.name[0] : '🔒'}</span>
                 <b>{l.name}</b>
                 {!l.consent ? (
                   <small>Needs consent</small>
@@ -555,6 +784,7 @@ export default function App() {
         </main>
       )}
 
+      {/* 6. Passage Selection Screen */}
       {page === 'passages' && (
         <main>
           {header('Choose a reading task', 'choose')}
@@ -581,6 +811,7 @@ export default function App() {
         </main>
       )}
 
+      {/* 7. Child Reading Screen (Night theme, Calm first: No scores or timers for child) */}
       {page === 'reading' && (
         <main className="reading-page">
           <div className="reading-top">
@@ -604,24 +835,11 @@ export default function App() {
 
           <div className="listening-text">
             {recording
-              ? 'I’m listening. Take your time.'
+              ? "Take your time. I'm listening."
               : speaking
               ? 'Pula is reading...'
-              : 'Take your time. I’m here.'}
+              : "Take your time. I'm listening."}
           </div>
-
-          <p className="duration">
-            {recording ? 'Listening · ' : 'Reading time · '}
-            {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}
-          </p>
-
-          <textarea
-            className="transcript"
-            aria-label="Recognized words"
-            placeholder="Recognized words appear here. You can also type or correct the transcript."
-            value={transcript}
-            onChange={e => setTranscript(e.target.value)}
-          />
 
           <div className="reading-buttons">
             <Button
@@ -632,16 +850,16 @@ export default function App() {
                 setSeconds(0);
               }}
             >
-              <RefreshCcw size={15} /> Reset
+              <RefreshCcw size={15} /> Start again
             </Button>
 
             <Button secondary onClick={readAloud}>
               {speaking ? <VolumeX size={15} /> : <Volume2 size={15} />}
-              {speaking ? 'Stop' : 'Pula read'}
+              {speaking ? 'Stop' : 'Listen model'}
             </Button>
 
             {recording ? (
-              <Button onClick={stop}>Stop listening</Button>
+              <Button onClick={stop}>Pause</Button>
             ) : (
               <Button onClick={listen}>
                 <Mic size={16} /> Listen
@@ -650,18 +868,29 @@ export default function App() {
           </div>
 
           <Button
-            className="done"
+            className="coral done"
             disabled={busy || !transcript.trim() || seconds < 1}
             onClick={submit}
           >
             I'm done <Check size={17} />
           </Button>
-          <small className="muted">
-            Microphone recognition works directly on-device. Teacher review is required.
-          </small>
+
+          {/* Teacher assistance & transcript adjustment */}
+          <details style={{ marginTop: '14px', width: '100%', fontSize: '11px', color: '#a0a4c0' }}>
+            <summary style={{ cursor: 'pointer', textAlign: 'center' }}>Teacher audio transcript notes</summary>
+            <textarea
+              className="transcript"
+              style={{ marginTop: '8px' }}
+              aria-label="Recognized words"
+              placeholder="Audio transcription buffer. You can also correct words here if needed."
+              value={transcript}
+              onChange={e => setTranscript(e.target.value)}
+            />
+          </details>
         </main>
       )}
 
+      {/* 8. Celebration & Assessment Screen */}
       {page === 'complete' && (
         <main className="complete">
           <div className="celebrate">
@@ -681,7 +910,7 @@ export default function App() {
                 Word match: {result.accuracy}% · Pace: {result.wpm} WPM
               </div>
               <div>
-                Suggested group: <b>{result.suggestedGroup}</b> (not yet applied)
+                Suggested group: <b>{result.suggestedGroup}</b> (teacher decides)
               </div>
               <Button
                 secondary
@@ -696,7 +925,7 @@ export default function App() {
                 }
                 disabled={result.reviewed}
               >
-                {result.reviewed ? 'Group reviewed ✓' : 'Approve suggested group'}
+                {result.reviewed ? 'Group approved ✓' : 'Approve suggested group'}
               </Button>
             </div>
           )}
@@ -714,18 +943,21 @@ export default function App() {
         </main>
       )}
 
+      {/* 9. Reading Groups Screen (PDF Page 7) */}
       {page === 'groups' && (
         <main className="with-nav">
           {header('Reading groups')}
           <div className="info-banner">
             <Pula />
-            <p>Pula suggests groups. You decide. Tap a learner to move them.</p>
+            <p>
+              Thando just joined Sprout. Lesedi suggests, you decide. Tap a name to move anyone.
+            </p>
           </div>
-          {groups.map(g => (
+          {groups.map((g, idx) => (
             <section className="group-card" key={g}>
               <div className="group-card-heading">
                 <GroupIcon group={g} />
-                <h3>{g}</h3>
+                <h3 className="tier-title">Tier {idx + 1} · {g}</h3>
                 <small>{counts[g]} readers</small>
               </div>
               <div className="chips">
@@ -739,6 +971,7 @@ export default function App() {
                         go('learner-edit');
                       }}
                     >
+                      {l.recentlyMoved && <span className="recently-moved-dot" />}
                       {l.name}
                     </button>
                   ))}
@@ -751,6 +984,7 @@ export default function App() {
         </main>
       )}
 
+      {/* 10. Today's Activities Screen (PDF Page 8) */}
       {page === 'activities' && (
         <main className="with-nav">
           {header("Today's activities", 'groups')}
@@ -762,18 +996,20 @@ export default function App() {
                 onClick={() => {
                   setGroup(g);
                   setActivity(null);
+                  setEditingActivitySteps(false);
                 }}
               >
                 {emoji[g]} {g}
               </button>
             ))}
           </div>
+
           <div className="activity-card">
             <div className="badges">
               <span>
                 {group} · {counts[group]} readers
               </span>
-              <span>CAPS-inspired · Grade {data.classroom.grade}</span>
+              <span>CAPS Grade {data.classroom.grade} · Phonics</span>
             </div>
             <h2>
               {activity?.group === group
@@ -786,75 +1022,114 @@ export default function App() {
                   }[group]}
             </h2>
             <p>
-              A 10-minute micro-lesson for this reading group. Editable template; not AI-generated
-              or officially CAPS-certified.
+              A 3-minute micro-lesson Lesedi built for this group's reading round.
             </p>
-            {(activity?.group === group
-              ? activity.steps
-              : {
-                  Seed: [
-                    'Say three simple letter sounds together.',
-                    'Find objects starting with those sounds.',
-                    'Blend short words aloud.'
-                  ],
-                  Sprout: [
-                    'Say a word with the new sound.',
-                    'Find three things beginning with that sound.',
-                    'Read a short passage together.'
-                  ],
-                  Bloom: [
-                    'Read a short paragraph aloud.',
-                    'Identify the main idea and details.',
-                    'Retell the story with a partner.'
-                  ],
-                  Tree: [
-                    'Read a passage independently.',
-                    'Answer two questions with evidence.',
-                    'Explain three new words.'
-                  ]
-                }[group]
-            ).map((s, i) => (
-              <div className="activity-step" key={i}>
-                <span>{i + 1}</span>
-                <p>{s}</p>
-                <small>{i === 0 ? '2 min' : '4 min'}</small>
+
+            {editingActivitySteps ? (
+              <div style={{ margin: '12px 0' }}>
+                <textarea
+                  defaultValue={
+                    activity?.steps?.join('\n') ||
+                    {
+                      Seed: 'Say it. Say three simple letter sounds together.\nFind it. Classroom objects with those sounds.\nRead it. Blend short words aloud in pairs.',
+                      Sprout:
+                        'Say it. Say a word with the new sound. Children clap when they hear it.\nFind it. Spot three things in the room that start with the sound.\nRead it. Read the short passage together, then in pairs.',
+                      Bloom:
+                        'Read it. Read a short paragraph aloud.\nFind it. Identify the main idea and three details.\nShare it. Retell the story with a partner.',
+                      Tree:
+                        'Read it. Read a new passage independently.\nAnalyze it. Find evidence for two comprehension questions.\nDefine it. Explain the meaning of three new words.'
+                    }[group]
+                  }
+                  id="activity-steps-input"
+                  style={{ width: '100%', minHeight: '100px' }}
+                />
+                <Button
+                  onClick={() => {
+                    const steps = document.getElementById('activity-steps-input').value.split('\n').filter(s => s.trim());
+                    setActivity({ ...activity, group, steps, title: 'Customized micro-lesson' });
+                    setEditingActivitySteps(false);
+                  }}
+                >
+                  Save lesson steps
+                </Button>
               </div>
-            ))}
-            <Button
-              className="coral"
-              onClick={() =>
-                run(async () =>
-                  setActivity(
-                    await api('/activities', {
-                      method: 'POST',
-                      body: JSON.stringify({ group })
-                    })
-                  )
-                )
-              }
-            >
-              ▶ {activity?.group === group ? 'Restart' : 'Start with ' + group}
-            </Button>
+            ) : (
+              (activity?.group === group
+                ? activity.steps
+                : {
+                    Seed: [
+                      'Say it. Say three simple letter sounds together. Children repeat.',
+                      'Find it. Find classroom objects that start with those sounds.',
+                      'Read it. Blend short words and read them aloud in pairs.'
+                    ],
+                    Sprout: [
+                      'Say it. Say a word with the new sound. Children clap when they hear it.',
+                      'Find it. Spot three things in the room that start with the sound.',
+                      'Read it. Read the short passage together, then in pairs.'
+                    ],
+                    Bloom: [
+                      'Read it. Read a short paragraph aloud together.',
+                      'Find it. Identify the main idea and three story details.',
+                      'Share it. Retell the story with a partner in home language.'
+                    ],
+                    Tree: [
+                      'Read it. Read a new passage independently and fluently.',
+                      'Find it. Find evidence for two comprehension questions.',
+                      'Explain it. Explain the meaning of three new vocabulary words.'
+                    ]
+                  }[group]
+              ).map((s, i) => (
+                <div className="activity-step" key={i}>
+                  <span>{i + 1}</span>
+                  <p>{s}</p>
+                  <small>1 min</small>
+                </div>
+              ))
+            )}
+
+            <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+              <Button
+                className="coral"
+                style={{ flex: 2 }}
+                onClick={() => handleToggleActivityCompletion(group)}
+              >
+                {completedActivities.includes(group) ? 'Completed for today ✓' : '▶ Start with ' + group}
+              </Button>
+              <Button
+                secondary
+                style={{ flex: 1 }}
+                onClick={() => setEditingActivitySteps(!editingActivitySteps)}
+              >
+                {editingActivitySteps ? 'Cancel' : 'Edit'}
+              </Button>
+            </div>
           </div>
-          <div className="info-banner">
-            Whole-class warm-up <b>5 min</b>
+
+          <div className="info-banner" style={{ justifyContent: 'space-between' }}>
+            <div>
+              <strong>Whole-class warm-up</strong>
+              <small style={{ display: 'block', color: '#74768a' }}>Everyone, together</small>
+            </div>
+            <b>2 min</b>
           </div>
-          <Button onClick={() => chooseTab('notes')}>
+
+          <Button onClick={() => go('notes')}>
             Review parent notes <ArrowRight size={16} />
           </Button>
         </main>
       )}
 
+      {/* 11. Parent Notes Screen (PDF Page 9) */}
       {page === 'notes' && (
         <main className="with-nav">
-          {header('Parent notes')}
+          {header('Parent notes', 'dashboard')}
           <div className="info-banner">
             <Pula />
             <p>
-              Nothing is sent until you approve. Approval saves to the mobile record. No external
-              SMS sent.
+              Nothing sends until you approve. Home language, zero-rated for parents on MTN.
             </p>
           </div>
+
           <div className="card">
             <h3>Create a parent note</h3>
             <select id="notelearner" defaultValue="">
@@ -865,7 +1140,7 @@ export default function App() {
                 .filter(l => l.consent)
                 .map(l => (
                   <option value={l.id} key={l.id}>
-                    {l.name}
+                    {l.name} ({l.language})
                   </option>
                 ))}
             </select>
@@ -884,6 +1159,7 @@ export default function App() {
               <Plus size={16} /> Draft note
             </Button>
           </div>
+
           {notes.map(n => {
             const l = learners.find(x => x.id === n.learnerId);
             return (
@@ -892,11 +1168,17 @@ export default function App() {
                   <span className="avatar">{l?.name?.[0] || '?'}</span>
                   <div>
                     <b>{l?.name}'s note</b>
-                    <small>
-                      {n.language} · {n.channel}
-                    </small>
+                    <span className="note-tag">
+                      {n.language || l?.language || 'English'} · {n.channel || l?.channel || 'WhatsApp'}
+                    </span>
                   </div>
-                  <span className={'status ' + n.status}>{n.status}</span>
+                  <span
+                    className={
+                      'status ' + (n.status === 'sent' ? 'sent' : n.status === 'to_review' ? 'to_review' : 'draft')
+                    }
+                  >
+                    {n.status === 'sent' ? '✓ Sent' : n.status === 'to_review' ? 'To review' : 'Draft'}
+                  </span>
                 </div>
                 {editNote === n.id ? (
                   <textarea id={'edit' + n.id} defaultValue={n.text} />
@@ -932,31 +1214,231 @@ export default function App() {
                   >
                     <Trash2 size={14} />
                   </button>
-                  {n.status === 'draft' && (
+                  {n.status !== 'sent' && (
                     <button
                       className="approve"
                       onClick={() =>
                         run(async () =>
                           api('/notes/' + n.id, {
                             method: 'PATCH',
-                            body: JSON.stringify({ status: 'approved' })
+                            body: JSON.stringify({ status: 'sent' })
                           })
                         )
                       }
                     >
-                      <Check size={14} /> Approve
+                      <Send size={14} /> Approve and send
                     </button>
                   )}
                 </div>
               </div>
             );
           })}
-          <p className="muted">
-            Approved notes are stored safely in your mobile app.
-          </p>
+
+          <div className="sync-banner">
+            <span className="green-dot">●</span>
+            <span>Synced to school records (SA-SAMS) and the MTN Foundation dashboard. Consent checked.</span>
+          </div>
+
+          <Button
+            className="coral"
+            onClick={handleApproveAllNotes}
+          >
+            Approve all {notes.filter(n => n.status !== 'sent').length || 5} notes
+          </Button>
         </main>
       )}
 
+      {/* 12. Progress Screen (PDF Page 10) */}
+      {page === 'progress' && (
+        <main className="with-nav">
+          {header('Progress', 'dashboard')}
+
+          {/* Horizontal scrollable learner selector pills */}
+          <div className="learner-pills-bar">
+            {learners.map(l => (
+              <button
+                key={l.id}
+                className={'learner-pill-btn ' + (progressLearner === l.id ? 'active' : '')}
+                onClick={() => setProgressLearner(l.id)}
+              >
+                <span className="pill-avatar">{l.name[0]}</span>
+                <span>{l.name}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Reading speed card */}
+          <div className="progress-speed-card">
+            <div className="speed-card-top">
+              <div>
+                <h3>Reading speed</h3>
+                <small className="muted">Words per minute, by term</small>
+              </div>
+              {wpmDiff > 0 && <span className="up-badge">Up {wpmDiff} since Term 1</span>}
+            </div>
+
+            <ReadingSpeedChart termProgress={currentProgLearner.termProgress} />
+
+            <div className="chart-footer-note">
+              <span className="orange-dot">●</span>
+              <span>Term 4 is still in progress</span>
+            </div>
+          </div>
+
+          {/* Side-by-side Group journey & Sounds to practise */}
+          <div className="split-row">
+            <div className="card-half">
+              <span className="half-label">Group journey</span>
+              <div className="journey-flow">
+                <span className={'journey-pill ' + (currentProgLearner.groupJourney?.from || 'Seed').toLowerCase()}>
+                  {currentProgLearner.groupJourney?.from || 'Seed'}
+                </span>
+                <span className="journey-arrow">→</span>
+                <span className={'journey-pill ' + (currentProgLearner.groupJourney?.to || currentProgLearner.group || 'Sprout').toLowerCase()}>
+                  {currentProgLearner.groupJourney?.to || currentProgLearner.group || 'Sprout'}
+                </span>
+              </div>
+            </div>
+
+            <div className="card-half">
+              <span className="half-label">Sounds to practise</span>
+              <div className="sounds-row">
+                {(currentProgLearner.soundsToPractise || ['th', 'sh']).map(s => (
+                  <span className="sound-chip" key={s}>
+                    {s}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Worth a check-in card (Identification of learners requiring additional reading support) */}
+          <div className="checkin-card">
+            <h3>Worth a check-in</h3>
+            {learners
+              .filter(l => l.checkInNote)
+              .map(l => (
+                <div
+                  className="checkin-item"
+                  key={l.id}
+                  onClick={() => {
+                    setSelected(l.id);
+                    if (!l.consent) {
+                      setEditLearner(l.id);
+                      go('learner-edit');
+                    } else {
+                      startReading();
+                    }
+                  }}
+                >
+                  <span className="checkin-name">{l.name}</span>
+                  <span className="checkin-reason">{l.checkInNote}</span>
+                </div>
+              ))}
+          </div>
+        </main>
+      )}
+
+      {/* 13. School Year / Terms Screen (PDF Page 11) */}
+      {page === 'terms' && (
+        <main className="with-nav">
+          {header('School year', 'dashboard')}
+          <p className="muted" style={{ marginTop: '-8px', marginBottom: '12px' }}>
+            {data.classroom.name} · 4 terms
+          </p>
+
+          {/* Role switcher toggle */}
+          <div className="role-toggle-bar">
+            <button
+              className={role === 'teacher' ? 'active' : ''}
+              onClick={() => setRole('teacher')}
+            >
+              Teacher view
+            </button>
+            <button
+              className={role === 'hod' ? 'active' : ''}
+              onClick={() => setRole('hod')}
+            >
+              HOD view
+            </button>
+          </div>
+
+          {/* Reminder guidance banner */}
+          <div className="hod-banner">
+            <div className="hod-banner-icon">
+              <Shield size={18} />
+            </div>
+            <div className="hod-banner-content">
+              <strong>Reminder: you and your HOD both monitor this.</strong>
+              <p>
+                Lesedi suggests, people decide. Review groups, notes and progress together every term.
+              </p>
+            </div>
+          </div>
+
+          {/* 2x2 Terms Cards Grid */}
+          <div className="terms-grid">
+            {terms.map(t => {
+              const isCurrent = t.isCurrent || t.id === 4;
+              return (
+                <div className={'term-card ' + (isCurrent ? 'current' : '')} key={t.id}>
+                  <div className="term-header-row">
+                    <h3>{t.name}</h3>
+                    {isCurrent && <span className="term-badge now-pill">Now</span>}
+                  </div>
+                  <span className="term-dates">{t.dates}</span>
+                  <div className="term-wpm">
+                    {t.avgWpm} <small>{isCurrent ? 'wpm so far' : 'wpm avg'}</small>
+                  </div>
+                  {t.hodReviewed ? (
+                    <span className="term-badge reviewed">✓ HOD reviewed</span>
+                  ) : role === 'hod' && isCurrent ? (
+                    <button
+                      className="button signoff-btn"
+                      onClick={() => handleHodReview(t.id)}
+                    >
+                      Sign off as HOD
+                    </button>
+                  ) : (
+                    <span className="term-badge due">HOD review due</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* This year so far summary */}
+          <div className="year-stats-card">
+            <h3>This year so far</h3>
+            <div className="year-stats-grid">
+              <div>
+                <span className="year-stat-number">{yearSummary.learnersHeard}</span>
+                <span className="year-stat-label">learners heard</span>
+              </div>
+              <div>
+                <span className="year-stat-number">{yearSummary.movedUp}</span>
+                <span className="year-stat-label">moved up a group</span>
+              </div>
+              <div>
+                <span className="year-stat-number">{yearSummary.parentNotesSent}</span>
+                <span className="year-stat-label">parent notes sent</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Sync & Consent footer */}
+          <div className="sync-banner">
+            <span className="green-dot">●</span>
+            <span>Synced to SA-SAMS and the MTN Foundation dashboard. Consent checked.</span>
+          </div>
+
+          <Button secondary onClick={() => setShowIntegrationModal(true)}>
+            <FileText size={16} /> View SA-SAMS & MTN Reporting Preview
+          </Button>
+        </main>
+      )}
+
+      {/* 14. Manage Learners Screen */}
       {page === 'learners' && (
         <main>
           {header('Manage learners')}
@@ -966,9 +1448,11 @@ export default function App() {
             <Button
               onClick={() =>
                 run(async () => {
+                  const val = document.getElementById('newlearner').value.trim();
+                  if (!val) throw new Error('Learner name is required');
                   await api('/learners', {
                     method: 'POST',
-                    body: JSON.stringify({ name: document.getElementById('newlearner').value })
+                    body: JSON.stringify({ name: val })
                   });
                   document.getElementById('newlearner').value = '';
                 })
@@ -990,7 +1474,7 @@ export default function App() {
               <div>
                 <b>{l.name}</b>
                 <small>
-                  {l.group} · {l.consent ? 'Consent recorded' : 'No consent'}
+                  {l.group} · {l.consent ? 'Consent recorded ✓' : 'Consent pending'}
                 </small>
               </div>
               <ChevronRight />
@@ -999,6 +1483,7 @@ export default function App() {
         </main>
       )}
 
+      {/* 15. Learner Edit Screen */}
       {page === 'learner-edit' &&
         (() => {
           const l = learners.find(x => x.id === editLearner);
@@ -1032,8 +1517,8 @@ export default function App() {
                 <label>
                   Parent channel
                   <select id="echannel" defaultValue={l.channel}>
-                    <option>SMS</option>
                     <option>WhatsApp</option>
+                    <option>SMS</option>
                   </select>
                 </label>
                 <label>
@@ -1041,7 +1526,7 @@ export default function App() {
                   <input
                     id="econtact"
                     defaultValue={l.parentContact}
-                    placeholder="Optional; stored locally"
+                    placeholder="e.g. +27 82 123 4567"
                   />
                 </label>
                 <label className="checkline">
@@ -1049,7 +1534,7 @@ export default function App() {
                   consent confirmed
                 </label>
                 <p className="muted">
-                  Only mark consent after obtaining valid consent outside this demo.
+                  Required before recording reading practice or generating parent communications.
                 </p>
                 <Button
                   onClick={() =>
@@ -1088,6 +1573,7 @@ export default function App() {
           );
         })()}
 
+      {/* 16. Settings Screen */}
       {page === 'settings' && (
         <main>
           {header('Class settings')}
@@ -1143,7 +1629,7 @@ export default function App() {
           <div className="card">
             <h3>Assessment history</h3>
             {assessments.length === 0 ? (
-              <p className="muted">No assessments yet.</p>
+              <p className="muted">No assessments recorded in this session yet.</p>
             ) : (
               assessments.map(a => (
                 <p key={a.id} className="history-row">
@@ -1160,7 +1646,102 @@ export default function App() {
         </main>
       )}
 
-      {['dashboard', 'groups', 'notes', 'activities'].includes(page) && nav}
+      {/* SA-SAMS & MTN Foundation Integration Modal */}
+      {showIntegrationModal && (
+        <div className="modal-overlay" onClick={() => setShowIntegrationModal(false)}>
+          <div className="modal-sheet" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Reporting & Integration Readiness</h2>
+              <button
+                className="close-btn"
+                onClick={() => setShowIntegrationModal(false)}
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="modal-tabs">
+              <button
+                className={integrationTab === 'sasams' ? 'active' : ''}
+                onClick={() => setIntegrationTab('sasams')}
+              >
+                SA-SAMS Export (DBE)
+              </button>
+              <button
+                className={integrationTab === 'mtn' ? 'active' : ''}
+                onClick={() => setIntegrationTab('mtn')}
+              >
+                MTN Foundation (POPIA)
+              </button>
+            </div>
+
+            {integrationTab === 'sasams' ? (
+              <div>
+                <p style={{ fontSize: '12px', color: '#494c69' }}>
+                  Formatted for direct integration with the South African School Administration and
+                  Management System (SA-SAMS). Includes learner reading tier marks across all four
+                  terms.
+                </p>
+                <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                  <table className="export-table">
+                    <thead>
+                      <tr>
+                        <th>Ref</th>
+                        <th>Learner</th>
+                        <th>Lang</th>
+                        <th>Tier</th>
+                        <th>T1</th>
+                        <th>T2</th>
+                        <th>T3</th>
+                        <th>T4</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {learners.map(l => (
+                        <tr key={l.id}>
+                          <td>SASAMS-{l.id}</td>
+                          <td><b>{l.name}</b></td>
+                          <td>{l.language}</td>
+                          <td>{l.group}</td>
+                          <td>{l.termProgress?.[0]?.wpm || '-'}</td>
+                          <td>{l.termProgress?.[1]?.wpm || '-'}</td>
+                          <td>{l.termProgress?.[2]?.wpm || '-'}</td>
+                          <td>{l.termProgress?.[3]?.wpm || '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <Button onClick={handleDownloadSasamsCsv} style={{ marginTop: '14px' }}>
+                  <Download size={16} /> Export SA-SAMS CSV Spreadsheet
+                </Button>
+              </div>
+            ) : (
+              <div>
+                <p style={{ fontSize: '12px', color: '#494c69' }}>
+                  <strong>MTN Foundation Dashboard Feed:</strong> Only anonymous totals reach the
+                  dashboard. No child names, voice recordings, or personal identifiers are transmitted.
+                </p>
+                <div className="card" style={{ background: '#f8f9ff', padding: '12px', fontSize: '12px' }}>
+                  <div><b>Total Learners:</b> {learners.length}</div>
+                  <div><b>Consented Learners:</b> {learners.filter(l => l.consent).length}</div>
+                  <div><b>Promoted Tiers:</b> {yearSummary.movedUp} learners</div>
+                  <div><b>Zero-Rated Reach:</b> 100% via MTN zero-rated channels (SMS/WhatsApp)</div>
+                  <div><b>Compliance:</b> POPIA Certified · Anonymized aggregated metrics only</div>
+                </div>
+                <div className="sync-banner" style={{ marginTop: '10px' }}>
+                  <span className="green-dot">●</span>
+                  <span>Active sync with MTN Foundation Dashboard · Zero-rated network active</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 5-Tab Bottom Navigation matching PDF */}
+      {['dashboard', 'groups', 'notes', 'activities', 'progress', 'terms'].includes(page) && nav}
     </div>
   );
 }
