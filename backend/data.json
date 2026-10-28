@@ -14,7 +14,39 @@
       "consent": true,
       "language": "isiZulu",
       "channel": "WhatsApp",
-      "parentContact": ""
+      "parentContact": "+27 82 123 4567",
+      "recentlyMoved": true,
+      "groupJourney": {
+        "from": "Seed",
+        "to": "Sprout"
+      },
+      "soundsToPractise": [
+        "th",
+        "sh"
+      ],
+      "termProgress": [
+        {
+          "term": 1,
+          "wpm": 18,
+          "accuracy": 84
+        },
+        {
+          "term": 2,
+          "wpm": 24,
+          "accuracy": 89
+        },
+        {
+          "term": 3,
+          "wpm": 31,
+          "accuracy": 93
+        },
+        {
+          "term": 4,
+          "wpm": 38,
+          "accuracy": 96
+        }
+      ],
+      "checkInNote": null
     },
     {
       "id": "2",
@@ -23,7 +55,39 @@
       "consent": true,
       "language": "Sepedi",
       "channel": "SMS",
-      "parentContact": ""
+      "parentContact": "+27 71 234 5678",
+      "recentlyMoved": false,
+      "groupJourney": {
+        "from": "Sprout",
+        "to": "Bloom"
+      },
+      "soundsToPractise": [
+        "ch",
+        "ph"
+      ],
+      "termProgress": [
+        {
+          "term": 1,
+          "wpm": 22,
+          "accuracy": 88
+        },
+        {
+          "term": 2,
+          "wpm": 28,
+          "accuracy": 92
+        },
+        {
+          "term": 3,
+          "wpm": 35,
+          "accuracy": 95
+        },
+        {
+          "term": 4,
+          "wpm": 41,
+          "accuracy": 97
+        }
+      ],
+      "checkInNote": null
     },
     {
       "id": "3",
@@ -32,7 +96,39 @@
       "consent": true,
       "language": "English",
       "channel": "WhatsApp",
-      "parentContact": ""
+      "parentContact": "+27 83 345 6789",
+      "recentlyMoved": false,
+      "groupJourney": {
+        "from": "Seed",
+        "to": "Seed"
+      },
+      "soundsToPractise": [
+        "b",
+        "d"
+      ],
+      "termProgress": [
+        {
+          "term": 1,
+          "wpm": 12,
+          "accuracy": 70
+        },
+        {
+          "term": 2,
+          "wpm": 15,
+          "accuracy": 74
+        },
+        {
+          "term": 3,
+          "wpm": 16,
+          "accuracy": 75
+        },
+        {
+          "term": 4,
+          "wpm": 16,
+          "accuracy": 75
+        }
+      ],
+      "checkInNote": "Hasn't read in 3 weeks"
     },
     {
       "id": "4",
@@ -41,7 +137,39 @@
       "consent": true,
       "language": "English",
       "channel": "SMS",
-      "parentContact": ""
+      "parentContact": "+27 72 456 7890",
+      "recentlyMoved": false,
+      "groupJourney": {
+        "from": "Sprout",
+        "to": "Sprout"
+      },
+      "soundsToPractise": [
+        "fl",
+        "st"
+      ],
+      "termProgress": [
+        {
+          "term": 1,
+          "wpm": 24,
+          "accuracy": 85
+        },
+        {
+          "term": 2,
+          "wpm": 26,
+          "accuracy": 87
+        },
+        {
+          "term": 3,
+          "wpm": 25,
+          "accuracy": 84
+        },
+        {
+          "term": 4,
+          "wpm": 22,
+          "accuracy": 80
+        }
+      ],
+      "checkInNote": "Speed dipped this term"
     },
     {
       "id": "5",
@@ -50,7 +178,39 @@
       "consent": true,
       "language": "English",
       "channel": "SMS",
-      "parentContact": ""
+      "parentContact": "+27 84 567 8901",
+      "recentlyMoved": false,
+      "groupJourney": {
+        "from": "Bloom",
+        "to": "Tree"
+      },
+      "soundsToPractise": [
+        "str",
+        "tch"
+      ],
+      "termProgress": [
+        {
+          "term": 1,
+          "wpm": 30,
+          "accuracy": 92
+        },
+        {
+          "term": 2,
+          "wpm": 36,
+          "accuracy": 95
+        },
+        {
+          "term": 3,
+          "wpm": 42,
+          "accuracy": 96
+        },
+        {
+          "term": 4,
+          "wpm": 48,
+          "accuracy": 98
+        }
+      ],
+      "checkInNote": null
     },
     {
       "id": "6",
@@ -59,7 +219,39 @@
       "consent": true,
       "language": "English",
       "channel": "WhatsApp",
-      "parentContact": ""
+      "parentContact": "+27 73 678 9012",
+      "recentlyMoved": false,
+      "groupJourney": {
+        "from": "Seed",
+        "to": "Sprout"
+      },
+      "soundsToPractise": [
+        "wh",
+        "ee"
+      ],
+      "termProgress": [
+        {
+          "term": 1,
+          "wpm": 16,
+          "accuracy": 80
+        },
+        {
+          "term": 2,
+          "wpm": 22,
+          "accuracy": 86
+        },
+        {
+          "term": 3,
+          "wpm": 28,
+          "accuracy": 90
+        },
+        {
+          "term": 4,
+          "wpm": 33,
+          "accuracy": 92
+        }
+      ],
+      "checkInNote": null
     },
     {
       "id": "7",
@@ -68,7 +260,39 @@
       "consent": true,
       "language": "isiZulu",
       "channel": "SMS",
-      "parentContact": ""
+      "parentContact": "+27 81 789 0123",
+      "recentlyMoved": false,
+      "groupJourney": {
+        "from": "Seed",
+        "to": "Seed"
+      },
+      "soundsToPractise": [
+        "m",
+        "p"
+      ],
+      "termProgress": [
+        {
+          "term": 1,
+          "wpm": 14,
+          "accuracy": 72
+        },
+        {
+          "term": 2,
+          "wpm": 18,
+          "accuracy": 78
+        },
+        {
+          "term": 3,
+          "wpm": 21,
+          "accuracy": 82
+        },
+        {
+          "term": 4,
+          "wpm": 24,
+          "accuracy": 85
+        }
+      ],
+      "checkInNote": null
     },
     {
       "id": "8",
@@ -77,7 +301,39 @@
       "consent": true,
       "language": "English",
       "channel": "SMS",
-      "parentContact": ""
+      "parentContact": "+27 76 890 1234",
+      "recentlyMoved": false,
+      "groupJourney": {
+        "from": "Seed",
+        "to": "Seed"
+      },
+      "soundsToPractise": [
+        "cl",
+        "gr"
+      ],
+      "termProgress": [
+        {
+          "term": 1,
+          "wpm": 13,
+          "accuracy": 71
+        },
+        {
+          "term": 2,
+          "wpm": 17,
+          "accuracy": 76
+        },
+        {
+          "term": 3,
+          "wpm": 20,
+          "accuracy": 81
+        },
+        {
+          "term": 4,
+          "wpm": 23,
+          "accuracy": 84
+        }
+      ],
+      "checkInNote": null
     },
     {
       "id": "9",
@@ -86,7 +342,18 @@
       "consent": false,
       "language": "English",
       "channel": "WhatsApp",
-      "parentContact": ""
+      "parentContact": "+27 82 901 2345",
+      "recentlyMoved": false,
+      "groupJourney": {
+        "from": "Seed",
+        "to": "Seed"
+      },
+      "soundsToPractise": [
+        "s",
+        "a"
+      ],
+      "termProgress": [],
+      "checkInNote": "Needs parent consent"
     },
     {
       "id": "10",
@@ -95,7 +362,39 @@
       "consent": true,
       "language": "English",
       "channel": "SMS",
-      "parentContact": ""
+      "parentContact": "+27 74 012 3456",
+      "recentlyMoved": false,
+      "groupJourney": {
+        "from": "Sprout",
+        "to": "Bloom"
+      },
+      "soundsToPractise": [
+        "igh",
+        "oa"
+      ],
+      "termProgress": [
+        {
+          "term": 1,
+          "wpm": 20,
+          "accuracy": 86
+        },
+        {
+          "term": 2,
+          "wpm": 27,
+          "accuracy": 90
+        },
+        {
+          "term": 3,
+          "wpm": 32,
+          "accuracy": 93
+        },
+        {
+          "term": 4,
+          "wpm": 37,
+          "accuracy": 95
+        }
+      ],
+      "checkInNote": null
     },
     {
       "id": "11",
@@ -104,7 +403,39 @@
       "consent": true,
       "language": "isiZulu",
       "channel": "WhatsApp",
-      "parentContact": ""
+      "parentContact": "+27 83 123 7890",
+      "recentlyMoved": false,
+      "groupJourney": {
+        "from": "Sprout",
+        "to": "Bloom"
+      },
+      "soundsToPractise": [
+        "ng",
+        "ny"
+      ],
+      "termProgress": [
+        {
+          "term": 1,
+          "wpm": 23,
+          "accuracy": 87
+        },
+        {
+          "term": 2,
+          "wpm": 29,
+          "accuracy": 91
+        },
+        {
+          "term": 3,
+          "wpm": 34,
+          "accuracy": 94
+        },
+        {
+          "term": 4,
+          "wpm": 39,
+          "accuracy": 96
+        }
+      ],
+      "checkInNote": null
     },
     {
       "id": "12",
@@ -113,10 +444,144 @@
       "consent": true,
       "language": "English",
       "channel": "WhatsApp",
-      "parentContact": ""
+      "parentContact": "+27 79 234 8901",
+      "recentlyMoved": false,
+      "groupJourney": {
+        "from": "Bloom",
+        "to": "Tree"
+      },
+      "soundsToPractise": [
+        "tion",
+        "sion"
+      ],
+      "termProgress": [
+        {
+          "term": 1,
+          "wpm": 28,
+          "accuracy": 91
+        },
+        {
+          "term": 2,
+          "wpm": 34,
+          "accuracy": 94
+        },
+        {
+          "term": 3,
+          "wpm": 40,
+          "accuracy": 97
+        },
+        {
+          "term": 4,
+          "wpm": 46,
+          "accuracy": 98
+        }
+      ],
+      "checkInNote": null
     }
   ],
+  "terms": [
+    {
+      "id": 1,
+      "name": "Term 1",
+      "dates": "Jan to Mar",
+      "avgWpm": 21,
+      "hodReviewed": true,
+      "reviewedBy": "Mrs. Khumalo (HOD)",
+      "reviewedAt": "2026-03-25"
+    },
+    {
+      "id": 2,
+      "name": "Term 2",
+      "dates": "Apr to Jun",
+      "avgWpm": 27,
+      "hodReviewed": true,
+      "reviewedBy": "Mrs. Khumalo (HOD)",
+      "reviewedAt": "2026-06-20"
+    },
+    {
+      "id": 3,
+      "name": "Term 3",
+      "dates": "Jul to Sep",
+      "avgWpm": 33,
+      "hodReviewed": true,
+      "reviewedBy": "Mrs. Khumalo (HOD)",
+      "reviewedAt": "2026-09-28"
+    },
+    {
+      "id": 4,
+      "name": "Term 4",
+      "dates": "Oct to Dec",
+      "avgWpm": 36,
+      "isCurrent": true,
+      "hodReviewed": false,
+      "reviewedBy": null,
+      "reviewedAt": null
+    }
+  ],
+  "yearSummary": {
+    "learnersHeard": 36,
+    "movedUp": 17,
+    "parentNotesSent": 112
+  },
   "assessments": [],
-  "notes": [],
-  "activities": []
+  "notes": [
+    {
+      "id": "note-1",
+      "learnerId": "1",
+      "text": "Hi! Thando read with growing confidence today and is practising the \"th\" sound. Reading one short page together tonight will help.",
+      "status": "draft",
+      "language": "isiZulu",
+      "channel": "WhatsApp",
+      "createdAt": "2026-10-28T08:30:00.000Z"
+    },
+    {
+      "id": "note-2",
+      "learnerId": "2",
+      "text": "Lerato read aloud with wonderful fluency and accuracy in the story passage today! Please continue reading together at home.",
+      "status": "sent",
+      "language": "Sepedi",
+      "channel": "SMS",
+      "createdAt": "2026-10-27T14:15:00.000Z"
+    },
+    {
+      "id": "note-3",
+      "learnerId": "3",
+      "text": "Sipho took part in phonics sounds practice today. We are building confidence with letter combinations.",
+      "status": "to_review",
+      "language": "English",
+      "channel": "WhatsApp",
+      "createdAt": "2026-10-28T09:10:00.000Z"
+    },
+    {
+      "id": "note-4",
+      "learnerId": "4",
+      "text": "Aisha practiced reading with the Sprout group today. Reading 5 minutes together tonight will reinforce her new words.",
+      "status": "draft",
+      "language": "English",
+      "channel": "SMS",
+      "createdAt": "2026-10-28T09:40:00.000Z"
+    },
+    {
+      "id": "note-5",
+      "learnerId": "6",
+      "text": "Naledi participated enthusiastically in our reading session today. Great progress with blend sounds!",
+      "status": "draft",
+      "language": "English",
+      "channel": "WhatsApp",
+      "createdAt": "2026-10-28T10:05:00.000Z"
+    }
+  ],
+  "activities": [],
+  "completedActivities": [
+    {
+      "group": "Tree",
+      "title": "Sound hunt",
+      "date": "2026-10-28"
+    },
+    {
+      "group": "Sprout",
+      "title": "Sound hunt",
+      "date": "2026-10-28"
+    }
+  ]
 }
