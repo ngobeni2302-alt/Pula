@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg'],
+      includeAssets: ['icon.png'],
       manifest: {
         name: 'Teacher Copilot — Pula',
         short_name: 'Teacher Copilot',
@@ -20,14 +20,15 @@ export default defineConfig({
         categories: ['education', 'productivity'],
         icons: [
           {
-            src: '/icon.svg',
+            src: '/icon.png',
             sizes: '192x192 512x512',
-            type: 'image/svg+xml',
+            type: 'image/png',
             purpose: 'any maskable'
           }
         ]
       },
       workbox: {
+        maximumFileSizeToCacheInBytes: 3000000,
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         runtimeCaching: [
           {
