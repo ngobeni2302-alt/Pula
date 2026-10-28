@@ -37,3 +37,5 @@ if (fs.existsSync(distPath)) {
 
 const port = process.env.PORT || 4000;
 app.listen(port, () => console.log(`Teacher Copilot running unified on http://localhost:${port}`));
+
+export default app;
