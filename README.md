@@ -2,6 +2,10 @@
 
 A mobile-first, installable teacher reading companion inspired by the supplied UI screenshots and data-flow diagram.
 
+## 🚀 Live Deployment
+
+- **Vercel URL:** [https://pula-delta.vercel.app/](https://pula-delta.vercel.app/)
+
 ## Run locally (Node.js 20+ recommended)
 
 ```bash
