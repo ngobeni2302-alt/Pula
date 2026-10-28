@@ -41,15 +41,12 @@ const emoji = { Seed: '◒', Sprout: '♟', Bloom: '▣', Tree: '▥' };
 
 function Pula({ large = false, happy = false }) {
   return (
-    <div className={'pula ' + (large ? 'pula-large' : '')}>
-      <div className="cloud">
-        <span className="moon">☾</span>
-        <span className="eye left" />
-        <span className="eye right" />
-        <span className="blush bleft" />
-        <span className="blush bright" />
-        <span className="smile">{happy ? 'ᴗ' : '⌣'}</span>
-      </div>
+    <div className={'pula ' + (large ? 'pula-large ' : '') + (happy ? 'happy ' : '')}>
+      <img
+        src="/icon.png"
+        alt="Pula character"
+        className="pula-avatar"
+      />
     </div>
   );
 }
