@@ -1,0 +1,122 @@
+{
+  "classroom": {
+    "name": "Grade 2B",
+    "teacher": "Teacher",
+    "code": "READ2B",
+    "grade": 2,
+    "classroom": ""
+  },
+  "learners": [
+    {
+      "id": "1",
+      "name": "Thando",
+      "group": "Sprout",
+      "consent": true,
+      "language": "isiZulu",
+      "channel": "WhatsApp",
+      "parentContact": ""
+    },
+    {
+      "id": "2",
+      "name": "Lerato",
+      "group": "Bloom",
+      "consent": true,
+      "language": "Sepedi",
+      "channel": "SMS",
+      "parentContact": ""
+    },
+    {
+      "id": "3",
+      "name": "Sipho",
+      "group": "Seed",
+      "consent": true,
+      "language": "English",
+      "channel": "WhatsApp",
+      "parentContact": ""
+    },
+    {
+      "id": "4",
+      "name": "Aisha",
+      "group": "Sprout",
+      "consent": true,
+      "language": "English",
+      "channel": "SMS",
+      "parentContact": ""
+    },
+    {
+      "id": "5",
+      "name": "Kabelo",
+      "group": "Tree",
+      "consent": true,
+      "language": "English",
+      "channel": "SMS",
+      "parentContact": ""
+    },
+    {
+      "id": "6",
+      "name": "Naledi",
+      "group": "Sprout",
+      "consent": true,
+      "language": "English",
+      "channel": "WhatsApp",
+      "parentContact": ""
+    },
+    {
+      "id": "7",
+      "name": "Zanele",
+      "group": "Seed",
+      "consent": true,
+      "language": "isiZulu",
+      "channel": "SMS",
+      "parentContact": ""
+    },
+    {
+      "id": "8",
+      "name": "Ruan",
+      "group": "Seed",
+      "consent": true,
+      "language": "English",
+      "channel": "SMS",
+      "parentContact": ""
+    },
+    {
+      "id": "9",
+      "name": "Palesa",
+      "group": "Seed",
+      "consent": false,
+      "language": "English",
+      "channel": "WhatsApp",
+      "parentContact": ""
+    },
+    {
+      "id": "10",
+      "name": "Neo",
+      "group": "Bloom",
+      "consent": true,
+      "language": "English",
+      "channel": "SMS",
+      "parentContact": ""
+    },
+    {
+      "id": "11",
+      "name": "Amahle",
+      "group": "Bloom",
+      "consent": true,
+      "language": "isiZulu",
+      "channel": "WhatsApp",
+      "parentContact": ""
+    },
+    {
+      "id": "12",
+      "name": "Tumi",
+      "group": "Tree",
+      "consent": true,
+      "language": "English",
+      "channel": "WhatsApp",
+      "parentContact": ""
+    }
+  ],
+  "assessments": [],
+  "notes": [],
+  "activities": []
+}
