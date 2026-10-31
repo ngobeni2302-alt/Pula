@@ -1,0 +1,93 @@
+.role-entry-main {
+  justify-content: center;
+  padding: 40px 24px;
+}
+
+.role-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 24px;
+  font-weight: 900;
+  margin-bottom: 40px;
+}
+
+.role-brand img {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+}
+
+.role-eyebrow {
+  font-size: 12px;
+  font-weight: 800;
+  color: #695c45;
+  margin-bottom: 12px;
+}
+
+.role-options {
+  display: grid;
+  gap: 14px;
+  margin: 18px 0 24px;
+}
+
+.role-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 18px 14px;
+  border: 1px solid #e4d9c5;
+  border-radius: 20px;
+  background: #fffdf8;
+  color: #16193f;
+  text-align: left;
+  box-shadow: 0 4px 12px #16193f08;
+}
+
+.role-option:hover { border-color: #16193f; }
+.role-option:focus-visible, .role-switch-bar button:focus-visible {
+  outline: 3px solid #6056bd;
+  outline-offset: 3px;
+}
+
+.role-icon, .role-emblem {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: #eee9fa;
+}
+
+.role-option:nth-child(2) .role-icon { background: #e7f1df; }
+.role-option:nth-child(3) .role-icon { background: #ffecd0; }
+.role-copy { display: grid; gap: 5px; flex: 1; }
+.role-copy strong { font-size: 16px; }
+.role-copy > span { font-size: 12px; line-height: 1.5; color: #5c5a6a; }
+.role-copy small { font-size: 11px; font-weight: 800; color: #695c45; }
+.role-footnote { font-size: 12px; color: #5c5a6a; text-align: center; }
+.role-emblem { width: 72px; height: 72px; margin-bottom: 24px; }
+.role-switch-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 10px 18px;
+  background: #fff7e6;
+  color: #16193f;
+  font-size: 12px;
+  border-bottom: 1px solid #e4d9c5;
+}
+.role-switch-bar button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-weight: 800;
+}

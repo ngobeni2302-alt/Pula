@@ -1,8 +1,13 @@
 import { defineConfig } from 'vite';
+import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  // Resolve packages from frontend/node_modules for the root-level Teacher module.
+  resolve: {
+    dedupe: ['react', 'react-dom', 'lucide-react']
+  },
   plugins: [
     react(),
     VitePWA({
@@ -48,6 +53,12 @@ export default defineConfig({
   ],
   server: {
     host: '0.0.0.0',
+    fs: {
+      allow: [
+        fileURLToPath(new URL('.', import.meta.url)),
+        fileURLToPath(new URL('../teacher', import.meta.url))
+      ]
+    },
     proxy: {
       '/api': 'http://localhost:4000'
     }

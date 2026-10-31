@@ -2,6 +2,56 @@
 
 A mobile-first, installable teacher reading companion inspired by the supplied UI screenshots and data-flow diagram.
 
+## Phase 1 project structure
+
+```text
+Pula/
+├── teacher/
+│   ├── App.jsx
+│   ├── style.css
+│   └── services/
+│       └── copilotStore.js
+├── hod/
+│   └── README.md
+├── parent/
+│   └── README.md
+├── frontend/
+│   ├── public/icon.png
+│   ├── src/ (main.jsx, RoleEntry.jsx, roleEntry.css)
+│   ├── index.html
+│   ├── vite.config.js
+│   ├── vercel.json
+│   ├── package.json
+│   └── package-lock.json
+├── backend/
+│   ├── data.json
+│   ├── src/server.js
+│   ├── package.json
+│   └── package-lock.json
+├── package.json
+├── package-lock.json
+├── vercel.json
+├── README.md
+└── .gitignore
+```
+
+The root-level `teacher/` module contains the existing application, unchanged.
+`frontend/src/main.jsx` mounts a three-way role selection screen. Teacher opens
+the existing application, with a Switch role button to return. Parent and HOD
+open coming-soon placeholders. This is role selection only; account authentication
+and access control are not implemented.
+The frontend retains Vite, public assets, and PWA configuration. Vite permits
+access only to the frontend and Teacher directories and resolves the Teacher
+module's packages from the frontend installation.
+
+`hod/` and `parent/` contain documentation placeholders only. Their dashboards
+and planned responsibilities will be developed in later phases.
+
+The backend stays in `backend/`, with its existing API and JSON persistence.
+Future integration will connect Teacher, HOD, and Parent to this shared backend
+and a shared database through authorised access. Cross-role integration,
+authentication and new shared services are not implemented.
+
 ## 🚀 Live Deployment
 
 - **Vercel URL:** [https://pula-delta.vercel.app/](https://pula-delta.vercel.app/)
@@ -9,7 +59,7 @@ A mobile-first, installable teacher reading companion inspired by the supplied U
 ## Run locally (Node.js 20+ recommended)
 
 ```bash
-cd teacher-copilot
+cd Pula
 npm install
 npm run install:all
 npm run dev
@@ -17,7 +67,7 @@ npm run dev
 
 Open **http://localhost:5173**. The frontend proxies `/api` to the Express API at port 4000.
 
-**Important:** Run these commands from the `teacher-copilot` folder (the one containing the root `package.json`).
+**Important:** Run these commands from the `Pula` folder (the one containing the root `package.json`).
 
 ## What's implemented
 
@@ -47,3 +97,13 @@ npm run build
 ```
 
 Vite writes production frontend assets to `frontend/dist`. Deploy frontend and backend together with appropriate HTTPS and API routing.
+
+For a production-style local run after installing dependencies:
+
+```bash
+npm start
+```
+
+This builds the frontend and starts Express at **http://localhost:4000**, serving
+both the production frontend and the existing API. To build only with dependencies
+already installed, run `npm --prefix frontend run build`.
