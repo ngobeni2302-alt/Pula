@@ -1,16 +1,10 @@
-# Parent module
+# Parent dashboard
 
-Reserved for the future Parent Dashboard. Phase 1 contains only this placeholder documentation; no functionality is implemented.
+Implemented in `frontend/src/Dashboards.jsx`, with Home, Progress, Schoolwork and Messages.
+Select a fictional parent profile on the entry screen. Only that child's group,
+progress, planner and conversation are shown. Group membership is read-only.
+Teacher messages and parent replies share browser-local storage with the teacher
+workspace; switch profiles to verify the conversation.
 
-Planned responsibilities for future phases:
-
-- View linked children's information
-- View English Literacy progress
-- View Mathematics progress
-- View assessment results
-- View attendance
-- View homework
-- View teacher-approved parent notes
-- Direct messaging with teachers
-- Group invitations
-- Accepting or declining group invitations
+This is a device-local demonstration, not authenticated parent access. There is
+no cross-device sync, external message delivery or automatic translation.
