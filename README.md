@@ -107,3 +107,40 @@ npm start
 This builds the frontend and starts Express at **http://localhost:4000**, serving
 both the production frontend and the existing API. To build only with dependencies
 already installed, run `npm --prefix frontend run build`.
+
+## Grade and role dashboards (November 2026)
+
+The role entry now opens interactive Teacher, Parent and HOD dashboards in
+`frontend/src/Dashboards.jsx`, styled in `frontend/src/dashboards.css`.
+`frontend/src/dashboardData.js` seeds four independent classes (R–3), totalling
+148 fictional learners. Choose a teacher or parent demo profile, or the HOD.
+
+- Teachers see their grade's home, guidelines/resources, reading groups, manual
+  reading assessments, planner and messaging hub. Lesedi uses editable template
+  drafts. Whole-class, group and individual recipients are resolved within the
+  selected class. Messages require explicit teacher approval.
+- Parent Home, Progress, Schoolwork and Messages use the same device-local data.
+  Groups are read-only. Switch profiles to follow a conversation or planner item.
+- HOD has five working tabs, confidential observation records, editable lesson
+  logs, intervention strategies/review dates, and directives with status updates.
+- Saving guidelines offline stores the weekly plan and built-in teaching guides.
+  The existing PWA caches the app shell after a production build; install/load it
+  online first. No external downloadable curriculum files are bundled.
+- The original speech-reading application remains accessible from Teacher Read
+  as a separate legacy demo. Its existing records are preserved and are not
+  merged into the new dashboard dataset.
+
+New dashboard state uses `pula_dashboards_v1` in localStorage, with offline plans
+under `pula_offline_plans`. It is not synced to the Express API. Data changes
+survive reloads on the same browser. These are demo profiles, not authenticated
+accounts: grade scoping and hidden observation UI do not enforce security.
+Production authentication, server-side authorization, cross-device persistence,
+live AI, WhatsApp/SMS providers and translation remain unconnected. All external
+sending is explicitly simulated. Sample CAPS/ATP guidance needs curriculum review.
+
+Validation:
+
+```bash
+node --test frontend/tests/dashboardData.test.mjs
+npm --prefix frontend run build
+```
