@@ -1,0 +1,87 @@
+/* ── HOD Calendar -- HodCalendar.css ─────────────────── */
+.hod-grade-dot-0 { background: #c0392b; }
+.hod-grade-dot-1 { background: #6a5ab5; }
+.hod-grade-dot-2 { background: #2e7d63; }
+.hod-grade-dot-3 { background: #2c5f8a; }
+
+.hod-chip-lavender { background: #e5dff0; color: #3d2f8a; }
+.hod-chip-orange   { background: #fae2cc; color: #7a3010; }
+.hod-chip-blue     { background: #dce7f2; color: #1d4f7a; }
+.hod-chip-sand     { background: #f1e4bf; color: #19183f; }
+
+.hod-cal-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 22px; flex-wrap: wrap; gap: 14px; }
+.hod-cal-header h2 { margin: 0; }
+
+.hod-cal-nav { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 16px; }
+.hod-cal-nav button { background: none; border: 1px solid #c5bfcc; border-radius: 10px; padding: 6px 14px; font-size: 13px; font-weight: 800; font-family: inherit; color: #19183f; cursor: pointer; }
+.hod-cal-nav button:hover { background: #e5dff0; }
+.hod-cal-month-label { font-size: 15px; font-weight: 900; min-width: 148px; text-align: center; }
+
+.hod-cal-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.hod-cal-filter-all { border: 1.5px solid #c5bfcc; background: #fff; border-radius: 20px; padding: 7px 14px; font-size: 12px; font-weight: 800; cursor: pointer; font-family: inherit; color: #19183f; }
+.hod-cal-filter-all.active { background: #19183f; color: white; border-color: #19183f; }
+.hod-cal-filter { display: inline-flex; align-items: center; gap: 6px; border: 1.5px solid #c5bfcc; background: #fff; border-radius: 20px; padding: 7px 14px; font-size: 12px; font-weight: 800; cursor: pointer; font-family: inherit; color: #19183f; }
+.hod-cal-filter.active { border-width: 2px; }
+.hod-grade-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
+
+.hod-cal-view-toggle { display: flex; gap: 6px; flex-shrink: 0; }
+.hod-cal-view-toggle button { background: #fff; border: 1px solid #c5bfcc; border-radius: 10px; padding: 7px 14px; font-size: 12px; font-weight: 800; font-family: inherit; color: #19183f; cursor: pointer; }
+.hod-cal-view-toggle button.active { background: #19183f; color: white; border-color: #19183f; }
+
+.hod-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #e8dfc8; border: 1px solid #e8dfc8; border-radius: 16px; overflow: hidden; margin-bottom: 24px; }
+.hod-cal-dow { background: #f7f2e9; padding: 9px 4px; text-align: center; font-size: 11px; font-weight: 900; color: #69617b; letter-spacing: .3px; }
+.hod-cal-cell { background: #fff; min-height: 92px; padding: 6px 5px 5px; display: flex; flex-direction: column; gap: 3px; overflow: hidden; }
+.hod-cal-cell.faded { background: #faf8f4; }
+.hod-cal-cell.today { background: #f0ecfa; }
+.hod-cal-day-num { font-size: 12px; font-weight: 800; color: #575779; margin-bottom: 1px; align-self: flex-start; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 50%; flex-shrink: 0; }
+.hod-cal-cell.today .hod-cal-day-num { background: #19183f; color: white; }
+
+.hod-cal-chip { border-radius: 5px; padding: 3px 6px; font-size: 10px; font-weight: 800; line-height: 1.35; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 100%; cursor: pointer; border: none; display: block; width: 100%; text-align: left; font-family: inherit; transition: filter .12s, transform .08s; }
+.hod-cal-chip:hover { filter: brightness(.92); transform: scale(1.01); }
+.hod-cal-chip:focus-visible { outline: 2px solid #6357c5; outline-offset: 1px; }
+.hod-cal-more { font-size: 10px; font-weight: 800; color: #69617b; cursor: pointer; background: none; border: 0; padding: 1px 0; text-align: left; font-family: inherit; }
+.hod-cal-more:hover { color: #19183f; }
+
+.hod-cal-legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 10px; }
+.hod-cal-legend-item { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; color: #69617b; }
+.hod-cal-legend-swatch { width: 22px; height: 11px; border-radius: 3px; flex-shrink: 0; }
+
+.hod-cal-list { display: flex; flex-direction: column; }
+.hod-cal-week { margin-bottom: 26px; }
+.hod-cal-week-label { font-size: 11px; font-weight: 900; letter-spacing: 1px; color: #69617b; text-transform: uppercase; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid #f0ebe0; }
+
+.hod-cal-event-row { display: flex; align-items: stretch; gap: 14px; padding: 10px 0; border-bottom: 1px solid #f0ebe0; width: 100%; text-align: left; background: none; border-left: none; border-right: none; border-top: none; font-family: inherit; cursor: pointer; }
+.hod-cal-event-row:last-child { border-bottom: 0; }
+.hod-cal-event-row:hover .hod-cal-event-body { opacity: .85; }
+
+.hod-cal-event-bar { width: 4px; border-radius: 4px; flex-shrink: 0; align-self: stretch; min-height: 36px; }
+.hod-cal-event-date { flex-shrink: 0; width: 46px; text-align: center; background: #fffaf2; border: 1px solid #e8dfc8; border-radius: 10px; padding: 6px 4px; }
+.hod-cal-event-date .day-num { font-size: 18px; font-weight: 900; line-height: 1; color: #19183f; }
+.hod-cal-event-date .day-name { font-size: 10px; font-weight: 800; color: #69617b; margin-top: 2px; }
+.hod-cal-event-body { flex: 1; min-width: 0; padding: 2px 0; }
+.hod-cal-event-title { font-size: 13px; font-weight: 800; color: #19183f; }
+.hod-cal-event-meta { font-size: 11px; color: #575779; margin-top: 4px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.hod-cal-grade-tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 8px; font-size: 11px; font-weight: 800; }
+.hod-cal-type-tag { display: inline-block; padding: 2px 7px; border-radius: 8px; font-size: 10px; font-weight: 800; }
+
+.hod-cal-popover-overlay { position: fixed; inset: 0; background: rgba(25,24,63,.2); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.hod-cal-popover { background: #fff; border-radius: 22px; padding: 28px; max-width: 390px; width: 100%; box-shadow: 0 12px 48px rgba(25,24,63,.2); }
+.hod-cal-popover h3 { margin: 10px 0 6px; font-size: 19px; font-weight: 900; }
+.hod-cal-popover p { margin: 7px 0; font-size: 13px; line-height: 1.6; }
+.hod-cal-popover-close { background: none; border: 0; font-size: 24px; font-weight: 900; color: #19183f; cursor: pointer; float: right; line-height: 1; margin: -4px -4px 0 0; }
+.hod-cal-popover-color-bar { height: 6px; border-radius: 6px; margin-bottom: 16px; }
+
+@media (min-width: 801px) {
+  .hod-cal-cell:hover { background: #f7f4fc; }
+  .hod-cal-cell.faded:hover { background: #f3f0f8; }
+}
+@media (max-width: 800px) {
+  .hod-cal-cell { min-height: 64px; padding: 4px 3px; }
+  .hod-cal-chip { font-size: 9px; padding: 2px 3px; }
+  .hod-cal-day-num { font-size: 11px; width: 18px; height: 18px; }
+  .hod-cal-header { flex-direction: column; }
+}
+@media (forced-colors: active) {
+  .hod-cal-chip { outline: 1px solid ButtonText; }
+  .hod-cal-event-bar { background: ButtonText !important; }
+}
