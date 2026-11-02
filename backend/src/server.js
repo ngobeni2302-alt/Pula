@@ -49,6 +49,12 @@ if (fs.existsSync(distPath)) {
 }
 
 const port = process.env.PORT || 4000;
-app.listen(port, () => console.log(`Teacher Copilot running unified on http://localhost:${port}`));
+const server = app.listen(port, () => console.log(`Teacher Copilot running on http://localhost:${port}`));
+server.on('error', e => {
+  if (e.code === 'EADDRINUSE') {
+    console.error(`\nPort ${port} is already in use.\nStop the other process or set a different port:\n  PORT=4001 npm run dev\n`);
+    process.exit(1);
+  } else throw e;
+});
 
 export default app;
