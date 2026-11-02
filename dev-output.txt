@@ -114,3 +114,114 @@
 [0]   PORT=4001 npm run dev
 [0] 
 [0] Failed running 'src/server.js'. Waiting for file changes before restarting...
+[0] Change detected in 'c:\\Users\\lebog\\Pula\\backend\\node_modules\\vary\\index.js'
+[0] Restarting 'src/server.js'
+[0] Teacher Copilot running on http://localhost:4000
+[0] Change detected in 'c:\\Users\\lebog\\Pula\\backend\\node_modules\\safer-buffer\\safer.js'
+[0] Restarting 'src/server.js'
+[0] 
+[0] Port 4000 is already in use.
+[0] Stop the other process or set a different port:
+[0]   PORT=4001 npm run dev
+[0] 
+[0] Failed running 'src/server.js'. Waiting for file changes before restarting...
+[0] Change detected in 'c:\\Users\\lebog\\Pula\\backend\\src\\server.js'
+[0] Restarting 'src/server.js'
+[0] [Lesedi] Routes mounted: POST /api/lesedi  GET /api/lesedi/health
+[0] Teacher Copilot running on http://localhost:4000
+[0] Change detected in 'c:\\Users\\lebog\\Pula\\LesediAiAgent\\src\\engine.js'
+[0] Restarting 'src/server.js'
+[0] [Lesedi] Routes mounted: POST /api/lesedi  GET /api/lesedi/health
+[0] 
+[0] Port 4000 is already in use.
+[0] Stop the other process or set a different port:
+[0]   PORT=4001 npm run dev
+[0] 
+[0] Failed running 'src/server.js'. Waiting for file changes before restarting...
+[0] Change detected in 'c:\\Users\\lebog\\Pula\\LesediAiAgent\\src\\engine.js'
+[0] Restarting 'src/server.js'
+[0] [Lesedi] Routes mounted: POST /api/lesedi  GET /api/lesedi/health
+[0] Teacher Copilot running on http://localhost:4000
+[0] Change detected in 'c:\\Users\\lebog\\Pula\\LesediAiAgent\\src\\index.js'
+[0] Restarting 'src/server.js'
+[0] [Lesedi] Routes mounted: POST /api/lesedi  GET /api/lesedi/health
+[0] 
+[0] Port 4000 is already in use.
+[0] Stop the other process or set a different port:
+[0]   PORT=4001 npm run dev
+[0] 
+[0] Failed running 'src/server.js'. Waiting for file changes before restarting...
+[0] Change detected in 'c:\\Users\\lebog\\Pula\\LesediAiAgent\\src\\index.js'
+[0] Restarting 'src/server.js'
+[0] [Lesedi] Routes mounted: POST /api/lesedi  GET /api/lesedi/health
+[0] 
+[0] Port 4000 is already in use.
+[0] Stop the other process or set a different port:
+[0]   PORT=4001 npm run dev
+[0] 
+[0] Failed running 'src/server.js'. Waiting for file changes before restarting...
+[0] Change detected in 'c:\\Users\\lebog\\Pula\\backend\\src\\server.js'
+[0] Restarting 'src/server.js'
+[0] [Lesedi] Routes mounted: POST /api/lesedi  GET /api/lesedi/health
+[0] Teacher Copilot running on http://localhost:4000
+[0] Change detected in 'c:\\Users\\lebog\\Pula\\LesediAiAgent\\src\\phraseBank.js'
+[0] Restarting 'src/server.js'
+[0] [Lesedi] Routes mounted: POST /api/lesedi  GET /api/lesedi/health
+[0] 
+[0] Port 4000 is already in use.
+[0] Stop the other process or set a different port:
+[0]   PORT=4001 npm run dev
+[0] 
+[0] Failed running 'src/server.js'. Waiting for file changes before restarting...
+[0] Change detected in 'c:\\Users\\lebog\\Pula\\LesediAiAgent\\src\\guardrails.js'
+[0] Restarting 'src/server.js'
+[0] [Lesedi] Routes mounted: POST /api/lesedi  GET /api/lesedi/health
+[0] Teacher Copilot running on http://localhost:4000
+[0] Change detected in 'c:\\Users\\lebog\\Pula\\LesediAiAgent\\src\\engine.js'
+[0] Restarting 'src/server.js'
+[0] [Lesedi] Routes mounted: POST /api/lesedi  GET /api/lesedi/health
+[0] 
+[0] Port 4000 is already in use.
+[0] Stop the other process or set a different port:
+[0]   PORT=4001 npm run dev
+[0] 
+[0] Failed running 'src/server.js'. Waiting for file changes before restarting...
+[0] Change detected in 'c:\\Users\\lebog\\Pula\\LesediAiAgent\\src\\index.js'
+[0] Restarting 'src/server.js'
+[0] [Lesedi] Routes mounted: POST /api/lesedi  GET /api/lesedi/health
+[0] 
+[0] Port 4000 is already in use.
+[0] Stop the other process or set a different port:
+[0]   PORT=4001 npm run dev
+[0] 
+[0] Failed running 'src/server.js'. Waiting for file changes before restarting...
+[0] Change detected in 'c:\\Users\\lebog\\Pula\\LesediAiAgent\\src\\index.js'
+[0] Restarting 'src/server.js'
+[0] [Lesedi] Routes mounted: POST /api/lesedi  GET /api/lesedi/health
+[0] 
+[0] Port 4000 is already in use.
+[0] Stop the other process or set a different port:
+[0]   PORT=4001 npm run dev
+[0] 
+[0] Failed running 'src/server.js'. Waiting for file changes before restarting...
+[0] Change detected in 'c:\\Users\\lebog\\Pula\\LesediAiAgent\\src\\index.js'
+[0] Restarting 'src/server.js'
+[0] [Lesedi] Routes mounted: POST /api/lesedi  GET /api/lesedi/health
+[0] 
+[0] Port 4000 is already in use.
+[0] Stop the other process or set a different port:
+[0]   PORT=4001 npm run dev
+[0] 
+[0] Failed running 'src/server.js'. Waiting for file changes before restarting...
+[0] Change detected in 'c:\\Users\\lebog\\Pula\\backend\\node_modules\\object-assign\\index.js'
+[0] Restarting 'src/server.js'
+[0] [Lesedi] Routes mounted: POST /api/lesedi  GET /api/lesedi/health
+[0] 
+[0] Port 4000 is already in use.
+[0] Stop the other process or set a different port:
+[0]   PORT=4001 npm run dev
+[0] 
+[0] Failed running 'src/server.js'. Waiting for file changes before restarting...
+[0] Change detected in 'c:\\Users\\lebog\\Pula\\backend\\src\\server.js'
+[0] Restarting 'src/server.js'
+[0] Teacher Copilot running on http://localhost:4000
