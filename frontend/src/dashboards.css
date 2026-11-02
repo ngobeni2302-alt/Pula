@@ -22,8 +22,11 @@
 .pd-shell button:disabled{cursor:not-allowed;opacity:.5}
 .pd-top{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e8dfc8;padding:15px 0;margin-bottom:26px;font-size:12px}
 .pd-top button,.pd-top span{display:flex;align-items:center;gap:7px;background:none}
-.pd-mobile{max-width:480px;margin:auto;padding:0 20px 105px;box-shadow:0 0 80px #17173e0d}
-.pd-wide{max-width:1440px;margin:auto;padding:0 40px 30px}
+.pd-mobile{max-width:480px;width:100%;min-width:0;margin:auto;padding:0 16px 105px;box-shadow:0 0 80px #17173e0d;box-sizing:border-box}
+@media (max-width: 400px){.pd-mobile{padding:0 10px 105px}}
+@media (max-width: 340px){.pd-mobile{padding:0 6px 105px}}
+.pd-wide{max-width:1440px;width:100%;min-width:0;margin:auto;padding:0 20px 30px;box-sizing:border-box}
+@media (min-width: 768px){.pd-wide{padding:0 40px 30px}}
 .pd-entry{max-width:1250px;margin:auto;padding:45px 45px 70px}
 .pd-brand{display:flex;align-items:center;gap:10px;font-size:28px;font-weight:900;margin-bottom:55px}
 .pd-brand small{margin-left:auto}
@@ -44,6 +47,14 @@
 .pd-tag{background:var(--pula-navy);color:white}
 .pd-warning{background:var(--pula-peach);margin:3px}
 .pd-peach{background:var(--pula-peach)}
+.pd-coral{background:#FF6B4A}
+.pd-coral small,.pd-coral p{color:var(--pula-navy)}
+.pd-coral h2{font-size:30px;margin:20px 0;color:var(--pula-navy)}
+.pd-coral .pd-primary{width:100%}
+.pd-periwinkle{background:#8E9BFF}
+.pd-periwinkle small,.pd-periwinkle p{color:var(--pula-navy)}
+.pd-periwinkle h2{font-size:30px;margin:20px 0;color:var(--pula-navy)}
+.pd-periwinkle .pd-primary{width:100%}
 .pd-peach small,.pd-peach p{color:var(--pula-navy)}
 .pd-peach h2{font-size:30px;margin:20px 0}
 .pd-peach .pd-primary{width:100%}
@@ -66,6 +77,21 @@
 .g1{background:var(--pula-sage)}
 .g2{background:var(--pula-lavender)}
 .g3{background:var(--pula-blue)}
+.pd-teacher-groups .pd-group,
+.pd-teacher-groups .pd-group.g0,
+.pd-teacher-groups .pd-group.g1,
+.pd-teacher-groups .pd-group.g2,
+.pd-teacher-groups .pd-group.g3 {
+  background: #8E9BFF;
+  color: var(--pula-navy);
+}
+.pd-teacher-groups .pd-group:hover {
+  box-shadow: 0 0 0 1px var(--pula-navy);
+}
+.pd-teacher-groups .pd-group small,
+.pd-teacher-groups .pd-group b {
+  color: var(--pula-navy);
+}
 .pd-group.current{outline:3px solid var(--pula-navy);outline-offset:3px}
 .pd-group-title{font-size:36px!important}
 .pd-group-title~.pd-groups b{font-size:12px}
