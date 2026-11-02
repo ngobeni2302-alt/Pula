@@ -64,13 +64,20 @@ export function seedData() {
       const id=`${p.grade}-${++n}`;
       const name=['Thando','Lerato','Sipho','Aisha','Kabelo','Naledi'][n-1] || `Learner ${n}`;
       const base=8+g*9+index*3+i%4;
-      return {id,name,group:GROUPS[g],code:Math.min(7,1+g*2+i%2),history:[base,base+6,base+13,base+20],sounds:p.grade==='R'?['s','m']:['th','sh'],strategy:'Guided reading for 10 minutes daily',review:'2026-11-13'};
+      return {id,name,group:GROUPS[g],code:Math.min(7,1+g*2+i%2),history:[base,base+6,base+13,base+20],sounds:p.grade==='R'?['s','m']:['th','sh'],strategy:'Guided reading for 10 minutes daily',review:'2026-11-13',consent:name==='Palesa'?false:true};
     }));
-    if(p.grade==='2') Object.assign(learners[8],{name:'Thando',history:[18,24,31,38]});
-    if(p.grade==='2') learners[0].name='Zanele';
+    if(p.grade==='2') {
+      Object.assign(learners[8],{name:'Thando',history:[18,24,31,38],consent:true});
+      learners[0].name='Zanele';
+      if(learners[6]) learners[6].name='Ruan';
+      if(learners[7]) { learners[7].name='Palesa'; learners[7].consent=false; }
+      if(learners[9]) learners[9].name='Neo';
+      if(learners[10]) learners[10].name='Amahle';
+      if(learners[11]) learners[11].name='Tumi';
+    }
     learners[2].history=[12,15,16,16];
     learners[3].history=[24,26,25,22];
-    return {...p,learners,logs:[true,true,false,false],previousAverage:index===3?41:24,items:[
+    return {...p,learners,assessedIds:p.grade==='2'?[learners[1].id, learners[4].id]:[],logs:[true,true,false,false],previousAverage:index===3?41:24,items:[
       {id:`${p.grade}-hw`,type:'Homework',title:p.work[1],date:'2026-11-02',detail:'Spend 10 minutes together.',told:false},
       {id:`${p.grade}-test`,type:'Test',title:p.work[0],date:'2026-11-04',detail:'Practise a little each evening.',told:false},
       {id:`${p.grade}-spell`,type:'Spelling test',title:p.work[2],date:'2026-11-06',detail:p.grade==='R'?'Practise rhymes together.':'Practise five words a night.',told:false},

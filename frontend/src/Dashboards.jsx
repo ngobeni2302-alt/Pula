@@ -7,6 +7,7 @@ import MessagingHub from './messaging/MessagingHub.jsx';
 import SchoolCalendar from './calendar/SchoolCalendar.jsx';
 import ReadingTierList from './learners/ReadingTierList.jsx';
 import LearnerProfile from './learners/LearnerProfile.jsx';
+import TeacherReadingExperience from './reading/TeacherReadingExperience.jsx';
 import { GROUPS, TOPICS, PLANS, loadData, STORAGE_KEY, tips } from './dashboardData.js';
 import './dashboards.css';
 import WelcomeScreen from './WelcomeScreen.jsx';
@@ -59,10 +60,10 @@ export default function Dashboards() {
     if (profile.role === 'HOD') return <HodDashboard onBack={() => { setProfile(null); setLegacy(false); }} />;
 
     return (
-        <div className={`pd-shell ${page === 'Messages' ? 'pd-messages-active' : 'pd-mobile'}`}>
-            {header}
+        <div className={`pd-shell ${page === 'Messages' ? 'pd-messages-active' : page === 'Read' ? 'pd-reading-active' : 'pd-mobile'}`}>
+            {page !== 'Read' && header}
             <main>
-                {page !== 'Messages' && page !== 'TierLearners' && page !== 'LearnerProfile' && (
+                {page !== 'Messages' && page !== 'TierLearners' && page !== 'LearnerProfile' && page !== 'Read' && (
                     <div className="pd-heading">
                         <div>
                             <span className="pd-eyebrow">GRADE {c.grade} ONLY · TERM 4</span>
@@ -71,7 +72,7 @@ export default function Dashboards() {
                         </div>
                     </div>
                 )}
-                {notice && <div role="status" className="pd-note">{notice}</div>}
+                {page !== 'Read' && notice && <div role="status" className="pd-note">{notice}</div>}
                 {page === 'Home' && teacher && (
                     <>
                         <Choices values={['English', 'Maths']} value={filter === 'All' ? 'English' : filter} onChange={setFilter} />
@@ -169,18 +170,34 @@ export default function Dashboards() {
                     <LearnerProfile learner={selectedLearner} classroom={c} selectedTier={tierView || 'All'} onBack={() => setPage('TierLearners')} onUpdateLearner={upd => { updateClass(c.grade, old => ({ ...old, learners: old.learners.map(l => l.id === upd.id ? { ...l, ...upd } : l) })); setNotice(`Academic profile updated for ${upd.name}.`); }} onStartMessage={(topic, item, lid) => startMessage(topic, item, lid)} />
                 )}
                 {page === 'Read' && (
-                    <>
-                        <Card>
-                            <h2>{c.grade === 'R' ? 'Listening and sound check' : 'Teacher reading round'}</h2>
-                            <p>Record a teacher-observed score for this grade. No audio is recorded.</p>
-                            <form onSubmit={e => { e.preventDefault(); const f = new FormData(e.currentTarget); const id = f.get('learner'); const wpm = Number(f.get('wpm')); if (updateClass(c.grade, old => ({ ...old, heard: Math.min(old.learners.length, old.heard + ((old.assessedIds || []).includes(id) ? 0 : 1)), assessedIds: [...new Set([...(old.assessedIds || []), id])], learners: old.learners.map(l => l.id === id ? { ...l, history: [...l.history.slice(0, 3), wpm] } : l) }))) setNotice('Score saved. Group stays unchanged until the teacher changes it.'); }}>
-                                <Field label="Learner"><select name="learner">{c.learners.map(l => <option key={l.id} value={l.id}>{l.name} · {l.group}</option>)}</select></Field>
-                                <Field label="Observed words per minute"><input required name="wpm" type="number" min="0" max="300" /></Field>
-                                <button className="pd-primary">Save teacher assessment</button>
-                            </form>
-                        </Card>
-                        <button className="pd-link" onClick={() => setLegacy(true)}>Open original speech-reading demo (separate data) →</button>
-                    </>
+                    <TeacherReadingExperience
+                        classroom={c}
+                        onBack={() => changePage('Home')}
+                        onSaveSession={(learnerId, { wpm, duration, taskTitle }) => {
+                            updateClass(c.grade, old => {
+                                const wasAssessed = (old.assessedIds || []).includes(learnerId);
+                                const updatedHeard = wasAssessed ? old.heard : Math.min(old.learners.length, (old.heard || 0) + 1);
+                                const updatedAssessedIds = [...new Set([...(old.assessedIds || []), learnerId])];
+                                const updatedLearners = old.learners.map(l => {
+                                    if (l.id !== learnerId) return l;
+                                    const nextWpm = wpm || (l.history.at(-1) + 2);
+                                    return {
+                                        ...l,
+                                        lastReadAt: new Date().toISOString(),
+                                        lastReadTask: taskTitle,
+                                        history: [...l.history.slice(0, 3), nextWpm]
+                                    };
+                                });
+                                return {
+                                    ...old,
+                                    heard: updatedHeard,
+                                    assessedIds: updatedAssessedIds,
+                                    learners: updatedLearners
+                                };
+                            });
+                            setNotice(`Reading session completed for ${c.learners.find(l => l.id === learnerId)?.name || 'learner'}!`);
+                        }}
+                    />
                 )}
                 {(page === 'Planner' || page === 'Schoolwork') && (
                     <>
@@ -272,17 +289,19 @@ export default function Dashboards() {
                     <MessagingHub profile={profile} classroom={c} classes={data.classes} initialLearnerId={msgLearnerId} initialTopic={msgTopic} onNavigateHome={() => changePage('Home')} />
                 )}
             </main>
-            <nav className="pd-nav" aria-label={`${profile.role} navigation`}>
-                {nav.map(([name, Icon]) => {
-                    const active = page === name || (name === 'Home' && (page === 'TierLearners' || page === 'LearnerProfile'));
-                    return (
-                        <button key={name} aria-current={active ? 'page' : undefined} className={active ? 'active' : ''} onClick={() => changePage(name)}>
-                            <Icon size={19} />
-                            <small>{name}</small>
-                        </button>
-                    );
-                })}
-            </nav>
+            {page !== 'Read' && (
+                <nav className="pd-nav" aria-label={`${profile.role} navigation`}>
+                    {nav.map(([name, Icon]) => {
+                        const active = page === name || (name === 'Home' && (page === 'TierLearners' || page === 'LearnerProfile'));
+                        return (
+                            <button key={name} aria-current={active ? 'page' : undefined} className={active ? 'active' : ''} onClick={() => changePage(name)}>
+                                <Icon size={19} />
+                                <small>{name}</small>
+                            </button>
+                        );
+                    })}
+                </nav>
+            )}
         </div>
     );
 }

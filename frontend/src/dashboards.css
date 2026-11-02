@@ -17,12 +17,14 @@
 .pd-shell p{font-size:14px;line-height:1.6;color:#575779}
 .pd-shell small{display:block;font-size:12px;line-height:1.5;color:#575779}
 .pd-shell button,.pd-legacy button{border:0;color:inherit;font-weight:800}
+.pd-shell button.re-primary-btn,.pd-shell button.re-confirm-keep-btn,.pd-shell button.re-btn-next-friend,.pd-shell button.re-btn-done,.pd-shell button.re-btn-again{color:#ffffff!important}
 .pd-shell button:focus-visible,.pd-shell input:focus-visible,.pd-shell select:focus-visible,.pd-shell textarea:focus-visible{outline:3px solid #6357c5;outline-offset:3px}
 .pd-shell button{cursor:pointer}
 .pd-shell button:disabled{cursor:not-allowed;opacity:.5}
 .pd-top{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e8dfc8;padding:15px 0;margin-bottom:26px;font-size:12px}
 .pd-top button,.pd-top span{display:flex;align-items:center;gap:7px;background:none}
 .pd-mobile{max-width:480px;width:100%;min-width:0;margin:auto;padding:0 16px 105px;box-shadow:0 0 80px #17173e0d;box-sizing:border-box}
+.pd-reading-active{max-width:480px;width:100%;min-width:0;margin:auto;padding:0;box-shadow:0 0 80px #17173e0d;box-sizing:border-box}
 @media (max-width: 400px){.pd-mobile{padding:0 10px 105px}}
 @media (max-width: 340px){.pd-mobile{padding:0 6px 105px}}
 .pd-wide{max-width:1440px;width:100%;min-width:0;margin:auto;padding:0 20px 30px;box-sizing:border-box}
