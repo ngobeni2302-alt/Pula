@@ -52,15 +52,11 @@ export default defineConfig({
     })
   ],
   server: {
-    host: '0.0.0.0',
     fs: {
       allow: [
         fileURLToPath(new URL('.', import.meta.url)),
         fileURLToPath(new URL('../teacher', import.meta.url))
       ]
-    },
-    proxy: {
-      '/api': 'http://localhost:4000'
     }
   }
 });
