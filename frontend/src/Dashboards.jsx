@@ -23,6 +23,7 @@ function Field({ label, children }) { return <label className="pd-field"><span>{
 export default function Dashboards() {
     const [data, setData] = useState(loadData);
     const [profile, setProfile] = useState(null);
+    const [switchCount, setSwitchCount] = useState(0);
     const [page, setPage] = useState('Home');
     const [filter, setFilter] = useState('All');
     const [notice, setNotice] = useState('');
@@ -45,14 +46,14 @@ export default function Dashboards() {
     const child = c.learners.find(l => l.id === profile?.childId) || c.learners[0];
     const selectedLearner = c.learners.find(l => l.id === activeLearnerId) || c.learners[0];
     const teacher = profile?.role === 'Teacher';
-    const select = p => { setProfile(p); setPage('Home'); setResource(null); setNotice(''); setTierView('All'); setActiveLearnerId(null); };
+    const select = p => { setProfile(p); setPage('Home'); setResource(null); setNotice(''); setTierView('All'); setActiveLearnerId(null); setSwitchCount(n => n + 1); };
     function startMessage(topic = 'Progress', item = null, learnerId = null) { setMsgLearnerId(learnerId || null); setMsgTopic(topic || null); setPage('Messages'); }
 
     const nav = teacher ? [['Home', Home], ['Read', Mic], ['Planner', CalendarDays], ['Messages', MessageCircle]] : [['Home', Home], ['Progress', TrendingUp], ['Schoolwork', BookOpen], ['Messages', MessageCircle]];
     const changePage = p => { if (p === 'Groups') { setTierView('All'); setActiveLearnerId(null); setPage('TierLearners'); } else { setPage(p); } setMsgLearnerId(null); setMsgTopic(null); setNotice(''); setFilter('All'); };
     if (legacy) return <><div className="pd-legacy"><button onClick={() => setLegacy(false)}>← Back to dashboards</button><span>Original reading demo · separate data</span></div><TeacherApp /></>;
-    if (!profile) return <WelcomeScreen classes={data.classes} onSelect={select} />;
-    const header = <header className="pd-top"><button onClick={() => { setProfile(null); setLegacy(false) }}><ArrowLeft size={16} /> Switch profile</button><span><Leaf size={16} /> Pula · {profile.role}</span></header>;
+    if (!profile) return <WelcomeScreen key={switchCount} classes={data.classes} onSelect={select} />;
+    const header = <header className="pd-top"><button onClick={() => { setProfile(null); setLegacy(false); setSwitchCount(n => n + 1); }}><ArrowLeft size={16} /> Switch profile</button><span><Leaf size={16} /> Pula · {profile.role}</span></header>;
 
     // HOD dashboard from main
     if (profile.role === 'HOD') return <HodDashboard onBack={() => { setProfile(null); setLegacy(false); }} />;
