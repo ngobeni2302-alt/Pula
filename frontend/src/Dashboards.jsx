@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState } from 'react';
-import { ArrowLeft, BookOpen, MessageCircle, CalendarDays, Home, TrendingUp, Download, ChevronRight, Mic, Check, Leaf, Bean, Sprout, Flower2, TreeDeciduous, CircleAlert, Clock } from 'lucide-react';
+import { ArrowLeft, BookOpen, MessageCircle, CalendarDays, Home, TrendingUp, Download, ChevronRight, Mic, Check, Leaf, Bean, Sprout, Flower2, TreeDeciduous, CircleAlert, Clock, Users } from 'lucide-react';
 import HodDashboard from './hod/HodDashboard.jsx';
 import TeacherApp from '../../teacher/App.jsx';
 import MessagingHub from './messaging/MessagingHub.jsx';
@@ -50,8 +50,8 @@ export default function Dashboards() {
     const select = p => { setProfile(p); setPage('Home'); setResource(null); setNotice(''); setTierView('All'); setActiveLearnerId(null); setSwitchCount(n => n + 1); };
     function startMessage(topic = 'Progress', item = null, learnerId = null) { setMsgLearnerId(learnerId || null); setMsgTopic(topic || null); setPage('Messages'); }
 
-    const nav = teacher ? [['Home', Home], ['Read', Mic], ['Planner', CalendarDays], ['Messages', MessageCircle]] : [['Home', Home], ['Progress', TrendingUp], ['Schoolwork', BookOpen], ['Messages', MessageCircle]];
-    const changePage = p => { if (p === 'Groups') { setTierView('All'); setActiveLearnerId(null); setPage('TierLearners'); } else { setPage(p); } setMsgLearnerId(null); setMsgTopic(null); setNotice(''); setFilter('All'); };
+    const nav = teacher ? [['Home', Home], ['Read', Mic], ['Students', Users], ['Planner', CalendarDays], ['Messages', MessageCircle]] : [['Home', Home], ['Progress', TrendingUp], ['Schoolwork', BookOpen], ['Messages', MessageCircle]];
+    const changePage = p => { if (p === 'Groups' || p === 'Students') { setTierView('All'); setActiveLearnerId(null); setPage('Students'); } else { setPage(p); } setMsgLearnerId(null); setMsgTopic(null); setNotice(''); setFilter('All'); };
     if (legacy) return <><div className="pd-legacy"><button onClick={() => setLegacy(false)}>← Back to dashboards</button><span>Original reading demo · separate data</span></div><TeacherApp /></>;
     if (!profile) return <WelcomeScreen key={switchCount} classes={data.classes} onSelect={select} />;
     const header = <header className="pd-top"><button onClick={() => { setProfile(null); setLegacy(false); setSwitchCount(n => n + 1); }}><ArrowLeft size={16} /> Switch profile</button><span><Leaf size={16} /> Pula · {profile.role}</span></header>;
@@ -63,7 +63,7 @@ export default function Dashboards() {
         <div className={`pd-shell ${page === 'Messages' ? 'pd-messages-active' : page === 'Read' ? 'pd-reading-active' : 'pd-mobile'}`}>
             {page !== 'Read' && header}
             <main>
-                {page !== 'Messages' && page !== 'TierLearners' && page !== 'LearnerProfile' && page !== 'Read' && (
+                {page !== 'Messages' && page !== 'TierLearners' && page !== 'Students' && page !== 'LearnerProfile' && page !== 'Read' && (
                     <div className="pd-heading">
                         <div>
                             <span className="pd-eyebrow">GRADE {c.grade} ONLY · TERM 4</span>
@@ -163,11 +163,11 @@ export default function Dashboards() {
                         <p className="pd-muted">Sample guidance based on the reference. CAPS/ATP content needs curriculum review.</p>
                     </>
                 )}
-                {page === 'TierLearners' && (
-                    <ReadingTierList classroom={c} initialTier={tierView} onSelectLearner={id => { setActiveLearnerId(id); setPage('LearnerProfile'); }} onBack={() => changePage('Home')} />
+                {(page === 'TierLearners' || page === 'Students') && (
+                    <ReadingTierList classroom={c} initialTier={tierView} title={page === 'Students' ? 'Students' : undefined} onSelectLearner={id => { setActiveLearnerId(id); setPage('LearnerProfile'); }} onBack={() => changePage('Home')} />
                 )}
                 {page === 'LearnerProfile' && selectedLearner && (
-                    <LearnerProfile learner={selectedLearner} classroom={c} selectedTier={tierView || 'All'} onBack={() => setPage('TierLearners')} onUpdateLearner={upd => { updateClass(c.grade, old => ({ ...old, learners: old.learners.map(l => l.id === upd.id ? { ...l, ...upd } : l) })); setNotice(`Academic profile updated for ${upd.name}.`); }} onStartMessage={(topic, item, lid) => startMessage(topic, item, lid)} />
+                    <LearnerProfile learner={selectedLearner} classroom={c} selectedTier={tierView || 'All'} onBack={() => setPage(tierView === 'All' ? 'Students' : 'TierLearners')} onUpdateLearner={upd => { updateClass(c.grade, old => ({ ...old, learners: old.learners.map(l => l.id === upd.id ? { ...l, ...upd } : l) })); setNotice(`Academic profile updated for ${upd.name}.`); }} onStartMessage={(topic, item, lid) => startMessage(topic, item, lid)} />
                 )}
                 {page === 'Read' && (
                     <TeacherReadingExperience
@@ -292,7 +292,7 @@ export default function Dashboards() {
             {page !== 'Read' && (
                 <nav className="pd-nav" aria-label={`${profile.role} navigation`}>
                     {nav.map(([name, Icon]) => {
-                        const active = page === name || (name === 'Home' && (page === 'TierLearners' || page === 'LearnerProfile'));
+                        const active = page === name || (name === 'Students' && (page === 'TierLearners' || page === 'LearnerProfile'));
                         return (
                             <button key={name} aria-current={active ? 'page' : undefined} className={active ? 'active' : ''} onClick={() => changePage(name)}>
                                 <Icon size={19} />

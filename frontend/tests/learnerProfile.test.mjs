@@ -10,12 +10,12 @@ import {
   getCapsRating
 } from '../src/learners/learnerData.js';
 
-test('1. Groups tab is removed from Teacher navigation, leaving 4 evenly spaced tabs', () => {
-  // Simulating teacher navigation structure
-  const teacherNav = ['Home', 'Read', 'Planner', 'Messages'];
-  assert.equal(teacherNav.length, 4, 'Teacher navigation must contain exactly 4 items');
-  assert.equal(teacherNav.includes('Groups'), false, 'Groups tab must be removed from teacher navigation');
-  assert.deepEqual(teacherNav, ['Home', 'Read', 'Planner', 'Messages']);
+test('1. Teacher navigation includes Students in the middle (Home, Read, Students, Planner, Messages)', () => {
+  const teacherNav = ['Home', 'Read', 'Students', 'Planner', 'Messages'];
+  assert.equal(teacherNav.length, 5, 'Teacher navigation contains 5 items');
+  assert.equal(teacherNav[2], 'Students', 'Students tab is positioned in the middle');
+  assert.equal(teacherNav.includes('Groups'), false, 'Groups tab is removed from teacher navigation');
+  assert.deepEqual(teacherNav, ['Home', 'Read', 'Students', 'Planner', 'Messages']);
 });
 
 test('2. Reading groups section on Home dashboard retains tier counts and categories', () => {
