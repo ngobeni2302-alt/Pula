@@ -5,10 +5,15 @@
     "moduleResolution": "Node",
     "jsx": "react-jsx",
     "allowJs": true,
-    "checkJs": false
+    "checkJs": false,
+    "baseUrl": ".",
+    "paths": {
+      "*": ["frontend/node_modules/*", "*"]
+    }
   },
   "include": [
-    "frontend/src/**/*"
+    "frontend/src/**/*",
+    "teacher/**/*"
   ],
   "exclude": [
     "node_modules",
@@ -17,4 +22,3 @@
     "backend/node_modules"
   ]
 }
-

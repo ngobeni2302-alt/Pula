@@ -1,12 +1,13 @@
+// @ts-nocheck
 import React, { useState } from 'react';
-import { ArrowLeft, BookOpen, MessageCircle, CalendarDays, Home, TrendingUp, Download, ChevronRight, Mic, Check, Leaf, Bean, Sprout, Flower2, TreeDeciduous, CircleAlert, Clock, TrendingDown } from 'lucide-react';
+import { ArrowLeft, BookOpen, MessageCircle, CalendarDays, Home, TrendingUp, Download, ChevronRight, Mic, Check, Leaf, Bean, Sprout, Flower2, TreeDeciduous, CircleAlert, Clock } from 'lucide-react';
 import HodDashboard from './hod/HodDashboard.jsx';
 import TeacherApp from '../../teacher/App.jsx';
 import MessagingHub from './messaging/MessagingHub.jsx';
 import SchoolCalendar from './calendar/SchoolCalendar.jsx';
 import ReadingTierList from './learners/ReadingTierList.jsx';
 import LearnerProfile from './learners/LearnerProfile.jsx';
-import { GROUPS, TOPICS, PLANS, loadData, STORAGE_KEY, tips, mean } from './dashboardData';
+import { GROUPS, TOPICS, PLANS, loadData, STORAGE_KEY, tips } from './dashboardData.js';
 import './dashboards.css';
 import WelcomeScreen from './WelcomeScreen.jsx';
 
@@ -20,7 +21,24 @@ function Chart({ history }) { return <div className="pd-chart" aria-label={`Word
 function Field({ label, children }) { return <label className="pd-field"><span>{label}</span>{children}</label>; }
 
 export default function Dashboards() {
-    const [data, setData] = useState(loadData), [profile, setProfile] = useState(null), [page, setPage] = useState('Home'), [filter, setFilter] = useState('All'), [notice, setNotice] = useState(''), [resource, setResource] = useState(null), [legacy, setLegacy] = useState(false), [saved, setSaved] = useState(() => { try { return JSON.parse(localStorage.getItem('pula_offline_plans') || '{}') } catch { return {} } }), [msgLearnerId, setMsgLearnerId] = useState(null), [msgTopic, setMsgTopic] = useState(null), [tierView, setTierView] = useState('All'), [activeLearnerId, setActiveLearnerId] = useState(null);
+    const [data, setData] = useState(loadData);
+    const [profile, setProfile] = useState(null);
+    const [page, setPage] = useState('Home');
+    const [filter, setFilter] = useState('All');
+    const [notice, setNotice] = useState('');
+    const [resource, setResource] = useState(null);
+    const [legacy, setLegacy] = useState(false);
+    const [saved, setSaved] = useState(() => {
+        try {
+            return JSON.parse(localStorage.getItem('pula_offline_plans') || '{}');
+        } catch {
+            return {};
+        }
+    });
+    const [msgLearnerId, setMsgLearnerId] = useState(null);
+    const [msgTopic, setMsgTopic] = useState(null);
+    const [tierView, setTierView] = useState('All');
+    const [activeLearnerId, setActiveLearnerId] = useState(null);
     const persist = next => { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); setData(next); return true; } catch { setNotice('Storage is full or unavailable. Your change was not saved.'); return false; } };
     const updateClass = (grade, fn) => persist({ ...data, classes: data.classes.map(c => c.grade === grade ? fn(c) : c) });
     const c = data.classes.find(c => c.grade === profile?.grade) || data.classes[2];
@@ -56,7 +74,7 @@ export default function Dashboards() {
                 {page === 'Home' && teacher && (
                     <>
                         <Choices values={['English', 'Maths']} value={filter === 'All' ? 'English' : filter} onChange={setFilter} />
-                        <Card className="pd-peach">
+                        <Card className="pd-coral">
                             <div className="pd-split">
                                 <span className="pd-tag">Now · {filter === 'Maths' ? 'Mathematics' : c.grade === 'R' ? 'Listening and speaking' : 'Home Language'}</span>
                                 <small>{c.heard} of {c.learners.length} heard</small>
@@ -81,7 +99,7 @@ export default function Dashboards() {
                             <h2>Reading groups</h2>
                             <button onClick={() => { setTierView('All'); setActiveLearnerId(null); setPage('TierLearners'); }}>See all →</button>
                         </div>
-                        <div className="pd-groups">
+                        <div className="pd-groups pd-teacher-groups">
                             {GROUPS.map((g, i) => (
                                 <button className={`pd-group g${i}`} key={g} onClick={() => { setTierView(g); setActiveLearnerId(null); setPage('TierLearners'); }}>
                                     <GroupIcon group={g} />

@@ -47,6 +47,14 @@
 .pd-tag{background:var(--pula-navy);color:white}
 .pd-warning{background:var(--pula-peach);margin:3px}
 .pd-peach{background:var(--pula-peach)}
+.pd-coral{background:#FF6B4A}
+.pd-coral small,.pd-coral p{color:var(--pula-navy)}
+.pd-coral h2{font-size:30px;margin:20px 0;color:var(--pula-navy)}
+.pd-coral .pd-primary{width:100%}
+.pd-periwinkle{background:#8E9BFF}
+.pd-periwinkle small,.pd-periwinkle p{color:var(--pula-navy)}
+.pd-periwinkle h2{font-size:30px;margin:20px 0;color:var(--pula-navy)}
+.pd-periwinkle .pd-primary{width:100%}
 .pd-peach small,.pd-peach p{color:var(--pula-navy)}
 .pd-peach h2{font-size:30px;margin:20px 0}
 .pd-peach .pd-primary{width:100%}
@@ -69,6 +77,21 @@
 .g1{background:var(--pula-sage)}
 .g2{background:var(--pula-lavender)}
 .g3{background:var(--pula-blue)}
+.pd-teacher-groups .pd-group,
+.pd-teacher-groups .pd-group.g0,
+.pd-teacher-groups .pd-group.g1,
+.pd-teacher-groups .pd-group.g2,
+.pd-teacher-groups .pd-group.g3 {
+  background: #8E9BFF;
+  color: var(--pula-navy);
+}
+.pd-teacher-groups .pd-group:hover {
+  box-shadow: 0 0 0 1px var(--pula-navy);
+}
+.pd-teacher-groups .pd-group small,
+.pd-teacher-groups .pd-group b {
+  color: var(--pula-navy);
+}
 .pd-group.current{outline:3px solid var(--pula-navy);outline-offset:3px}
 .pd-group-title{font-size:36px!important}
 .pd-group-title~.pd-groups b{font-size:12px}

@@ -8,11 +8,11 @@
     "checkJs": false
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "../teacher/**/*"
   ],
   "exclude": [
     "node_modules",
     "dist"
   ]
 }
-
