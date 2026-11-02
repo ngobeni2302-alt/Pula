@@ -14,22 +14,22 @@ function Card({children,className=''}) {return <section className={`pd-card ${cl
 function Chart({history}) {return <div className="pd-chart" aria-label={`Words per minute by term: ${history.join(', ')}`}>{history.map((v,i)=><div key={i}><b>{v}</b><span style={{height:`${Math.max(5,v/Math.max(...history)*100)}px`}}/><small>Term {i+1}</small></div>)}</div>;}
 function Field({label,children}) {return <label className="pd-field"><span>{label}</span>{children}</label>;}
 export default function Dashboards(){
- const [data,setData]=useState(loadData),[profile,setProfile]=useState(null),[page,setPage]=useState('Home'),[filter,setFilter]=useState('All'),[box,setBox]=useState('Inbox'),[compose,setCompose]=useState(null),[chat,setChat]=useState(null),[reply,setReply]=useState(''),[notice,setNotice]=useState(''),[resource,setResource]=useState(null),[legacy,setLegacy]=useState(false),[saved,setSaved]=useState(()=>{try{return JSON.parse(localStorage.getItem('pula_offline_plans')||'{}')}catch{return {}}});
+ const [data,setData]=useState(loadData),[profile,setProfile]=useState(null),[switchCount,setSwitchCount]=useState(0),[page,setPage]=useState('Home'),[filter,setFilter]=useState('All'),[box,setBox]=useState('Inbox'),[compose,setCompose]=useState(null),[chat,setChat]=useState(null),[reply,setReply]=useState(''),[notice,setNotice]=useState(''),[resource,setResource]=useState(null),[legacy,setLegacy]=useState(false),[saved,setSaved]=useState(()=>{try{return JSON.parse(localStorage.getItem('pula_offline_plans')||'{}')}catch{return {}}});
  const [hodTab,setHodTab]=useState('Class performance');
  const persist=next=>{try{localStorage.setItem(STORAGE_KEY,JSON.stringify(next));setData(next);return true;}catch{setNotice('Storage is full or unavailable. Your change was not saved.');return false;}};
  const updateClass=(grade,fn)=>persist({...data,classes:data.classes.map(c=>c.grade===grade?fn(c):c)});
  const c=data.classes.find(c=>c.grade===profile?.grade)||data.classes[2];
  const child=c.learners.find(l=>l.id===profile?.childId)||c.learners[0];
  const teacher=profile?.role==='Teacher';
- const select=p=>{setProfile(p);setPage('Home');setChat(null);setCompose(null);setResource(null);setNotice('');};
+ const select=p=>{setProfile(p);setPage('Home');setChat(null);setCompose(null);setResource(null);setNotice('');setSwitchCount(n=>n+1);};
  function startMessage(topic='Progress',item=null,learnerId=null){const kind=learnerId?'One parent':'Whole class';setCompose({id:uid(),grade:c.grade,kind,target:learnerId||GROUPS[0],topic,channels:['App'],text:item?`Hello! ${item.title} is on ${date(item.date)}. ${item.detail}`:`Hello! ${topic==='Progress'?'Your child is building confidence. Please read together for 10 minutes tonight.':`${topic} is coming up. Please practise a little each evening.`}`,itemId:item?.id,status:'draft'});setPage('Messages');}
  function saveMessage(send){try{let m={...compose,recipientIds:recipients(c,compose.kind,compose.target),sender:'teacher',createdAt:new Date().toISOString()};if(send)m=approveMessage(m);const next={...data,messages:[...data.messages.filter(x=>x.id!==m.id),m],classes:data.classes.map(cl=>cl.grade===c.grade?{...cl,items:cl.items.map(i=>i.id===m.itemId&&send?{...i,told:true}:i)}:cl)};if(persist(next)){setCompose(null);setNotice(send?'Approved. App inbox updated; external channels are simulated.':'Draft saved.');}}catch(e){setNotice(e.message);}}
  function sendReply(){if(!reply.trim())return;const learner=teacher?c.learners.find(l=>l.id===chat):child;const message={id:uid(),grade:c.grade,recipientIds:[learner.id],sender:teacher?'teacher':'parent',text:reply.trim(),channels:['App'],status:'sent',createdAt:new Date().toISOString(),...(teacher?{approvedAt:new Date().toISOString()}: {})};if(persist({...data,messages:[...data.messages,message]})){setReply('');setNotice('Message added to the demo app conversation.');}}
  const nav=teacher?[['Home',Home],['Read',Mic],['Groups',Users],['Planner',CalendarDays],['Messages',MessageCircle]]:[['Home',Home],['Progress',TrendingUp],['Schoolwork',BookOpen],['Messages',MessageCircle]];
  const changePage=p=>{setPage(p);setCompose(null);setChat(null);setNotice('');setFilter('All');};
  if(legacy)return <><div className="pd-legacy"><button onClick={()=>setLegacy(false)}>← Back to dashboards</button><span>Original reading demo · separate data</span></div><TeacherApp/></>;
- if(!profile)return <WelcomeScreen classes={data.classes} onSelect={select}/>;
- const header=<header className="pd-top"><button onClick={()=>{setProfile(null);setLegacy(false)}}><ArrowLeft size={16}/> Switch profile</button><span><Leaf size={16}/> Pula · {profile.role}</span></header>;
+ if(!profile)return <WelcomeScreen key={switchCount} classes={data.classes} onSelect={select}/>;
+ const header=<header className="pd-top"><button onClick={()=>{setProfile(null);setLegacy(false);setSwitchCount(n=>n+1)}}><ArrowLeft size={16}/> Switch profile</button><span><Leaf size={16}/> Pula · {profile.role}</span></header>;
  if(profile.role==='HOD')return <HodDashboard onBack={()=>{setProfile(null);setLegacy(false)}} />;
  const conversationLearner=teacher?c.learners.find(l=>l.id===chat):child;
  const conversation=conversationLearner?data.messages.filter(m=>m.grade===c.grade&&m.status==='sent'&&m.recipientIds.includes(conversationLearner.id)):[];

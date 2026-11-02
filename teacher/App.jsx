@@ -223,6 +223,10 @@ export default function App() {
   const [customSteps, setCustomSteps] = useState('');
   const [completedActivities, setCompletedActivities] = useState(['Sprout']);
 
+  // Lesedi parent note state — generated on the celebration screen
+  const [lesediNote, setLesediNote] = useState(null);     // { text, source, noteId }
+  const [lesediLoading, setLesediLoading] = useState(false);
+
   const rec = useRef(null);
   const timer = useRef(null);
   const start = useRef(null);
@@ -275,7 +279,60 @@ export default function App() {
     setError('');
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
     setSpeaking(false);
+    if (p !== 'complete') setLesediNote(null);
     setPage(p);
+  };
+
+  // Called automatically after an assessment completes.
+  // Asks Lesedi for a parent note draft and saves it to notes.
+  const requestLesediNote = async (learner, assessmentResult) => {
+    if (!learner?.consent) return;
+    setLesediNote(null);
+    setLesediLoading(true);
+    try {
+      const grade = String(data?.classroom?.grade ?? '2');
+      const lesediRes = await api('/lesedi', {
+        method: 'POST',
+        body: JSON.stringify({
+          task:     'parent_note',
+          grade,
+          term:     4,
+          language: learner.language ?? 'English',
+          channel:  learner.channel  ?? 'WhatsApp',
+          learnerId: learner.id,
+          learner: {
+            ref:              learner.id,
+            firstName:        learner.name,
+            group:            learner.group,
+            consent:          learner.consent,
+            termProgress:     learner.termProgress  ?? [],
+            soundsToPractise: learner.soundsToPractise ?? [],
+            checkInNote:      learner.checkInNote ?? null,
+          },
+        }),
+      });
+
+      if (!lesediRes?.text) return;
+
+      // Save the draft note via the local store
+      const saved = await api('/notes', {
+        method: 'POST',
+        body: JSON.stringify({ learnerId: learner.id, text: lesediRes.text }),
+      });
+
+      setLesediNote({
+        text:   lesediRes.text,
+        source: lesediRes.source,
+        noteId: saved.id,
+      });
+      // Refresh app state so the notes screen reflects the new draft
+      await refresh();
+    } catch (e) {
+      // Non-fatal — celebration screen still works without the note
+      console.warn('[Lesedi] parent note generation failed:', e.message);
+    } finally {
+      setLesediLoading(false);
+    }
   };
 
   const handleInstallClick = async () => {
@@ -410,6 +467,8 @@ export default function App() {
       });
       setResult(a);
       go('complete');
+      // Ask Lesedi to draft a parent note in the background
+      requestLesediNote(current, a);
     });
 
   const chooseTab = t => {
@@ -902,7 +961,7 @@ export default function App() {
             <br />
             {current?.name}!
           </h1>
-          <p>Pula loved listening to you.</p>
+          <p>Lesedi loved listening to you.</p>
           {result && (
             <div className="teacher-result">
               <strong>Teacher-only assessment</strong>
@@ -929,6 +988,67 @@ export default function App() {
               </Button>
             </div>
           )}
+
+          {/* ── Lesedi parent note card ── */}
+          <div className="lesedi-note-card">
+            <div className="lesedi-note-header">
+              <span className="lesedi-note-icon">🌟</span>
+              <div>
+                <strong>Lesedi drafted a parent note</strong>
+                <small>Review and approve before it sends</small>
+              </div>
+            </div>
+
+            {lesediLoading && (
+              <div className="lesedi-note-loading" aria-busy="true">
+                <span className="lesedi-dot" /><span className="lesedi-dot" /><span className="lesedi-dot" />
+                <span style={{ marginLeft: 8, fontSize: '0.82rem', color: '#74768a' }}>Lesedi is drafting…</span>
+              </div>
+            )}
+
+            {lesediNote && !lesediLoading && (
+              <>
+                <p className="lesedi-note-text">{lesediNote.text}</p>
+                <div className="lesedi-note-meta">
+                  <span className="lesedi-source-tag">
+                    {lesediNote.source === 'offline_stub' ? '📴 Offline draft' : '✨ Lesedi draft'}
+                  </span>
+                  <span className="lesedi-approval-tag">⚠️ Needs your approval</span>
+                </div>
+                <div className="lesedi-note-actions">
+                  <Button
+                    className="coral"
+                    onClick={() =>
+                      run(async () => {
+                        await api('/notes/' + lesediNote.noteId, {
+                          method: 'PATCH',
+                          body: JSON.stringify({ status: 'sent' }),
+                        });
+                        setLesediNote({ ...lesediNote, approved: true });
+                      })
+                    }
+                    disabled={lesediNote.approved}
+                  >
+                    {lesediNote.approved ? '✓ Approved and sent' : 'Approve and send'}
+                  </Button>
+                  <Button
+                    secondary
+                    onClick={() => go('notes')}
+                  >
+                    Edit in notes →
+                  </Button>
+                </div>
+              </>
+            )}
+
+            {!lesediNote && !lesediLoading && (
+              <p className="lesedi-note-empty">
+                Note unavailable — go to the Notes screen to draft one manually.
+              </p>
+            )}
+          </div>
+          {/* ── end Lesedi note card ── */}
+
           <Button
             onClick={() => {
               setSelected(null);

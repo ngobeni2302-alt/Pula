@@ -796,6 +796,43 @@ export async function api(endpoint, options = {}) {
     };
   }
 
+  // 15. POST /lesedi — try the live server first; fall back to a stub draft offline
+  if (endpoint === '/lesedi' && method === 'POST') {
+    // Always try the real server first (Lesedi runs on the same origin)
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 4000);
+      const r = await fetch('/api/lesedi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+      if (r.ok) return await r.json();
+    } catch {
+      // Server unreachable — fall through to offline stub
+    }
+
+    // Offline stub: build a sensible draft from local data
+    const learner = body.learner;
+    const firstName = learner?.firstName ?? learner?.name ?? 'your child';
+    const sounds = learner?.soundsToPractise?.length
+      ? `We are practising the sounds ${learner.soundsToPractise.join(' and ')}.`
+      : '';
+    const channel = body.channel ?? learner?.channel ?? 'WhatsApp';
+    const stubText =
+      `Draft for teacher approval. ${firstName} read today with effort and growing confidence. ${sounds} Reading one short page together tonight will help. Please contact me if you have questions. Teacher: ______`;
+    return {
+      ok: true,
+      task: 'parent_note',
+      text: stubText,
+      source: 'offline_stub',
+      requiresApproval: true,
+      tags: ['teacher_approval_required', 'offline'],
+    };
+  }
+
   // Fallback direct fetch if unknown endpoint
   const r = await fetch('/api' + endpoint, {
     headers: { 'Content-Type': 'application/json' },
