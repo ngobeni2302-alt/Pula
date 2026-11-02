@@ -583,5 +583,167 @@
       "title": "Sound hunt",
       "date": "2026-10-28"
     }
+  ],
+  "conversations": [
+    {
+      "id": "conv-thando",
+      "type": "private",
+      "title": "Thando's Parent (Nomsa Mokoena)",
+      "grade": "2",
+      "classroom": "Grade 2B",
+      "learnerId": "1",
+      "participantIds": [
+        "teacher-main",
+        "parent-1"
+      ],
+      "teacherId": "teacher-main",
+      "parentId": "parent-1",
+      "lastMessage": "Thank you, teacher!",
+      "lastMessageAt": "2026-11-02T10:45:00.000Z",
+      "unreadCount": {
+        "teacher-main": 0,
+        "parent-1": 0
+      },
+      "createdAt": "2026-11-01T08:00:00.000Z"
+    },
+    {
+      "id": "conv-grp-grade2",
+      "type": "group",
+      "groupId": "grp-grade2",
+      "title": "Grade 2B Parents",
+      "grade": "2",
+      "classroom": "Grade 2B",
+      "participantIds": [
+        "teacher-main",
+        "parent-1"
+      ],
+      "teacherId": "teacher-main",
+      "lastMessage": "Reminder: Homework is due tomorrow.",
+      "lastMessageAt": "2026-11-01T15:30:00.000Z",
+      "unreadCount": {
+        "teacher-main": 0,
+        "parent-1": 0
+      },
+      "createdAt": "2026-10-29T09:00:00.000Z"
+    },
+    {
+      "id": "conv-lerato",
+      "type": "private",
+      "title": "Lerato's Parent (Kagiso Dlamini)",
+      "grade": "2",
+      "classroom": "Grade 2B",
+      "learnerId": "2",
+      "participantIds": [
+        "teacher-main",
+        "parent-2"
+      ],
+      "teacherId": "teacher-main",
+      "parentId": "parent-2",
+      "lastMessage": "Good morning, Ma'am.",
+      "lastMessageAt": "2026-10-31T07:20:00.000Z",
+      "unreadCount": {
+        "teacher-main": 0,
+        "parent-2": 0
+      },
+      "createdAt": "2026-10-30T08:00:00.000Z"
+    }
+  ],
+  "messages": [
+    {
+      "id": "msg-1",
+      "conversationId": "conv-thando",
+      "senderId": "teacher-main",
+      "senderName": "Teacher",
+      "senderRole": "teacher",
+      "text": "Sawubona! Thando read with wonderful fluency today. Keep practising the \"th\" sound at home.",
+      "createdAt": "2026-11-02T10:30:00.000Z",
+      "status": "read"
+    },
+    {
+      "id": "msg-2",
+      "conversationId": "conv-thando",
+      "senderId": "parent-1",
+      "senderName": "Nomsa Mokoena",
+      "senderRole": "parent",
+      "text": "Thank you, teacher!",
+      "createdAt": "2026-11-02T10:45:00.000Z",
+      "status": "read"
+    },
+    {
+      "id": "msg-3",
+      "conversationId": "conv-grp-grade2",
+      "senderId": "teacher-main",
+      "senderName": "Teacher",
+      "senderRole": "teacher",
+      "text": "Reminder: Homework is due tomorrow.",
+      "createdAt": "2026-11-01T15:30:00.000Z",
+      "status": "read"
+    },
+    {
+      "id": "msg-4",
+      "conversationId": "conv-lerato",
+      "senderId": "parent-2",
+      "senderName": "Kagiso Dlamini",
+      "senderRole": "parent",
+      "text": "Good morning, Ma'am.",
+      "createdAt": "2026-10-31T07:20:00.000Z",
+      "status": "read"
+    }
+  ],
+  "groups": [
+    {
+      "id": "grp-grade2",
+      "name": "Grade 2B Parents",
+      "description": "Communication between the Grade 2B teacher and parents.",
+      "creatorId": "teacher-main",
+      "teacherAdminId": "teacher-main",
+      "classroom": "Grade 2B",
+      "grade": "2",
+      "onlyAdminCanSend": false,
+      "createdAt": "2026-10-29T09:00:00.000Z",
+      "members": [
+        {
+          "id": "teacher-main",
+          "name": "Teacher",
+          "role": "admin",
+          "status": "accepted",
+          "joinedAt": "2026-10-29T09:00:00.000Z"
+        },
+        {
+          "id": "parent-1",
+          "name": "Nomsa Mokoena",
+          "learnerName": "Thando",
+          "role": "member",
+          "status": "accepted",
+          "joinedAt": "2026-10-29T11:00:00.000Z"
+        },
+        {
+          "id": "parent-2",
+          "name": "Kagiso Dlamini",
+          "learnerName": "Lerato",
+          "role": "member",
+          "status": "pending",
+          "joinedAt": null
+        }
+      ]
+    }
+  ],
+  "groupInvitations": [
+    {
+      "id": "inv-lerato",
+      "groupId": "grp-grade2",
+      "groupName": "Grade 2B Parents",
+      "groupDescription": "Communication between the Grade 2B teacher and parents.",
+      "classroom": "Grade 2B",
+      "grade": "2",
+      "parentId": "parent-2",
+      "parentName": "Kagiso Dlamini",
+      "learnerName": "Lerato",
+      "teacherId": "teacher-main",
+      "teacherName": "Teacher",
+      "status": "pending",
+      "createdAt": "2026-10-29T09:00:00.000Z",
+      "respondedAt": null
+    }
   ]
 }

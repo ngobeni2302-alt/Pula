@@ -7,6 +7,56 @@ export const PLANS = [
   {grade:'3', teacher:'Grade 3 teacher', room:'3C', counts:[6,11,13,10], heard:15, focus:'Reading for meaning', description:'Short stories, spelling sets and paired reading every day.', steps:['Read short stories and discuss what happened.','Practise a new spelling set each week.','Use paired reading so each child reads aloud daily.'], resources:['Comprehension questions, set 2','Spelling word set 6','Paired reading routine','Number patterns game'], work:['Reading test','Write 3 sentences','Word set 6']}
 ];
 export const STORAGE_KEY = 'pula_dashboards_v1';
+
+export const SURNAMES = ['Mokoena', 'Dlamini', 'Nkosi', 'Patel', 'Modise', 'Molefe', 'Sithole', 'Khumalo', 'Ndlovu', 'Botha', 'Naidoo', 'Van der Merwe'];
+export const GUARDIAN_FIRST_NAMES = ['Nomsa', 'Kagiso', 'Busisiwe', 'Fatima', 'Tebogo', 'Palesa', 'Siphiwe', 'Lindiwe', 'Bongani', 'Zandile', 'Anil', 'Johan'];
+export const RELATIONSHIPS = ['Mother', 'Father', 'Mother', 'Father', 'Guardian', 'Mother', 'Aunt', 'Father'];
+
+export function getParentForLearner(learner, grade = '2') {
+  if (!learner) return { id: 'parent-demo', name: "Thando's Parent", relationship: 'Parent', learnerId: 'demo', learnerName: 'Learner', grade: String(grade) };
+  if (learner.name?.startsWith('Thando')) {
+    return {
+      id: `parent-${learner.id}`,
+      name: 'Nomsa Mokoena',
+      relationship: 'Mother',
+      learnerId: String(learner.id),
+      learnerName: 'Thando Mokoena',
+      grade: String(grade),
+      classroom: `Grade ${grade}`,
+      channel: 'WhatsApp'
+    };
+  }
+  if (learner.name?.startsWith('Lerato')) {
+    return {
+      id: `parent-${learner.id}`,
+      name: 'Kagiso Dlamini',
+      relationship: 'Father',
+      learnerId: String(learner.id),
+      learnerName: 'Lerato Dlamini',
+      grade: String(grade),
+      classroom: `Grade ${grade}`,
+      channel: 'SMS'
+    };
+  }
+  const numId = parseInt(String(learner.id).replace(/\D/g, '') || '1', 10);
+  const surname = SURNAMES[(numId - 1) % SURNAMES.length];
+  const firstName = GUARDIAN_FIRST_NAMES[(numId - 1) % GUARDIAN_FIRST_NAMES.length];
+  const relationship = RELATIONSHIPS[(numId - 1) % RELATIONSHIPS.length];
+  const learnerFullName = learner.name.includes(' ') ? learner.name : `${learner.name} ${surname}`;
+  const parentName = `${firstName} ${surname}`;
+  const parentId = `parent-${learner.id}`;
+  return {
+    id: parentId,
+    name: parentName,
+    relationship,
+    learnerId: String(learner.id),
+    learnerName: learnerFullName,
+    grade: String(grade),
+    classroom: `Grade ${grade}`,
+    channel: 'WhatsApp'
+  };
+}
+
 export function seedData() {
   const classes = PLANS.map((p, index) => {
     let n=0;
@@ -28,7 +78,184 @@ export function seedData() {
     ]};
   });
   const child=classes[2].learners[8];
-  return {version:1,classes,messages:[{id:'welcome',grade:'2',recipientIds:[child.id],text:'How can I help Thando with the “th” sound at home?',sender:'parent',status:'sent',channels:['App'],createdAt:'2026-11-01T06:40:00Z'}],observations:[{id:'observation-1',grade:'2',text:'Clear modelling during shared reading. Follow up with individual sound practice for learners needing support.',date:'2026-10-28'}],directives:[{id:'d1',grade:'3',text:'Adjust reading groups by Friday',due:'2026-11-06',status:'Open'},{id:'d2',grade:'2',text:'Provide concrete counters for subtraction',due:'2026-11-04',status:'In progress'},{id:'d3',grade:'3',text:'Log writing lessons against the ATP',due:'2026-11-02',status:'Open'}]};
+  const thandoParent = getParentForLearner(child, '2');
+  const leratoChild = classes[2].learners[1];
+  const leratoParent = getParentForLearner(leratoChild, '2');
+
+  const conversations = [
+    {
+      id: 'conv-thando',
+      type: 'private',
+      title: "Thando's Parent",
+      subtitle: `Nomsa Mokoena · ${child.group} · Grade 2B`,
+      grade: '2',
+      classroom: 'Grade 2B',
+      learnerId: child.id,
+      parentId: thandoParent.id,
+      parentName: thandoParent.name,
+      teacherId: 'teacher-2',
+      teacherName: 'Sir Iak',
+      participantIds: ['teacher-2', thandoParent.id],
+      lastMessage: 'Thank you, teacher!',
+      lastMessageAt: '2026-11-02T10:45:00.000Z',
+      unreadCount: { 'teacher-2': 0, [thandoParent.id]: 0 },
+      createdAt: '2026-11-01T08:00:00.000Z'
+    },
+    {
+      id: 'conv-grp-grade2',
+      type: 'group',
+      groupId: 'grp-grade2',
+      title: 'Grade 2 Parents',
+      subtitle: '3 members · Grade 2B',
+      grade: '2',
+      classroom: 'Grade 2B',
+      teacherId: 'teacher-2',
+      teacherName: 'Sir Iak',
+      participantIds: ['teacher-2', thandoParent.id],
+      lastMessage: 'Reminder: Homework is due tomorrow.',
+      lastMessageAt: '2026-11-01T15:30:00.000Z',
+      unreadCount: { 'teacher-2': 0, [thandoParent.id]: 0 },
+      createdAt: '2026-10-29T09:00:00.000Z'
+    },
+    {
+      id: 'conv-lerato',
+      type: 'private',
+      title: "Lerato's Parent",
+      subtitle: `Kagiso Dlamini · ${leratoChild.group} · Grade 2B`,
+      grade: '2',
+      classroom: 'Grade 2B',
+      learnerId: leratoChild.id,
+      parentId: leratoParent.id,
+      parentName: leratoParent.name,
+      teacherId: 'teacher-2',
+      teacherName: 'Sir Iak',
+      participantIds: ['teacher-2', leratoParent.id],
+      lastMessage: "Good morning, Ma'am.",
+      lastMessageAt: '2026-10-31T07:20:00.000Z',
+      unreadCount: { 'teacher-2': 0, [leratoParent.id]: 0 },
+      createdAt: '2026-10-30T08:00:00.000Z'
+    }
+  ];
+
+  const groups = [
+    {
+      id: 'grp-grade2',
+      name: 'Grade 2 Parents',
+      description: 'Communication between Sir Iak and Grade 2B parents.',
+      creatorId: 'teacher-2',
+      teacherAdminId: 'teacher-2',
+      classroom: 'Grade 2B',
+      grade: '2',
+      onlyAdminCanSend: false,
+      createdAt: '2026-10-29T09:00:00.000Z',
+      members: [
+        { id: 'teacher-2', name: 'Sir Iak (Teacher)', role: 'admin', status: 'accepted', joinedAt: '2026-10-29T09:00:00.000Z' },
+        { id: thandoParent.id, name: `${thandoParent.name} (Thando's Mother)`, learnerName: 'Thando Mokoena', role: 'member', status: 'accepted', joinedAt: '2026-10-29T11:00:00.000Z' },
+        { id: leratoParent.id, name: `${leratoParent.name} (Lerato's Father)`, learnerName: 'Lerato Dlamini', role: 'member', status: 'pending', joinedAt: null }
+      ]
+    }
+  ];
+
+  const groupInvitations = [
+    {
+      id: 'inv-lerato',
+      groupId: 'grp-grade2',
+      groupName: 'Grade 2 Parents',
+      groupDescription: 'Communication between Sir Iak and Grade 2B parents.',
+      classroom: 'Grade 2B',
+      grade: '2',
+      parentId: leratoParent.id,
+      parentName: leratoParent.name,
+      learnerName: 'Lerato Dlamini',
+      teacherId: 'teacher-2',
+      teacherName: 'Sir Iak',
+      status: 'pending',
+      createdAt: '2026-10-29T09:00:00.000Z',
+      respondedAt: null
+    }
+  ];
+
+  return {
+    version: 1,
+    classes,
+    conversations,
+    groups,
+    groupInvitations,
+    messages: [
+      {
+        id: 'welcome',
+        conversationId: 'conv-thando',
+        grade: '2',
+        recipientIds: [child.id],
+        text: 'How can I help Thando with the “th” sound at home?',
+        sender: 'parent',
+        senderRole: 'parent',
+        senderId: thandoParent.id,
+        senderName: thandoParent.name,
+        status: 'sent',
+        channels: ['App'],
+        createdAt: '2026-11-01T06:40:00Z'
+      },
+      {
+        id: 'msg-1',
+        conversationId: 'conv-thando',
+        grade: '2',
+        recipientIds: [child.id],
+        sender: 'teacher',
+        senderRole: 'teacher',
+        senderId: 'teacher-2',
+        senderName: 'Sir Iak',
+        text: 'Sawubona Nomsa! Thando read with wonderful fluency today. Keep practising the "th" sound at home.',
+        channels: ['App'],
+        status: 'sent',
+        createdAt: '2026-11-02T10:30:00.000Z'
+      },
+      {
+        id: 'msg-2',
+        conversationId: 'conv-thando',
+        grade: '2',
+        recipientIds: [child.id],
+        sender: 'parent',
+        senderRole: 'parent',
+        senderId: thandoParent.id,
+        senderName: 'Nomsa Mokoena',
+        text: 'Thank you, teacher!',
+        channels: ['App'],
+        status: 'sent',
+        createdAt: '2026-11-02T10:45:00.000Z'
+      },
+      {
+        id: 'msg-3',
+        conversationId: 'conv-grp-grade2',
+        grade: '2',
+        recipientIds: [child.id],
+        sender: 'teacher',
+        senderRole: 'teacher',
+        senderId: 'teacher-2',
+        senderName: 'Sir Iak',
+        text: 'Reminder: Homework is due tomorrow.',
+        channels: ['App'],
+        status: 'sent',
+        createdAt: '2026-11-01T15:30:00.000Z'
+      },
+      {
+        id: 'msg-4',
+        conversationId: 'conv-lerato',
+        grade: '2',
+        recipientIds: [leratoChild.id],
+        sender: 'parent',
+        senderRole: 'parent',
+        senderId: leratoParent.id,
+        senderName: 'Kagiso Dlamini',
+        text: "Good morning, Ma'am.",
+        channels: ['App'],
+        status: 'sent',
+        createdAt: '2026-10-31T07:20:00.000Z'
+      }
+    ],
+    observations: [{id:'observation-1',grade:'2',text:'Clear modelling during shared reading. Follow up with individual sound practice for learners needing support.',date:'2026-10-28'}],
+    directives: [{id:'d1',grade:'3',text:'Adjust reading groups by Friday',due:'2026-11-06',status:'Open'},{id:'d2',grade:'2',text:'Provide concrete counters for subtraction',due:'2026-11-04',status:'In progress'},{id:'d3',grade:'3',text:'Log writing lessons against the ATP',due:'2026-11-02',status:'Open'}]
+  };
 }
 export function loadData(storage=localStorage) {try {const data=JSON.parse(storage.getItem(STORAGE_KEY));if(data?.version===1&&Array.isArray(data.classes)&&data.classes.length===4)return data;}catch{} return seedData();}
 export function recipients(classroom,kind,target) {return classroom.learners.filter(l=>kind==='Whole class'||(kind==='A group'?l.group===target:l.id===target)).map(l=>l.id);}

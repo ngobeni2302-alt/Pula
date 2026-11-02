@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "jsx": "react-jsx",
+    "allowJs": true,
+    "checkJs": false
+  },
+  "include": [
+    "src/**/*",
+    "../teacher/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}
