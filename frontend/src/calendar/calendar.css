@@ -1,0 +1,746 @@
+/* Pula Interactive School Calendar Styles */
+
+.pula-calendar-wrapper {
+  background: #ffffff;
+  border: 1px solid #ebe4d5;
+  border-radius: 20px;
+  padding: 12px;
+  margin: 14px 0;
+  box-shadow: 0 4px 20px rgba(25, 24, 63, 0.05);
+  font-family: 'Nunito', system-ui, sans-serif;
+  color: var(--pula-navy);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  container-type: inline-size;
+  container-name: calendar;
+}
+
+/* Today / Live Date Header */
+.pula-cal-live-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: var(--pula-cream);
+  border: 1px solid #eee5d4;
+  border-radius: 14px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.pula-cal-live-date {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--pula-navy);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.pula-cal-term-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--pula-sand);
+  color: var(--pula-navy);
+  font-size: 11px;
+  font-weight: 900;
+  padding: 3px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pula-cal-term-badge.active-term {
+  background: var(--pula-sage);
+  color: #1a4e32;
+}
+
+/* Calendar Header & Controls */
+.pula-cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.pula-cal-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.pula-cal-month-title {
+  font-size: 18px;
+  font-weight: 900;
+  margin: 0;
+  color: var(--pula-navy);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.pula-cal-year-select {
+  border: 1px solid #d8cfbd !important;
+  border-radius: 10px !important;
+  background: #ffffff !important;
+  padding: 4px 8px !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  color: var(--pula-navy) !important;
+  min-height: 32px !important;
+  height: 32px !important;
+  width: auto !important;
+  min-width: 72px !important;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.pula-cal-nav-btns {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.pula-cal-nav-btn {
+  background: #f7f3ea;
+  border: 1px solid #e2d9c8;
+  border-radius: 10px;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  color: var(--pula-navy);
+  cursor: pointer;
+  transition: all 0.12s ease;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.pula-cal-nav-btn:hover {
+  background: var(--pula-lavender);
+  border-color: #d1c5e3;
+}
+
+.pula-cal-today-btn {
+  background: #f7f3ea;
+  border: 1px solid #e2d9c8;
+  border-radius: 10px;
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--pula-navy);
+  cursor: pointer;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s ease;
+  flex-shrink: 0;
+}
+
+.pula-cal-today-btn:hover {
+  background: var(--pula-navy);
+  color: #ffffff;
+}
+
+/* Notice for unverified years */
+.pula-cal-notice {
+  background: var(--pula-peach);
+  color: #7b291c;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 11.5px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* Role Filters Bar (HOD / Parent) */
+.pula-cal-filters-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  scrollbar-width: thin;
+}
+
+.pula-cal-filter-chip {
+  background: #f6f1e6;
+  border: 1px solid #ded5c2;
+  border-radius: 14px;
+  padding: 5px 12px;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--pula-navy);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.12s ease;
+}
+
+.pula-cal-filter-chip.active {
+  background: var(--pula-navy);
+  color: #ffffff;
+  border-color: var(--pula-navy);
+}
+
+/* 7-Column Calendar Grid */
+.pula-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  gap: 3px;
+  border: 1px solid #eee7db;
+  border-radius: 16px;
+  padding: 5px;
+  background: #fffdf9;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.pula-cal-col-header {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 900;
+  color: #69627e;
+  padding: 6px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pula-cal-col-header.weekend {
+  color: #b05747;
+}
+
+/* Day Cell */
+.pula-cal-day-cell {
+  position: relative;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 48px;
+  padding: 4px 2px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  user-select: none;
+  overflow: hidden;
+}
+
+.pula-cal-day-cell:hover {
+  background: #f7f3ec;
+  border-color: #ded6c4;
+}
+
+.pula-cal-day-cell.other-month {
+  opacity: 0.35;
+  background: #faf7f2;
+}
+
+.pula-cal-day-cell.weekend-day {
+  background: #faf6f0;
+}
+
+.pula-cal-day-cell.school-holiday-period {
+  background: #f5f0fc;
+}
+
+.pula-cal-day-cell.today {
+  border: 1.5px solid var(--pula-navy) !important;
+  background: #fffbf0;
+}
+
+.pula-cal-day-cell.selected {
+  outline: 2px solid #6357c5;
+  outline-offset: -1px;
+  background: #f2eef8 !important;
+}
+
+.pula-cal-day-num {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--pula-navy);
+  line-height: 1;
+  margin-bottom: 3px;
+  text-align: center;
+}
+
+.pula-cal-day-cell.today .pula-cal-day-num {
+  background: var(--pula-navy);
+  color: #ffffff;
+  padding: 1px 5px;
+  border-radius: 6px;
+  font-size: 10.5px;
+}
+
+/* Event Indicators inside Calendar Cells */
+.pula-cal-indicators {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 2.5px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin-top: auto;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* Mobile-first compact dots */
+.pula-cal-dot {
+  display: inline-block;
+  width: 5.5px;
+  height: 5.5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Explicit dot colors per category */
+.dot-test { background-color: #2563eb !important; }
+.dot-exam { background-color: #7c3aed !important; }
+.dot-homework { background-color: #eab308 !important; }
+.dot-spelling-test { background-color: #ec4899 !important; }
+.dot-public-holiday { background-color: #ef4444 !important; }
+.dot-school-holiday { background-color: #a855f7 !important; }
+.dot-school-opening { background-color: #10b981 !important; }
+.dot-school-closing { background-color: #f97316 !important; }
+
+/* Text pill hidden by default on mobile / compact screens */
+.pula-cal-pill {
+  display: none;
+}
+
+.pula-cal-more-count {
+  font-size: 8px;
+  font-weight: 900;
+  color: var(--pula-navy);
+  line-height: 1;
+}
+
+/* Selected Date Details Panel */
+.pula-cal-details-panel {
+  background: #ffffff;
+  border: 1px solid #ebd9c8;
+  border-radius: 16px;
+  padding: 14px;
+  margin-top: 14px;
+  box-shadow: 0 4px 18px rgba(25, 24, 63, 0.04);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.pula-cal-details-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+  border-bottom: 1px solid #f2e9dc;
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.pula-cal-details-title {
+  font-size: 15px;
+  font-weight: 900;
+  margin: 0;
+  color: var(--pula-navy);
+  line-height: 1.3;
+}
+
+.pula-cal-events-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* Event Item Card */
+.pula-cal-event-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #fffdf9;
+  border: 1px solid #eee5d4;
+  border-radius: 14px;
+  padding: 10px 12px;
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.pula-cal-event-icon {
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.pula-cal-event-body {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.pula-cal-event-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 8px;
+  margin-bottom: 3px;
+}
+
+.pula-cal-event-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--pula-navy);
+  margin: 2px 0 4px;
+  line-height: 1.3;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.pula-cal-event-detail {
+  font-size: 12px;
+  color: #575779;
+  line-height: 1.4;
+  margin: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.pula-cal-event-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  width: 100%;
+}
+
+.pula-cal-btn-notify {
+  background: var(--pula-navy);
+  color: #ffffff !important;
+  border: none;
+  border-radius: 10px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pula-cal-btn-delete {
+  background: none;
+  border: none;
+  color: #8c3220;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  padding: 4px 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.pula-cal-empty-events {
+  padding: 20px;
+  text-align: center;
+  color: #726d84;
+  font-size: 13px;
+}
+
+/* =========================================================
+   CONTAINER QUERIES (Adaptive to local component width)
+   ========================================================= */
+
+/* Extra small containers (e.g. 320px viewport mobile phone) */
+@container calendar (max-width: 360px) {
+  .pula-calendar-wrapper {
+    padding: 8px 4px;
+    border-radius: 16px;
+  }
+  .pula-cal-header {
+    gap: 6px;
+  }
+  .pula-cal-month-title {
+    font-size: 15px;
+  }
+  .pula-cal-year-select {
+    font-size: 12px !important;
+    min-width: 62px !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    padding: 2px 4px !important;
+  }
+  .pula-cal-nav-btn {
+    width: 28px;
+    height: 28px;
+  }
+  .pula-cal-today-btn {
+    height: 28px;
+    padding: 2px 6px;
+    font-size: 10.5px;
+  }
+  .pula-cal-grid {
+    gap: 1.5px;
+    padding: 3px;
+    border-radius: 12px;
+  }
+  .pula-cal-col-header {
+    font-size: 9px;
+    padding: 3px 0;
+  }
+  .pula-cal-day-cell {
+    min-height: 38px;
+    padding: 2px 1px;
+    border-radius: 6px;
+  }
+  .pula-cal-day-num {
+    font-size: 10px;
+    margin-bottom: 2px;
+  }
+  .pula-cal-dot {
+    width: 4.5px;
+    height: 4.5px;
+  }
+}
+
+/* Compact containers (typical mobile phones 361px - 619px) */
+@container calendar (min-width: 361px) and (max-width: 619px) {
+  .pula-calendar-wrapper {
+    padding: 10px 8px;
+  }
+  .pula-cal-grid {
+    gap: 2.5px;
+    padding: 4px;
+  }
+  .pula-cal-col-header {
+    font-size: 10px;
+    padding: 4px 0;
+  }
+  .pula-cal-day-cell {
+    min-height: 44px;
+    padding: 3px 2px;
+    border-radius: 7px;
+  }
+  .pula-cal-day-num {
+    font-size: 11px;
+    margin-bottom: 2px;
+  }
+  .pula-cal-dot {
+    width: 5.5px;
+    height: 5.5px;
+  }
+}
+
+/* Wide containers (>= 620px: e.g. HOD dashboard or full desktop views) */
+@container calendar (min-width: 620px) {
+  .pula-calendar-wrapper {
+    padding: 18px 20px;
+    border-radius: 24px;
+  }
+  .pula-cal-header {
+    margin-bottom: 16px;
+  }
+  .pula-cal-month-title {
+    font-size: 22px;
+  }
+  .pula-cal-year-select {
+    font-size: 14px !important;
+    min-width: 86px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 6px 10px !important;
+  }
+  .pula-cal-nav-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+  }
+  .pula-cal-today-btn {
+    height: 36px;
+    padding: 6px 14px;
+    font-size: 12px;
+    border-radius: 12px;
+  }
+  .pula-cal-grid {
+    gap: 4px;
+    padding: 8px;
+    border-radius: 18px;
+  }
+  .pula-cal-col-header {
+    font-size: 11px;
+    padding: 8px 0;
+  }
+  .pula-cal-day-cell {
+    min-height: 72px;
+    align-items: flex-start;
+    padding: 6px 8px;
+    border-radius: 10px;
+  }
+  .pula-cal-day-num {
+    font-size: 12.5px;
+    margin-bottom: 5px;
+  }
+  .pula-cal-indicators {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+  }
+  .pula-cal-dot {
+    display: none !important;
+  }
+  .pula-cal-pill {
+    display: flex !important;
+    align-items: center;
+    gap: 3px;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 5px;
+    border-radius: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+  .pula-cal-pill-icon {
+    flex-shrink: 0;
+    font-size: 11px;
+  }
+  .pula-cal-pill-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+  .pula-cal-details-panel {
+    padding: 18px 20px;
+    border-radius: 20px;
+    margin-top: 18px;
+  }
+  .pula-cal-details-title {
+    font-size: 16px;
+  }
+}
+
+/* =========================================================
+   MEDIA QUERY FALLBACKS (For environments without container queries)
+   ========================================================= */
+
+@media (max-width: 600px) {
+  .pula-calendar-wrapper {
+    padding: 10px 8px;
+  }
+  .pula-cal-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+    gap: 2px !important;
+    padding: 4px !important;
+  }
+  .pula-cal-day-cell {
+    min-height: 42px !important;
+    padding: 3px 1px !important;
+    border-radius: 6px !important;
+  }
+  .pula-cal-day-num {
+    font-size: 11px !important;
+    margin-bottom: 2px !important;
+  }
+  .pula-cal-pill {
+    display: none !important;
+  }
+  .pula-cal-dot {
+    display: inline-block !important;
+    width: 5px !important;
+    height: 5px !important;
+  }
+}
+
+@media (min-width: 1025px) {
+  .pd-wide .pula-cal-day-cell {
+    min-height: 74px;
+    align-items: flex-start;
+    padding: 6px 8px;
+  }
+  .pd-wide .pula-cal-indicators {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+  }
+  .pd-wide .pula-cal-dot {
+    display: none;
+  }
+  .pd-wide .pula-cal-pill {
+    display: flex;
+  }
+}
