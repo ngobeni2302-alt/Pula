@@ -586,6 +586,24 @@
   ],
   "conversations": [
     {
+      "id": "36540156-f22e-435d-8f3a-ebdc7230cab5",
+      "type": "group",
+      "groupId": "d66db5b8-355e-4ac9-9d00-15ec018b0035",
+      "title": "seed",
+      "grade": "R",
+      "classroom": "Grade 2B",
+      "participantIds": [
+        "teacher-R"
+      ],
+      "teacherId": "teacher-R",
+      "lastMessage": "Group \"seed\" created by Ma’am Elise",
+      "lastMessageAt": "2026-11-02T21:30:24.915Z",
+      "unreadCount": {
+        "teacher-R": 0
+      },
+      "createdAt": "2026-11-02T21:30:24.915Z"
+    },
+    {
       "id": "conv-thando",
       "type": "private",
       "title": "Thando's Parent (Nomsa Mokoena)",
@@ -691,6 +709,26 @@
     }
   ],
   "groups": [
+    {
+      "id": "d66db5b8-355e-4ac9-9d00-15ec018b0035",
+      "name": "seed",
+      "description": "Communication between Ma’am Elise and parents.",
+      "creatorId": "teacher-R",
+      "teacherAdminId": "teacher-R",
+      "classroom": "Grade 2B",
+      "grade": "R",
+      "onlyAdminCanSend": false,
+      "createdAt": "2026-11-02T21:30:24.915Z",
+      "members": [
+        {
+          "id": "teacher-R",
+          "name": "Ma’am Elise",
+          "role": "admin",
+          "status": "accepted",
+          "joinedAt": "2026-11-02T21:30:24.915Z"
+        }
+      ]
+    },
     {
       "id": "grp-grade2",
       "name": "Grade 2B Parents",

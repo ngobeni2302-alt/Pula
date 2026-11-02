@@ -918,13 +918,15 @@ export default function MessagingHub({
             </div>
           )}
 
-          <button
-            type="submit"
-            className="pd-primary pd-full"
-            disabled={!groupName.trim() || selectedLearnerIds.length === 0}
-          >
-            <Check size={16} /> Create Group & Send Invitations
-          </button>
+          <div className="msg-create-group-footer">
+            <button
+              type="submit"
+              className="pd-primary pd-full"
+              disabled={!groupName.trim() || selectedLearnerIds.length === 0}
+            >
+              <Check size={16} /> Create Group & Send Invitations
+            </button>
+          </div>
         </form>
       </div>
     );
