@@ -19,8 +19,7 @@ export default function WelcomeScreen({classes, onSelect}) {
     <main className="welcome-screen">
       <div className="welcome-content">
         <div className="welcome-brand" aria-label="Pula">
-          <img src="/icon.png" alt="Pula" width="140" height="93" />
-          <span>Pula</span>
+          <img src="/icon.png" alt="Pula" width="160" height="106" />
         </div>
         <h1>{role ? `${role} sign in` : 'Welcome to Pula'}</h1>
         <p className="welcome-subtitle">{role ? (role === 'Teacher' ? 'Choose your classroom to continue.' : 'Choose your child to continue.') : 'Choose how you’d like to sign in.'}</p>

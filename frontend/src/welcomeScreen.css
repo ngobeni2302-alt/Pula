@@ -32,9 +32,9 @@
   transform: rotate(-28deg);
 }
 .welcome-content {width: min(100%, 850px); margin: 0 auto; text-align: center;}
-.welcome-brand {display: flex; align-items: center; justify-content: center; gap: 17px; margin-bottom: 12px;}
-.welcome-brand img {width: 140px; height: auto; max-height: 95px; object-fit: contain; mix-blend-mode: multiply;}
-.welcome-brand span {font-size: 80px; font-weight: 900; letter-spacing: -3px; line-height: 1;}
+.welcome-brand {display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; text-align: center;}
+.welcome-brand img {width: 170px; max-width: 100%; height: auto; max-height: 125px; object-fit: contain; display: block; margin: 0 auto; mix-blend-mode: multiply;}
+.welcome-brand span {display: none;}
 .welcome-screen h1 {margin: 5px 0 8px; font-size: clamp(38px, 5.2vw, 72px); line-height: 1.18; font-weight: 900; letter-spacing: -1.8px;}
 .welcome-subtitle {margin: 12px 0 56px; color: #74739c; font-size: clamp(19px, 2.5vw, 34px); font-weight: 600; line-height: 1.4;}
 .welcome-options {display: flex; flex-direction: column; gap: 20px;}

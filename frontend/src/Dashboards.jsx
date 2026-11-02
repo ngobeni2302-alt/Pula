@@ -1,6 +1,6 @@
 // @ts-nocheck
-import React, { useState } from 'react';
-import { ArrowLeft, BookOpen, MessageCircle, CalendarDays, Home, TrendingUp, Download, ChevronRight, Mic, Check, Leaf, Bean, Sprout, Flower2, TreeDeciduous, CircleAlert, Clock } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, BookOpen, MessageCircle, CalendarDays, Home, TrendingUp, Download, ChevronRight, Mic, Check, Leaf, Bean, Sprout, Flower2, TreeDeciduous, CircleAlert, Clock, Users, X } from 'lucide-react';
 import HodDashboard from './hod/HodDashboard.jsx';
 import TeacherApp from '../../teacher/App.jsx';
 import MessagingHub from './messaging/MessagingHub.jsx';
@@ -9,6 +9,7 @@ import ReadingTierList from './learners/ReadingTierList.jsx';
 import LearnerProfile from './learners/LearnerProfile.jsx';
 import TeacherReadingExperience from './reading/TeacherReadingExperience.jsx';
 import { GROUPS, TOPICS, PLANS, loadData, STORAGE_KEY, tips } from './dashboardData.js';
+import { getUnreadMessagesCountForUser, getLatestUnreadMessageForUser, formatMessageTime } from './messaging/messagingService.js';
 import './dashboards.css';
 import WelcomeScreen from './WelcomeScreen.jsx';
 
@@ -41,17 +42,65 @@ export default function Dashboards() {
     const [msgTopic, setMsgTopic] = useState(null);
     const [tierView, setTierView] = useState('All');
     const [activeLearnerId, setActiveLearnerId] = useState(null);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [toastNotification, setToastNotification] = useState(null);
+    const [dismissedNotificationIds, setDismissedNotificationIds] = useState(() => new Set());
+
     const persist = next => { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); setData(next); return true; } catch { setNotice('Storage is full or unavailable. Your change was not saved.'); return false; } };
     const updateClass = (grade, fn) => persist({ ...data, classes: data.classes.map(c => c.grade === grade ? fn(c) : c) });
     const c = data.classes.find(c => c.grade === profile?.grade) || data.classes[2];
     const child = c.learners.find(l => l.id === profile?.childId) || c.learners[0];
     const selectedLearner = c.learners.find(l => l.id === activeLearnerId) || c.learners[0];
     const teacher = profile?.role === 'Teacher';
+    const currentGrade = String(c?.grade || profile?.grade || '2');
+    const currentUserId = teacher ? `teacher-${currentGrade}` : `parent-${profile?.childId || c?.learners?.[0]?.id || '2-9'}`;
+
+    useEffect(() => {
+        if (!profile) return;
+        const updateUnread = () => {
+            const count = getUnreadMessagesCountForUser({ role: profile.role, userId: currentUserId, grade: currentGrade });
+            setUnreadCount(count);
+
+            if (count > 0 && page !== 'Messages') {
+                const latest = getLatestUnreadMessageForUser({ role: profile.role, userId: currentUserId, grade: currentGrade });
+                if (latest && !dismissedNotificationIds.has(latest.message.id || latest.conversation.id)) {
+                    setToastNotification({
+                        id: latest.message.id || latest.conversation.id,
+                        senderName: latest.message.senderName || latest.conversation.title,
+                        text: latest.message.text || latest.conversation.lastMessage,
+                        time: formatMessageTime(latest.message.createdAt || latest.conversation.lastMessageAt) || 'Just now',
+                        learnerId: latest.conversation.learnerId,
+                        conversationId: latest.conversation.id
+                    });
+                }
+            } else if (page === 'Messages') {
+                setToastNotification(null);
+            }
+        };
+
+        updateUnread();
+        const handleUpdate = () => updateUnread();
+        window.addEventListener('pula_messaging_update', handleUpdate);
+        window.addEventListener('storage', handleUpdate);
+        return () => {
+            window.removeEventListener('pula_messaging_update', handleUpdate);
+            window.removeEventListener('storage', handleUpdate);
+        };
+    }, [profile, currentUserId, currentGrade, page, switchCount]);
+
+    useEffect(() => {
+        if (!toastNotification) return;
+        const timer = setTimeout(() => {
+            setToastNotification(null);
+        }, 7000);
+        return () => clearTimeout(timer);
+    }, [toastNotification]);
+
     const select = p => { setProfile(p); setPage('Home'); setResource(null); setNotice(''); setTierView('All'); setActiveLearnerId(null); setSwitchCount(n => n + 1); };
     function startMessage(topic = 'Progress', item = null, learnerId = null) { setMsgLearnerId(learnerId || null); setMsgTopic(topic || null); setPage('Messages'); }
 
-    const nav = teacher ? [['Home', Home], ['Read', Mic], ['Planner', CalendarDays], ['Messages', MessageCircle]] : [['Home', Home], ['Progress', TrendingUp], ['Schoolwork', BookOpen], ['Messages', MessageCircle]];
-    const changePage = p => { if (p === 'Groups') { setTierView('All'); setActiveLearnerId(null); setPage('TierLearners'); } else { setPage(p); } setMsgLearnerId(null); setMsgTopic(null); setNotice(''); setFilter('All'); };
+    const nav = teacher ? [['Home', Home], ['Read', Mic], ['Students', Users], ['Planner', CalendarDays], ['Messages', MessageCircle]] : [['Home', Home], ['Progress', TrendingUp], ['Schoolwork', BookOpen], ['Messages', MessageCircle]];
+    const changePage = p => { if (p === 'Groups' || p === 'Students') { setTierView('All'); setActiveLearnerId(null); setPage('Students'); } else { setPage(p); } setMsgLearnerId(null); setMsgTopic(null); setNotice(''); setFilter('All'); };
     if (legacy) return <><div className="pd-legacy"><button onClick={() => setLegacy(false)}>← Back to dashboards</button><span>Original reading demo · separate data</span></div><TeacherApp /></>;
     if (!profile) return <WelcomeScreen key={switchCount} classes={data.classes} onSelect={select} />;
     const header = <header className="pd-top"><button onClick={() => { setProfile(null); setLegacy(false); setSwitchCount(n => n + 1); }}><ArrowLeft size={16} /> Switch profile</button><span><Leaf size={16} /> Pula · {profile.role}</span></header>;
@@ -61,9 +110,44 @@ export default function Dashboards() {
 
     return (
         <div className={`pd-shell ${page === 'Messages' ? 'pd-messages-active' : page === 'Read' ? 'pd-reading-active' : 'pd-mobile'}`}>
+            {toastNotification && page !== 'Messages' && (
+                <div
+                    className="pd-whatsapp-toast"
+                    role="alert"
+                    onClick={() => {
+                        const targetLid = toastNotification.learnerId;
+                        setToastNotification(null);
+                        startMessage('Progress', null, targetLid);
+                    }}
+                    title="Click to view message"
+                >
+                    <div className="pd-toast-icon-wrap">
+                        <MessageCircle size={22} />
+                    </div>
+                    <div className="pd-toast-body">
+                        <div className="pd-toast-header">
+                            <span className="pd-toast-sender">{toastNotification.senderName}</span>
+                            <span className="pd-toast-time">{toastNotification.time}</span>
+                        </div>
+                        <p className="pd-toast-text">{toastNotification.text}</p>
+                    </div>
+                    <button
+                        type="button"
+                        className="pd-toast-close"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setDismissedNotificationIds(prev => new Set([...prev, toastNotification.id]));
+                            setToastNotification(null);
+                        }}
+                        aria-label="Dismiss notification"
+                    >
+                        <X size={16} />
+                    </button>
+                </div>
+            )}
             {page !== 'Read' && header}
             <main>
-                {page !== 'Messages' && page !== 'TierLearners' && page !== 'LearnerProfile' && page !== 'Read' && (
+                {page !== 'Messages' && page !== 'TierLearners' && page !== 'Students' && page !== 'LearnerProfile' && page !== 'Read' && page !== 'Progress' && (
                     <div className="pd-heading">
                         <div>
                             <span className="pd-eyebrow">GRADE {c.grade} ONLY · TERM 4</span>
@@ -163,11 +247,11 @@ export default function Dashboards() {
                         <p className="pd-muted">Sample guidance based on the reference. CAPS/ATP content needs curriculum review.</p>
                     </>
                 )}
-                {page === 'TierLearners' && (
-                    <ReadingTierList classroom={c} initialTier={tierView} onSelectLearner={id => { setActiveLearnerId(id); setPage('LearnerProfile'); }} onBack={() => changePage('Home')} />
+                {(page === 'TierLearners' || page === 'Students') && (
+                    <ReadingTierList classroom={c} initialTier={tierView} title={page === 'Students' ? 'Students' : undefined} onSelectLearner={id => { setActiveLearnerId(id); setPage('LearnerProfile'); }} onBack={() => changePage('Home')} />
                 )}
                 {page === 'LearnerProfile' && selectedLearner && (
-                    <LearnerProfile learner={selectedLearner} classroom={c} selectedTier={tierView || 'All'} onBack={() => setPage('TierLearners')} onUpdateLearner={upd => { updateClass(c.grade, old => ({ ...old, learners: old.learners.map(l => l.id === upd.id ? { ...l, ...upd } : l) })); setNotice(`Academic profile updated for ${upd.name}.`); }} onStartMessage={(topic, item, lid) => startMessage(topic, item, lid)} />
+                    <LearnerProfile learner={selectedLearner} classroom={c} selectedTier={tierView || 'All'} onBack={() => setPage(tierView === 'All' ? 'Students' : 'TierLearners')} onUpdateLearner={upd => { updateClass(c.grade, old => ({ ...old, learners: old.learners.map(l => l.id === upd.id ? { ...l, ...upd } : l) })); setNotice(`Academic profile updated for ${upd.name}.`); }} onStartMessage={(topic, item, lid) => startMessage(topic, item, lid)} />
                 )}
                 {page === 'Read' && (
                     <TeacherReadingExperience
@@ -224,7 +308,7 @@ export default function Dashboards() {
                         <Card>
                             <small>{child.name}’s reading group</small>
                             <h2 className="pd-group-title">{child.group}</h2>
-                            <div className="pd-groups">
+                            <div className="pd-groups pd-parent-groups">
                                 {GROUPS.map((g, i) => (
                                     <span className={`pd-group g${i} ${child.group === g ? 'current' : ''}`} key={g}>
                                         <GroupIcon group={g} />
@@ -255,35 +339,16 @@ export default function Dashboards() {
                                 </div>
                             </Card>
                         ))}
-                        <button className="pd-card pd-row" onClick={() => changePage('Messages')}>
-                            <MessageCircle />
-                            <span><b>Message {c.teacher}</b><small>{data.messages.filter(m => m.sender === 'teacher' && m.status === 'sent' && m.recipientIds.includes(child.id)).length} teacher messages</small></span>
-                            <ChevronRight />
-                        </button>
-                        <Card className="pd-lavender">
-                            <h3>Try this at home</h3>
-                            <p>{tips(child)[1]}</p>
-                            <small>From {c.teacher}</small>
-                        </Card>
                     </>
                 )}
                 {!teacher && page === 'Progress' && (
-                    <>
-                        <Card>
-                            <h2>Reading speed</h2>
-                            <p>Words per minute, by term</p>
-                            <Chart history={child.history} />
-                            <small>Term 4 is still in progress</small>
-                        </Card>
-                        <Card>
-                            <h3>Reading group: {child.group}</h3>
-                            <p>Only {c.teacher} can change this.</p>
-                            <h3>What {child.name} can improve</h3>
-                            <small>From {c.teacher} · This week</small>
-                            <ol>{tips(child).map(t => <li key={t}>{t}</li>)}</ol>
-                            <span className="pd-pill">Sounds to practise: {child.sounds.join(', ')}</span>
-                        </Card>
-                    </>
+                    <LearnerProfile
+                        learner={child}
+                        classroom={c}
+                        isParent={true}
+                        onBack={() => changePage('Home')}
+                        onStartMessage={(topic, item, lid) => startMessage(topic, item, lid)}
+                    />
                 )}
                 {page === 'Messages' && (
                     <MessagingHub profile={profile} classroom={c} classes={data.classes} initialLearnerId={msgLearnerId} initialTopic={msgTopic} onNavigateHome={() => changePage('Home')} />
@@ -292,10 +357,18 @@ export default function Dashboards() {
             {page !== 'Read' && (
                 <nav className="pd-nav" aria-label={`${profile.role} navigation`}>
                     {nav.map(([name, Icon]) => {
-                        const active = page === name || (name === 'Home' && (page === 'TierLearners' || page === 'LearnerProfile'));
+                        const active = page === name || (name === 'Students' && (page === 'TierLearners' || page === 'LearnerProfile'));
+                        const isMsg = name === 'Messages';
                         return (
                             <button key={name} aria-current={active ? 'page' : undefined} className={active ? 'active' : ''} onClick={() => changePage(name)}>
-                                <Icon size={19} />
+                                <div className="pd-nav-icon-wrap">
+                                    <Icon size={19} />
+                                    {isMsg && unreadCount > 0 && (
+                                        <span className="pd-nav-badge" aria-label={`${unreadCount} unread messages`}>
+                                            {unreadCount > 99 ? '99+' : unreadCount}
+                                        </span>
+                                    )}
+                                </div>
                                 <small>{name}</small>
                             </button>
                         );

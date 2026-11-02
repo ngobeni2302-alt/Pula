@@ -10,13 +10,14 @@ import {
   Sparkles,
   AlertCircle
 } from 'lucide-react';
-import { GROUPS } from '../dashboardData.js';
+import { GROUPS, getParentForLearner } from '../dashboardData.js';
 import { getLearnerFullName, getLearnerAcademicRecord } from './learnerData.js';
 import './learners.css';
 
 export default function ReadingTierList({
   classroom,
   initialTier = 'All',
+  title,
   onSelectLearner,
   onBack
 }) {
@@ -87,10 +88,10 @@ export default function ReadingTierList({
       {/* Page Title */}
       <header className="pula-tier-header">
         <h1 className="pula-tier-title">
-          {selectedTier === 'All' ? 'Reading Groups' : `${selectedTier} Reading Group`}
+          {title ? title : (selectedTier === 'All' ? 'Reading Groups' : `${selectedTier} Reading Group`)}
         </h1>
         <p className="pula-tier-subtitle">
-          Grade {room} · {sortedLearners.length} learner{sortedLearners.length === 1 ? '' : 's'}
+          Grade {room} · {sortedLearners.length} student{sortedLearners.length === 1 ? '' : 's'}
           {selectedTier !== 'All' ? ` in ${selectedTier}` : ' total'}
         </p>
       </header>
@@ -173,6 +174,7 @@ export default function ReadingTierList({
         <div className="pula-learner-cards">
           {sortedLearners.map(learner => {
             const fullName = getLearnerFullName(learner, grade);
+            const parent = getParentForLearner(learner, grade);
             const latestWpm = learner.history?.at(-1);
             const improvement = latestWpm != null && learner.history?.[0] != null
               ? latestWpm - learner.history[0]
@@ -232,6 +234,15 @@ export default function ReadingTierList({
                       <span className="pula-improvement-badge pula-positive-imp">
                         +{improvement} WPM
                       </span>
+                    )}
+                  </div>
+
+                  <div className="pula-learner-submeta" style={{ marginTop: '5px', fontSize: '11.5px', color: '#6c6785', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <span>Home Language: <strong>{learner.language || 'English'}</strong></span>
+                    <span>·</span>
+                    <span>Parent: <strong>{parent.name}</strong> ({learner.channel || 'WhatsApp'})</span>
+                    {learner.consent === false && (
+                      <span style={{ color: '#b94025', fontWeight: 800 }}>⚠️ Needs consent</span>
                     )}
                   </div>
                 </div>

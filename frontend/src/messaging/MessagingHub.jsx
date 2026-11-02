@@ -59,6 +59,9 @@ export default function MessagingHub({
   // Current user ID: if Teacher, teacherId; if Parent, parentId based on childId
   const parentId = !isTeacher ? `parent-${profile?.childId || classroom?.learners?.[0]?.id || '2-9'}` : null;
   const currentUserId = isTeacher ? teacherId : parentId;
+  const childLearner = !isTeacher
+    ? (classroom?.learners?.find(l => l.id === profile?.childId) || classroom?.learners?.[0])
+    : null;
 
   // View state: 'list' (on mobile) or 'chat' | 'contact-parent' | 'create-group' | 'group-info'
   const [view, setView] = useState('list');
@@ -139,20 +142,20 @@ export default function MessagingHub({
 
   // Handle initial learner/topic passed from Planner or Groups
   useEffect(() => {
-    if (initialLearnerId && isTeacher) {
-      const targetLearner = learners.find(l => l.id === initialLearnerId);
+    if (initialLearnerId) {
+      const targetLearner = learners.find(l => l.id === initialLearnerId) || classroom?.learners?.find(l => l.id === initialLearnerId);
       if (targetLearner) {
         const conv = openOrCreatePrivateConversation({
           teacherId,
           teacherName,
           learner: targetLearner,
           grade: currentGrade,
-          classroomName: classroom?.name || `Grade ${currentGrade}`
+          classroomName: classroom?.name || (classroom?.room ? `Grade ${classroom.room}` : `Grade ${currentGrade}`)
         });
         setActiveConversation(conv);
         setView('chat');
 
-        if (initialTopic) {
+        if (isTeacher && initialTopic) {
           const draft = generateLesediDraft(initialTopic, targetLearner, classroom);
           setLesediTopic(initialTopic);
           setLesediDraft(draft);
@@ -222,6 +225,49 @@ export default function MessagingHub({
     setGroupOnlyAdmin(false);
     setSelectedLearnerIds([]);
     setMenuOpen(false);
+  };
+
+  const handleParentMessageTeacher = () => {
+    setMenuOpen(false);
+    if (!childLearner) return;
+
+    const conv = openOrCreatePrivateConversation({
+      teacherId,
+      teacherName,
+      learner: childLearner,
+      grade: currentGrade,
+      classroomName: classroom?.name || (classroom?.room ? `Grade ${classroom.room}` : `Grade ${currentGrade}`)
+    });
+    setActiveConversation(conv);
+    setView('chat');
+    setTick(t => t + 1);
+  };
+
+  const getConversationDisplayDetails = (conv) => {
+    if (!conv) return { title: '', subtitle: '', initials: '?' };
+    const isGroup = conv.type === 'group';
+    if (isGroup) {
+      return {
+        title: conv.title,
+        subtitle: conv.subtitle || 'Classroom Group',
+        initials: 'GP'
+      };
+    }
+    if (!isTeacher) {
+      const tName = conv.teacherName || teacherName;
+      const cRoom = conv.classroom || (classroom?.room ? `Grade ${classroom.room}` : `Grade ${currentGrade}`);
+      const lName = childLearner?.name || 'Child';
+      return {
+        title: `${tName} (${cRoom})`,
+        subtitle: `${lName}'s Teacher · ${cRoom}`,
+        initials: (tName.match(/\b(\w)/g) || ['T']).slice(0, 2).join('').toUpperCase()
+      };
+    }
+    return {
+      title: conv.title,
+      subtitle: conv.subtitle || 'Private chat',
+      initials: (conv.title?.match(/\b(\w)/g) || ['P']).slice(0, 2).join('').toUpperCase()
+    };
   };
 
   const handleLearnerContactSelected = learner => {
@@ -360,45 +406,65 @@ export default function MessagingHub({
           </small>
         </div>
 
-        {/* Top-Right Menu for Teachers */}
-        {isTeacher && (
-          <div className="msg-header-actions">
-            <button
-              className="msg-icon-btn"
-              onClick={() => setMenuOpen(!menuOpen)}
-              title="Menu options"
-              aria-label="Options"
-            >
-              <MoreVertical size={20} />
-            </button>
+        {/* Top-Right Menu for Teachers and Parents */}
+        <div className="msg-header-actions">
+          <button
+            className="msg-icon-btn"
+            onClick={() => setMenuOpen(!menuOpen)}
+            title="Menu options"
+            aria-label="Options"
+          >
+            <MoreVertical size={20} />
+          </button>
 
-            {menuOpen && (
-              <div className="msg-dropdown-menu">
-                <button
-                  className="msg-dropdown-item"
-                  onClick={handleOpenContactParent}
-                >
-                  <UserPlus size={16} /> Contact Parent
-                </button>
-                <button
-                  className="msg-dropdown-item"
-                  onClick={handleOpenCreateGroup}
-                >
-                  <Users size={16} /> Create Group
-                </button>
-                <button
-                  className="msg-dropdown-item"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    document.getElementById('msg-search-input')?.focus();
-                  }}
-                >
-                  <Search size={16} /> Search Contacts
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+          {menuOpen && (
+            <div className="msg-dropdown-menu">
+              {isTeacher ? (
+                <>
+                  <button
+                    className="msg-dropdown-item"
+                    onClick={handleOpenContactParent}
+                  >
+                    <UserPlus size={16} /> Contact Parent
+                  </button>
+                  <button
+                    className="msg-dropdown-item"
+                    onClick={handleOpenCreateGroup}
+                  >
+                    <Users size={16} /> Create Group
+                  </button>
+                  <button
+                    className="msg-dropdown-item"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      document.getElementById('msg-search-input')?.focus();
+                    }}
+                  >
+                    <Search size={16} /> Search Contacts
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    className="msg-dropdown-item"
+                    onClick={handleParentMessageTeacher}
+                  >
+                    <MessageCircle size={16} /> Message Teacher ({teacherName} · Grade {classroom?.room || currentGrade})
+                  </button>
+                  <button
+                    className="msg-dropdown-item"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      document.getElementById('msg-search-input')?.focus();
+                    }}
+                  >
+                    <Search size={16} /> Search Messages
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Notice Banner */}
@@ -503,11 +569,7 @@ export default function MessagingHub({
             const isGroup = conv.type === 'group';
             const isActive = activeConversation?.id === conv.id;
             const unread = conv.unreadCount?.[currentUserId] || 0;
-
-            // Generate initials for avatar
-            const initials = isGroup
-              ? 'GP'
-              : (conv.title?.match(/\b(\w)/g) || ['P']).slice(0, 2).join('').toUpperCase();
+            const { title: convTitle, subtitle: convSubtitle, initials } = getConversationDisplayDetails(conv);
 
             return (
               <button
@@ -521,7 +583,7 @@ export default function MessagingHub({
 
                 <div className="msg-conv-info">
                   <div className="msg-conv-top">
-                    <span className="msg-conv-title">{conv.title}</span>
+                    <span className="msg-conv-title">{convTitle}</span>
                     <span className="msg-conv-time">{formatMessageTime(conv.lastMessageAt || conv.createdAt)}</span>
                   </div>
 
@@ -555,6 +617,7 @@ export default function MessagingHub({
 
     const isGroup = activeConversation.type === 'group';
     const isRestrictedGroup = isGroup && currentGroup?.onlyAdminCanSend && !isTeacher;
+    const activeDisplay = getConversationDisplayDetails(activeConversation);
 
     return (
       <div className="msg-chat-pane">
@@ -570,7 +633,7 @@ export default function MessagingHub({
             className={`msg-avatar ${isGroup ? 'group-avatar' : ''}`}
             style={{ width: '40px', height: '40px', fontSize: '13px' }}
           >
-            {isGroup ? <Users size={18} /> : (activeConversation.title?.[0] || 'P')}
+            {isGroup ? <Users size={18} /> : activeDisplay.initials}
           </div>
 
           <div
@@ -578,8 +641,8 @@ export default function MessagingHub({
             onClick={() => isGroup && setView('group-info')}
             title={isGroup ? 'Click for group details' : ''}
           >
-            <h2>{activeConversation.title}</h2>
-            <small>{activeConversation.subtitle || (isGroup ? 'Classroom Group' : 'Private chat')}</small>
+            <h2>{activeDisplay.title}</h2>
+            <small>{activeDisplay.subtitle}</small>
           </div>
 
           {isGroup && (
@@ -918,13 +981,15 @@ export default function MessagingHub({
             </div>
           )}
 
-          <button
-            type="submit"
-            className="pd-primary pd-full"
-            disabled={!groupName.trim() || selectedLearnerIds.length === 0}
-          >
-            <Check size={16} /> Create Group & Send Invitations
-          </button>
+          <div className="msg-create-group-footer">
+            <button
+              type="submit"
+              className="pd-primary pd-full"
+              disabled={!groupName.trim() || selectedLearnerIds.length === 0}
+            >
+              <Check size={16} /> Create Group & Send Invitations
+            </button>
+          </div>
         </form>
       </div>
     );

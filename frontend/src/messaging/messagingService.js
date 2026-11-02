@@ -2,18 +2,23 @@ import { getParentForLearner, seedData, STORAGE_KEY } from '../dashboardData.js'
 
 const MESSAGING_STORAGE_KEY = 'pula_messaging_v2';
 
+let memoryStore = null;
+
 function safeStorageGet(key, fallback) {
   try {
-    const val = localStorage.getItem(key);
-    return val ? JSON.parse(val) : fallback;
+    const val = typeof localStorage !== 'undefined' ? localStorage.getItem(key) : null;
+    return val ? JSON.parse(val) : (memoryStore || fallback);
   } catch {
-    return fallback;
+    return memoryStore || fallback;
   }
 }
 
 function safeStorageSet(key, value) {
+  memoryStore = value;
   try {
-    localStorage.setItem(key, JSON.stringify(value));
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
     return true;
   } catch {
     return false;
@@ -63,6 +68,11 @@ export function getMessagingStore() {
 
 export function saveMessagingStore(store) {
   safeStorageSet(MESSAGING_STORAGE_KEY, store);
+  if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+    try {
+      window.dispatchEvent(new CustomEvent('pula_messaging_update', { detail: { timestamp: Date.now() } }));
+    } catch {}
+  }
 }
 
 // --------------------------------------------------------------------------
@@ -512,5 +522,43 @@ export function markConversationRead({ conversationId, userId }) {
     conv.unreadCount[userId] = 0;
     saveMessagingStore(store);
   }
+}
+
+export function getUnreadMessagesCountForUser({ role, userId, grade }) {
+  const tId = role === 'Teacher' ? (userId || `teacher-${grade || '2'}`) : null;
+  const pId = role === 'Parent' ? (userId || 'parent-2-9') : null;
+  const targetId = role === 'Teacher' ? tId : pId;
+  if (!targetId) return 0;
+
+  const convs = getConversationsForUser({ role, userId: targetId, grade });
+  return convs.reduce((sum, c) => sum + (c.unreadCount?.[targetId] || 0), 0);
+}
+
+export function getLatestUnreadMessageForUser({ role, userId, grade }) {
+  const store = getMessagingStore();
+  const tId = role === 'Teacher' ? (userId || `teacher-${grade || '2'}`) : null;
+  const pId = role === 'Parent' ? (userId || 'parent-2-9') : null;
+  const targetId = role === 'Teacher' ? tId : pId;
+  if (!targetId) return null;
+
+  const unreadConvs = getConversationsForUser({ role, userId: targetId, grade })
+    .filter(c => (c.unreadCount?.[targetId] || 0) > 0);
+
+  if (unreadConvs.length === 0) return null;
+
+  const conv = unreadConvs[0];
+  const msgs = store.messages
+    .filter(m => m.conversationId === conv.id && m.senderId !== targetId)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  const msg = msgs[0];
+  return {
+    conversation: conv,
+    message: msg || {
+      text: conv.lastMessage,
+      senderName: conv.title,
+      createdAt: conv.lastMessageAt
+    }
+  };
 }
 
