@@ -56,24 +56,28 @@ test('Teacher Home: All four Reading Groups tier cards have Periwinkle backgroun
   );
 });
 
-test('Parent Home: Reading groups retain original pastel colors (unmodified)', () => {
+test('Parent Home: Reading groups match teacher tier colours (#8E9BFF)', () => {
   const css = fs.readFileSync(cssPath, 'utf8');
   const jsx = fs.readFileSync(jsxPath, 'utf8');
 
-  // Verify parent reading groups do not have pd-teacher-groups
+  // Verify parent reading groups have pd-parent-groups
   const parentSection = jsx.slice(jsx.indexOf("{!teacher && page === 'Home'"));
   assert.ok(
-    parentSection.includes('<div className="pd-groups">'),
-    'Parent reading groups must remain pd-groups without pd-teacher-groups'
-  );
-  assert.ok(
-    !parentSection.includes('<div className="pd-groups pd-teacher-groups">'),
-    'Parent reading groups must not use pd-teacher-groups'
+    parentSection.includes('<div className="pd-groups pd-parent-groups">'),
+    'Parent reading groups must use pd-parent-groups class'
   );
 
-  // Verify original tier colors exist
-  assert.match(css, /\.g0\s*\{\s*background:\s*var\(--pula-sand\)\s*\}/);
-  assert.match(css, /\.g1\s*\{\s*background:\s*var\(--pula-sage\)\s*\}/);
-  assert.match(css, /\.g2\s*\{\s*background:\s*var\(--pula-lavender\)\s*\}/);
-  assert.match(css, /\.g3\s*\{\s*background:\s*var\(--pula-blue\)\s*\}/);
+  // Verify parent groups get #8E9BFF
+  assert.match(
+    css,
+    /\.pd-parent-groups\s+\.pd-group[\s\S]*?background:\s*#8E9BFF/i,
+    'Parent reading groups must have background #8E9BFF (Periwinkle)'
+  );
+
+  // Verify dark navy text
+  assert.match(
+    css,
+    /\.pd-parent-groups\s+\.pd-group[\s\S]*?color:\s*var\(--pula-navy\)/i,
+    'Parent reading groups must maintain dark navy color'
+  );
 });

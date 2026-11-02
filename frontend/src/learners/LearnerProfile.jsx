@@ -30,7 +30,8 @@ export default function LearnerProfile({
   selectedTier = 'All',
   onBack,
   onUpdateLearner,
-  onStartMessage
+  onStartMessage,
+  isParent = false
 }) {
   const grade = classroom?.grade || '2';
   const room = classroom?.room || grade;
@@ -156,9 +157,9 @@ export default function LearnerProfile({
           type="button"
           className="pula-back-btn"
           onClick={onBack}
-          aria-label={`Back to ${selectedTier} Learners`}
+          aria-label={isParent ? 'Back to Home' : `Back to ${selectedTier} Learners`}
         >
-          <ArrowLeft size={16} /> Back to {selectedTier === 'All' ? 'Learners' : `${selectedTier} Learners`}
+          <ArrowLeft size={16} /> {isParent ? 'Back to Home' : `Back to ${selectedTier === 'All' ? 'Learners' : `${selectedTier} Learners`}`}
         </button>
 
         {onStartMessage && (
@@ -166,9 +167,9 @@ export default function LearnerProfile({
             type="button"
             className="pula-message-parent-btn"
             onClick={() => onStartMessage('Progress', null, learner.id)}
-            title="Message learner's parent"
+            title={isParent ? `Message ${teacherName}` : "Message learner's parent"}
           >
-            <MessageCircle size={15} /> Message Parent →
+            <MessageCircle size={15} /> {isParent ? `Message ${teacherName} →` : 'Message Parent →'}
           </button>
         )}
       </div>
@@ -189,30 +190,36 @@ export default function LearnerProfile({
                 <span>·</span>
                 <span>{academicYear} Academic Year</span>
                 <span>·</span>
-                {/* Reading Tier Selector */}
-                <label style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}>
-                  <span className={`pula-badge-pill badge-${learner.group}`}>
-                    Tier:
+                {/* Reading Tier Selector / Display */}
+                {isParent ? (
+                  <span className={`pula-badge-pill badge-${learner.group}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: 800 }}>
+                    Reading Tier: {learner.group}
                   </span>
-                  <select
-                    value={learner.group}
-                    onChange={e => handleTierChange(e.target.value)}
-                    style={{
-                      border: '1px solid #dcd4c3',
-                      borderRadius: '8px',
-                      padding: '2px 6px',
-                      fontSize: '12px',
-                      fontWeight: 800,
-                      background: '#fff',
-                      cursor: 'pointer'
-                    }}
-                    title="Change reading tier"
-                  >
-                    {GROUPS.map(g => (
-                      <option key={g} value={g}>{g}</option>
-                    ))}
-                  </select>
-                </label>
+                ) : (
+                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}>
+                    <span className={`pula-badge-pill badge-${learner.group}`}>
+                      Tier:
+                    </span>
+                    <select
+                      value={learner.group}
+                      onChange={e => handleTierChange(e.target.value)}
+                      style={{
+                        border: '1px solid #dcd4c3',
+                        borderRadius: '8px',
+                        padding: '2px 6px',
+                        fontSize: '12px',
+                        fontWeight: 800,
+                        background: '#fff',
+                        cursor: 'pointer'
+                      }}
+                      title="Change reading tier"
+                    >
+                      {GROUPS.map(g => (
+                        <option key={g} value={g}>{g}</option>
+                      ))}
+                    </select>
+                  </label>
+                )}
               </div>
             </div>
           </div>
@@ -548,72 +555,76 @@ export default function LearnerProfile({
             </div>
           )}
 
-          {/* Teacher Attendance Recording Form */}
-          <form className="pula-att-record-form" onSubmit={handleRecordAttendance}>
-            <h4 style={{ fontSize: '13px', fontWeight: 800, margin: '0 0 10px', color: 'var(--pula-navy)' }}>
-              <UserCheck size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
-              Record Attendance for {fullName}
-            </h4>
-            <div className="pula-att-form-grid">
-              <label style={{ fontSize: '11px', fontWeight: 800 }}>
-                Date
+          {/* Teacher Attendance Recording Form (Teacher only) */}
+          {!isParent && (
+            <form className="pula-att-record-form" onSubmit={handleRecordAttendance}>
+              <h4 style={{ fontSize: '13px', fontWeight: 800, margin: '0 0 10px', color: 'var(--pula-navy)' }}>
+                <UserCheck size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
+                Record Attendance for {fullName}
+              </h4>
+              <div className="pula-att-form-grid">
+                <label style={{ fontSize: '11px', fontWeight: 800 }}>
+                  Date
+                  <input
+                    required
+                    type="date"
+                    value={attDate}
+                    onChange={e => setAttDate(e.target.value)}
+                    style={{ width: '100%', padding: '6px 8px', borderRadius: '8px', border: '1px solid #ccc' }}
+                  />
+                </label>
+
+                <label style={{ fontSize: '11px', fontWeight: 800 }}>
+                  Status
+                  <select
+                    value={attStatus}
+                    onChange={e => setAttStatus(e.target.value)}
+                    style={{ width: '100%', padding: '6px 8px', borderRadius: '8px', border: '1px solid #ccc' }}
+                  >
+                    <option value="Present">Present</option>
+                    <option value="Absent">Absent</option>
+                    <option value="Late">Late</option>
+                    <option value="Excused">Excused</option>
+                  </select>
+                </label>
+              </div>
+
+              <label style={{ fontSize: '11px', fontWeight: 800, display: 'block', marginBottom: '10px' }}>
+                Reason / Teacher Note (Optional)
                 <input
-                  required
-                  type="date"
-                  value={attDate}
-                  onChange={e => setAttDate(e.target.value)}
+                  type="text"
+                  placeholder="e.g. Doctor's note, transport delay..."
+                  value={attReason}
+                  onChange={e => setAttReason(e.target.value)}
                   style={{ width: '100%', padding: '6px 8px', borderRadius: '8px', border: '1px solid #ccc' }}
                 />
               </label>
 
-              <label style={{ fontSize: '11px', fontWeight: 800 }}>
-                Status
-                <select
-                  value={attStatus}
-                  onChange={e => setAttStatus(e.target.value)}
-                  style={{ width: '100%', padding: '6px 8px', borderRadius: '8px', border: '1px solid #ccc' }}
-                >
-                  <option value="Present">Present</option>
-                  <option value="Absent">Absent</option>
-                  <option value="Late">Late</option>
-                  <option value="Excused">Excused</option>
-                </select>
-              </label>
-            </div>
-
-            <label style={{ fontSize: '11px', fontWeight: 800, display: 'block', marginBottom: '10px' }}>
-              Reason / Teacher Note (Optional)
-              <input
-                type="text"
-                placeholder="e.g. Doctor's note, transport delay..."
-                value={attReason}
-                onChange={e => setAttReason(e.target.value)}
-                style={{ width: '100%', padding: '6px 8px', borderRadius: '8px', border: '1px solid #ccc' }}
-              />
-            </label>
-
-            <button
-              type="submit"
-              className="pd-primary"
-              style={{ minHeight: '36px', padding: '6px 14px', fontSize: '12px' }}
-            >
-              Save Attendance Record
-            </button>
-          </form>
+              <button
+                type="submit"
+                className="pd-primary"
+                style={{ minHeight: '36px', padding: '6px 14px', fontSize: '12px' }}
+              >
+                Save Attendance Record
+              </button>
+            </form>
+          )}
         </div>
 
         {/* Teacher Observations and Development Notes */}
         <div className="pula-section-card">
           <div className="pula-section-header">
             <h2 className="pula-section-title">Teacher Observations</h2>
-            <button
-              type="button"
-              className="pd-link"
-              onClick={() => setShowAddObsModal(true)}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12.5px' }}
-            >
-              <Plus size={15} /> Add Observation
-            </button>
+            {!isParent && (
+              <button
+                type="button"
+                className="pd-link"
+                onClick={() => setShowAddObsModal(true)}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12.5px' }}
+              >
+                <Plus size={15} /> Add Observation
+              </button>
+            )}
           </div>
 
           <div className="pula-observations-list">
@@ -631,14 +642,16 @@ export default function LearnerProfile({
 
                   <p className="pula-obs-text">{obs.text}</p>
 
-                  <button
-                    type="button"
-                    className="pula-obs-delete-btn"
-                    onClick={() => handleDeleteObservation(obs.id)}
-                    title="Delete observation"
-                  >
-                    <Trash2 size={12} /> Delete
-                  </button>
+                  {!isParent && (
+                    <button
+                      type="button"
+                      className="pula-obs-delete-btn"
+                      onClick={() => handleDeleteObservation(obs.id)}
+                      title="Delete observation"
+                    >
+                      <Trash2 size={12} /> Delete
+                    </button>
+                  )}
                 </div>
               ))
             )}

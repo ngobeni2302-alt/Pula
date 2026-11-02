@@ -105,7 +105,7 @@ export function seedData() {
       participantIds: ['teacher-2', thandoParent.id],
       lastMessage: 'Thank you, teacher!',
       lastMessageAt: '2026-11-02T10:45:00.000Z',
-      unreadCount: { 'teacher-2': 0, [thandoParent.id]: 0 },
+      unreadCount: { 'teacher-2': 0, [thandoParent.id]: 1 },
       createdAt: '2026-11-01T08:00:00.000Z'
     },
     {
@@ -139,7 +139,7 @@ export function seedData() {
       participantIds: ['teacher-2', leratoParent.id],
       lastMessage: "Good morning, Ma'am.",
       lastMessageAt: '2026-10-31T07:20:00.000Z',
-      unreadCount: { 'teacher-2': 0, [leratoParent.id]: 0 },
+      unreadCount: { 'teacher-2': 1, [leratoParent.id]: 0 },
       createdAt: '2026-10-30T08:00:00.000Z'
     }
   ];
