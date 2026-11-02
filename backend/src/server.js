@@ -11,10 +11,10 @@ const dbPath=_resolved;
 const initial={classroom:{name:'Grade 2B',teacher:'Teacher',code:'READ2B',grade:2},learners:[['1','Thando','Sprout',true,'isiZulu','WhatsApp'],['2','Lerato','Bloom',true,'Sepedi','SMS'],['3','Sipho','Seed',true,'English','WhatsApp'],['4','Aisha','Sprout',true,'English','SMS'],['5','Kabelo','Tree',true,'English','SMS'],['6','Naledi','Sprout',true,'English','WhatsApp'],['7','Zanele','Seed',true,'isiZulu','SMS'],['8','Ruan','Seed',true,'English','SMS'],['9','Palesa','Seed',false,'English','WhatsApp'],['10','Neo','Bloom',true,'English','SMS'],['11','Amahle','Bloom',true,'isiZulu','WhatsApp'],['12','Tumi','Tree',true,'English','WhatsApp']].map(([id,name,group,consent,language,channel])=>({id,name,group,consent,language,channel,parentContact:''})),assessments:[],notes:[],activities:[]};
 function load(){try{return JSON.parse(fs.readFileSync(dbPath,'utf8'))}catch{return structuredClone(initial)}}
 let db=load();function save(){fs.writeFileSync(dbPath,JSON.stringify(db,null,2))}
-const ALLOWED_ORIGINS=['http://localhost:5173','https://pula-delta.vercel.app'];
+const ALLOWED_ORIGINS=['https://pula-delta.vercel.app'];
 const app=express();
 // TODO (production): add CSRF tokens once session-based auth is introduced
-app.use(cors({origin:(origin,cb)=>cb(null,!origin||ALLOWED_ORIGINS.includes(origin))}));
+app.use(cors({origin:(origin,cb)=>cb(null,!origin||origin.startsWith('http://localhost')||ALLOWED_ORIGINS.includes(origin))}));
 app.use(express.json({limit:'2mb'}));
 const wrap=f=>(req,res)=>{try{f(req,res)}catch(e){res.status(400).json({error:e.message})}};
 const must=(cond,msg)=>{if(!cond)throw Error(msg)};
