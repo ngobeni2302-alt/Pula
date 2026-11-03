@@ -1,0 +1,19 @@
+services:
+  app:
+    image: pula-team:local
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      USE_JSON_STORE: "true"
+      PORT: "4000"
+      DATA_FILE: /app/backend/data/data.json
+    ports:
+      - "${PULA_PORT:-4000}:4000"
+    volumes:
+      - pula-data:/app/backend/data
+
+volumes:
+  pula-data:

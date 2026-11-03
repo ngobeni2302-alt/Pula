@@ -1,0 +1,645 @@
+{
+  "meta": {
+    "version": "1.0",
+    "subject": "maths",
+    "grades": ["R", "1", "2", "3"],
+    "language": "English",
+    "source": "CAPS Mathematics Foundation Phase",
+    "note": "Independent maths dataset for Lesedi. All learners are invented. Phone numbers are never included. Observations use the shared schema from activitySchema.js."
+  },
+  "rows": [
+
+    {
+      "id": "M-CH-001",
+      "batch": 1,
+      "job": "child_hint",
+      "subject": "maths",
+      "grade": "R",
+      "term": 1,
+      "capsArea": "Counting and number concept: one-to-one correspondence",
+      "capsRef": "CAPS Maths Gr R p.10",
+      "context": {
+        "task": "child_hint",
+        "subject": "maths",
+        "grade": "R",
+        "term": 1,
+        "language": "English",
+        "learner": { "ref": "R-M-01", "firstName": "Mpho", "group": "Seed", "consent": true },
+        "hintLevel": 1,
+        "event": "no_response",
+        "target": "count 3 objects with one-to-one correspondence"
+      },
+      "teacherRequest": "(child is quiet when asked to count 3 blocks)",
+      "idealOutput": "Let's look at this together, Mpho. How many do you have on this side? Count them for me.",
+      "guardrailTags": ["hint_L1", "no_answer_given", "maths_bank", "observation_not_test"],
+      "outputFormat": { "source": "maths_bank", "requiresApproval": false, "handoff": false }
+    },
+
+    {
+      "id": "M-CH-002",
+      "batch": 1,
+      "job": "child_hint",
+      "subject": "maths",
+      "grade": "1",
+      "term": 2,
+      "capsArea": "Addition and subtraction: bridging through 10",
+      "capsRef": "CAPS Maths Gr 1 p.22",
+      "context": {
+        "task": "child_hint",
+        "subject": "maths",
+        "grade": "1",
+        "term": 2,
+        "language": "English",
+        "learner": { "ref": "1-M-01", "firstName": "Lwazi", "group": "Sprout", "consent": true },
+        "hintLevel": 1,
+        "event": "freezes_at_ten",
+        "target": "8 + 5"
+      },
+      "teacherRequest": "(child stops when the sum crosses 10)",
+      "idealOutput": "How many more do you need to get to 10, Lwazi? Start there first.",
+      "guardrailTags": ["hint_L1", "strategy_not_answer", "maths_bank", "bridging_10"],
+      "outputFormat": { "source": "maths_bank", "requiresApproval": false, "handoff": false }
+    },
+
+    {
+      "id": "M-CH-003",
+      "batch": 1,
+      "job": "child_hint",
+      "subject": "maths",
+      "grade": "2",
+      "term": 1,
+      "capsArea": "Addition: count on strategy",
+      "capsRef": "CAPS Maths Gr 2 p.16",
+      "context": {
+        "task": "child_hint",
+        "subject": "maths",
+        "grade": "2",
+        "term": 1,
+        "language": "English",
+        "learner": { "ref": "2-M-01", "firstName": "Dineo", "group": "Sprout", "consent": true },
+        "hintLevel": 2,
+        "event": "counts_all_from_one",
+        "target": "5 + 4"
+      },
+      "teacherRequest": "(child counts all from 1 for 5 + 4 in Grade 2)",
+      "idealOutput": "Watch me: I start at 5 and count on: 5… 6, 7, 8, 9. Try starting at your bigger number, Dineo.",
+      "guardrailTags": ["hint_L2", "strategy_not_answer", "maths_bank", "count_on"],
+      "outputFormat": { "source": "maths_bank", "requiresApproval": false, "handoff": false }
+    },
+
+    {
+      "id": "M-CH-004",
+      "batch": 1,
+      "job": "child_hint",
+      "subject": "maths",
+      "grade": "2",
+      "term": 3,
+      "capsArea": "Place value: tens and units",
+      "capsRef": "CAPS Maths Gr 2 p.38",
+      "context": {
+        "task": "child_hint",
+        "subject": "maths",
+        "grade": "2",
+        "term": 3,
+        "language": "English",
+        "learner": { "ref": "2-M-02", "firstName": "Karabo", "group": "Sprout", "consent": true },
+        "hintLevel": 3,
+        "event": "place_value_error",
+        "target": "write 34 in the correct columns"
+      },
+      "teacherRequest": "(child writes 34 with digits reversed, three tries)",
+      "idealOutput": "This one is tricky, and that is okay, Karabo. In 34: the 3 means three tens (30), the 4 means four units (4). So 34 is 30 + 4. Try reading your number the same way. We can ask your teacher if you are still unsure.",
+      "guardrailTags": ["hint_L3", "worked_example_not_answer", "no_dead_end", "handoff_to_teacher", "place_value"],
+      "outputFormat": { "source": "maths_bank", "requiresApproval": false, "handoff": true }
+    },
+
+    {
+      "id": "M-CH-005",
+      "batch": 1,
+      "job": "child_hint",
+      "subject": "maths",
+      "grade": "3",
+      "term": 1,
+      "capsArea": "Mental maths: smart strategies",
+      "capsRef": "CAPS Maths Gr 3 p.28",
+      "context": {
+        "task": "child_hint",
+        "subject": "maths",
+        "grade": "3",
+        "term": 1,
+        "language": "English",
+        "learner": { "ref": "3-M-01", "firstName": "Bongani", "group": "Bloom", "consent": true },
+        "hintLevel": 1,
+        "event": "semi_concrete_overuse",
+        "target": "14 + 8 without fingers"
+      },
+      "teacherRequest": "(Grade 3 child uses fingers for 14 + 8)",
+      "idealOutput": "You know this one, Bongani. Try it in your head first — then check with your fingers if you need to.",
+      "guardrailTags": ["hint_L1", "strategy_not_answer", "maths_bank", "mental_maths"],
+      "outputFormat": { "source": "maths_bank", "requiresApproval": false, "handoff": false }
+    },
+
+    {
+      "id": "M-TA-001",
+      "batch": 1,
+      "job": "teacher_activity",
+      "subject": "maths",
+      "grade": "R",
+      "term": 1,
+      "capsArea": "Counting and number concept",
+      "capsRef": "CAPS Maths Gr R p.10",
+      "context": {
+        "task": "teacher_activity",
+        "subject": "maths",
+        "grade": "R",
+        "term": 1,
+        "language": "English",
+        "focus": "one-to-one correspondence to 5",
+        "mathsConcept": "one-to-one correspondence",
+        "minutes": 5,
+        "tier": "Seed"
+      },
+      "teacherRequest": "5-minute activity for counting with one-to-one correspondence, Grade R Seed.",
+      "idealOutput": "Draft for teacher approval. Counting bodies, 5 minutes, no materials. 1) Hold up 3 fingers slowly, counting aloud: 1, 2, 3. Children copy. 2) Ask 'How many fingers?' and confirm together. 3) Put 3 blocks in a row, touch each one as you count. 4) Ask a child to show 4 fingers. Observe: who touches each object once while counting? Who skips or double-counts? Home game: count 5 raisins or buttons with your child, touching each one. CAPS Maths Gr R p.10. Teacher and HOD to approve before use.",
+      "guardrailTags": ["teacher_approval_required", "caps_aligned", "concrete", "observation_not_test", "maths"],
+      "outputFormat": { "source": "ai_model", "requiresApproval": true, "handoff": false }
+    },
+
+    {
+      "id": "M-TA-002",
+      "batch": 1,
+      "job": "teacher_activity",
+      "subject": "maths",
+      "grade": "1",
+      "term": 2,
+      "capsArea": "Addition and subtraction: bridging through 10",
+      "capsRef": "CAPS Maths Gr 1 p.22",
+      "context": {
+        "task": "teacher_activity",
+        "subject": "maths",
+        "grade": "1",
+        "term": 2,
+        "language": "English",
+        "focus": "bridging through 10",
+        "mathsConcept": "bridging through 10 (e.g. 8 + 5)",
+        "minutes": 10,
+        "tier": "Sprout",
+        "groupSize": "small_group"
+      },
+      "teacherRequest": "10-minute Sprout maths activity on bridging through 10, Grade 1.",
+      "idealOutput": "Draft for teacher approval. Jump the 10 bridge, 10 minutes, number line 0–20. 1) Show 8 + 5 on the number line. 'How far to 10 from 8?' (2 jumps). 2) 'We used 2. How many left from 5?' (3 left). Land on 13. 3) Children copy with 7 + 6 and 9 + 4. 4) One child explains the jumps to the group. Observe: who freezes at 10? Who splits the second number automatically? CAPS Maths Gr 1 p.22. Teacher and HOD to approve before use.",
+      "guardrailTags": ["teacher_approval_required", "caps_aligned", "semi_concrete", "observation_not_test", "maths"],
+      "outputFormat": { "source": "ai_model", "requiresApproval": true, "handoff": false }
+    },
+
+    {
+      "id": "M-TA-003",
+      "batch": 1,
+      "job": "teacher_activity",
+      "subject": "maths",
+      "grade": "2",
+      "term": 3,
+      "capsArea": "Place value and two-digit operations",
+      "capsRef": "CAPS Maths Gr 2 p.38",
+      "context": {
+        "task": "teacher_activity",
+        "subject": "maths",
+        "grade": "2",
+        "term": 3,
+        "language": "English",
+        "focus": "two-digit subtraction with semi-concrete strategy",
+        "mathsConcept": "lines and dots subtraction",
+        "minutes": 15,
+        "tier": "Sprout",
+        "groupSize": "pair"
+      },
+      "teacherRequest": "15-minute Sprout maths activity on two-digit subtraction, Grade 2.",
+      "idealOutput": "Draft for teacher approval. Lines and dots subtraction, 15 minutes, mini whiteboards. 1) Show 34 − 12 as lines (tens) and dots (units): ||| • and cross out | ••. 2) Count what remains. Write the number sentence. 3) Children try 45 − 23 by drawing first. 4) Challenge: 'Can you do 52 − 17 without drawing lines?' Observe: who moves from drawing to mental calculation? Who still needs every line? CAPS Maths Gr 2 p.38. Teacher and HOD to approve before use.",
+      "guardrailTags": ["teacher_approval_required", "caps_aligned", "semi_concrete", "subtraction", "observation_not_test", "maths"],
+      "outputFormat": { "source": "ai_model", "requiresApproval": true, "handoff": false }
+    },
+
+    {
+      "id": "M-TA-004",
+      "batch": 1,
+      "job": "teacher_activity",
+      "subject": "maths",
+      "grade": "3",
+      "term": 2,
+      "capsArea": "Multi-step word problems and patterns",
+      "capsRef": "CAPS Maths Gr 3 p.28",
+      "context": {
+        "task": "teacher_activity",
+        "subject": "maths",
+        "grade": "3",
+        "term": 2,
+        "language": "English",
+        "focus": "multi-step word problems",
+        "mathsConcept": "reading and solving multi-step word problems",
+        "minutes": 20,
+        "tier": "Tree",
+        "groupSize": "pair"
+      },
+      "teacherRequest": "20-minute Tree maths activity on word problems, Grade 3.",
+      "idealOutput": "Draft for teacher approval. Problem detectives, 20 minutes, word problem cards. 1) Read a multi-step problem aloud: 'There are 125 learners. 48 go home early. Then 17 arrive. How many now?' 2) Children underline key numbers and the question. 3) Each pair writes the number sentences for each step. 4) 'Is there another way?' Pairs share methods. 5) Open challenge: 'Write your own two-step problem for the class.' Observe: who identifies the operation? Who can explain why? CAPS Maths Gr 3 p.28. Teacher and HOD to approve before use.",
+      "guardrailTags": ["teacher_approval_required", "caps_aligned", "multi_step", "word_problems", "observation_not_test", "maths"],
+      "outputFormat": { "source": "ai_model", "requiresApproval": true, "handoff": false }
+    },
+
+    {
+      "id": "M-GA-001",
+      "batch": 2,
+      "job": "gap_explanation",
+      "subject": "maths",
+      "grade": "1",
+      "term": 2,
+      "capsArea": "Counting and addition strategies",
+      "capsRef": "CAPS Maths Gr 1 p.12, p.22",
+      "context": {
+        "task": "gap_explanation",
+        "subject": "maths",
+        "grade": "1",
+        "term": 2,
+        "language": "English",
+        "learner": {
+          "ref": "1-M-02",
+          "firstName": "Siyabonga",
+          "group": "Seed",
+          "consent": true,
+          "weeksInTier": 6,
+          "dbeCode": 2,
+          "mathsSkillsToWork": ["count on from larger number", "one-to-one correspondence past 10"],
+          "observations": [
+            { "item": "counts to 20 reliably", "result": "with_help" },
+            { "item": "one-to-one correspondence to 10", "result": "on_own" },
+            { "item": "adds single digits without counters", "result": "not_yet" },
+            { "item": "bridges through 10", "result": "not_yet" },
+            { "item": "recognises numerals 1–20", "correct": 14, "of": 20 }
+          ],
+          "termProgress": [
+            { "term": 1, "score": 45, "strategy": "counts all from 1" },
+            { "term": 2, "score": 48, "strategy": "counts all from 1" }
+          ],
+          "checkInNote": "Still counting all from 1 every time"
+        },
+        "weeks": 6,
+        "subject": "maths"
+      },
+      "teacherRequest": "Why is Siyabonga in Seed for maths, and what should I do?",
+      "idealOutput": "Siyabonga: single-digit addition without objects is the gap to close now.\nWhat the data shows: recognises 14 of 20 numerals, counts to 10 reliably on his own, but can't yet add single digits without counters or bridge through 10. Still counting all from 1 in term 2.\nWhy he is in Seed: Seed in maths means a learner can't add or subtract single digits without concrete objects. He has been in Seed for 6 weeks — this triggers the Intervention Log review.\nWhy it matters: the Grade 1 to Grade 2 gate requires single-digit operations without counters.\nDo this: (1) Daily count-on game — start at the bigger number, count on the smaller. (2) Number line walk 1–20. (3) Send parent a home game: hold up 5 fingers, count on 3 more (6, 7, 8). (4) Update the Intervention Log.\nMissing: no bridging-through-10 evidence, no HTU observation.\nConfidence: medium. 5 observations over 6 weeks, but term 2 score suggests little change in strategy.",
+      "guardrailTags": ["insight_first", "caps_aligned", "evidence_cited", "seed_alert", "hod_flag", "parent_action", "confidence_stated", "maths"],
+      "outputFormat": { "source": "ai_model", "requiresApproval": false, "handoff": false }
+    },
+
+    {
+      "id": "M-GA-002",
+      "batch": 2,
+      "job": "gap_explanation",
+      "subject": "maths",
+      "grade": "2",
+      "term": 3,
+      "capsArea": "Addition and subtraction: two-digit operations",
+      "capsRef": "CAPS Maths Gr 2 p.38",
+      "context": {
+        "task": "gap_explanation",
+        "subject": "maths",
+        "grade": "2",
+        "term": 3,
+        "language": "English",
+        "learner": {
+          "ref": "2-M-03",
+          "firstName": "Zodwa",
+          "group": "Sprout",
+          "consent": true,
+          "weeksInTier": 10,
+          "dbeCode": 3,
+          "mathsSkillsToWork": ["bridging through 10", "moving from lines-and-dots to mental"],
+          "observations": [
+            { "item": "single-digit addition without counters", "result": "on_own" },
+            { "item": "two-digit addition with drawing", "result": "on_own" },
+            { "item": "two-digit addition mentally", "result": "not_yet" },
+            { "item": "bridges through 10", "result": "with_help" },
+            { "item": "place value tens and units", "result": "on_own" }
+          ],
+          "termProgress": [
+            { "term": 1, "score": 55, "strategy": "tally lines" },
+            { "term": 2, "score": 58, "strategy": "tally lines" },
+            { "term": 3, "score": 57, "strategy": "tally lines — slower this term" }
+          ],
+          "checkInNote": "Slower than last term — seems anxious in maths"
+        },
+        "weeks": 10,
+        "subject": "maths"
+      },
+      "teacherRequest": "Why is Zodwa in Sprout and what changed?",
+      "idealOutput": "Zodwa: tally-line strategy is the gap — she needs to bridge to mental.\nWhat the data shows: single-digit addition is secure. Two-digit addition works with drawing. But mental addition and bridging through 10 are not yet independent. Scores: 55%, 58%, 57% across terms — slightly lower this term. Your note says she seems anxious.\nWhy she is in Sprout: Sprout for maths means relying on semi-concrete strategies and freezing crossing 10. The scores and the strategy match.\nWhy it matters: moving to Bloom needs mental calculation with smart strategies.\nDo this: (1) 'Jump the 10 bridge' game on a number line — 3 sums per day. (2) Check that the text level of her maths work is not too hard (aim for 80%+ success). (3) Parent note: 5-minute fingers game crossing 10 at home.\nMissing: no record of which operation type (addition vs subtraction) shows more difficulty, no check on anxiety trigger.\nConfidence: medium. 5 observations over 10 weeks; the slight score dip and anxiety note warrant a closer look.",
+      "guardrailTags": ["insight_first", "caps_aligned", "tier_rule_applied", "hypothesis_not_conclusion", "parent_action", "confidence_stated", "maths"],
+      "outputFormat": { "source": "ai_model", "requiresApproval": false, "handoff": false }
+    },
+
+    {
+      "id": "M-GA-003",
+      "batch": 2,
+      "job": "gap_explanation",
+      "subject": "maths",
+      "grade": "3",
+      "term": 1,
+      "capsArea": "Place value and mental maths",
+      "capsRef": "CAPS Maths Gr 3 p.24, p.28",
+      "context": {
+        "task": "gap_explanation",
+        "subject": "maths",
+        "grade": "3",
+        "term": 1,
+        "language": "English",
+        "learner": {
+          "ref": "3-M-01",
+          "firstName": "Kagiso",
+          "group": "Bloom",
+          "consent": true,
+          "weeksInTier": 14,
+          "dbeCode": 5,
+          "mathsSkillsToWork": ["explain strategy verbally", "multi-step word problems"],
+          "observations": [
+            { "item": "mental addition to 100", "result": "on_own" },
+            { "item": "place value HTU", "result": "on_own" },
+            { "item": "two-step word problems", "result": "with_help" },
+            { "item": "explains strategy verbally", "result": "not_yet" },
+            { "item": "subtraction with regrouping", "result": "on_own" }
+          ],
+          "termProgress": [
+            { "term": 1, "score": 72, "strategy": "mental — can't explain yet" },
+            { "term": 2, "score": 78, "strategy": "mental — starting to explain" },
+            { "term": 3, "score": 81, "strategy": "mental with explanation" }
+          ],
+          "checkInNote": null
+        },
+        "weeks": 14,
+        "subject": "maths"
+      },
+      "teacherRequest": "Is Kagiso ready to move to Tree?",
+      "idealOutput": "Kagiso: solid Bloom, close to Tree — check word problems and explanation.\nWhat the data shows: mental addition and place value are secure. Subtraction with regrouping is independent. Scores rising: 72%, 78%, 81%. Multi-step word problems still need help, and verbal explanation of strategy is developing.\nWhy she is in Bloom: Bloom for maths means mental calculation with smart strategies and place value. She fits. Tree requires multi-step word problems and explaining why a rule works — she is not yet there on both.\nWhy it matters: the Grade 2 to Grade 3 gate for Tree requires Code 7 (she is Code 5) and multi-step regrouping.\nDo this: one word-problem challenge per day where she must write her number sentences AND explain her method to a partner. If she can do it consistently, consider Tree.\nMissing: no pattern-recognition observation, no Code 7 confirmation.\nConfidence: medium-high on Bloom placement; low on Tree readiness until word problems are checked.",
+      "guardrailTags": ["insight_first", "caps_aligned", "tier_rule_applied", "gate_linked", "confidence_stated", "maths"],
+      "outputFormat": { "source": "ai_model", "requiresApproval": false, "handoff": false }
+    },
+
+    {
+      "id": "M-T-001",
+      "batch": 2,
+      "job": "child_tutor",
+      "subject": "maths",
+      "grade": "1",
+      "term": 3,
+      "capsArea": "Number: counting and addition",
+      "capsRef": "CAPS Maths Gr 1 p.22",
+      "context": {
+        "task": "child_tutor",
+        "subject": "maths",
+        "grade": "1",
+        "term": 3,
+        "language": "English",
+        "learner": { "ref": "1-M-03", "firstName": "Ayanda", "group": "Seed", "consent": true },
+        "event": "silent_or_anxious",
+        "setting": "one_to_one_with_Lesedi"
+      },
+      "teacherRequest": "(child is silent and looks away when asked to count)",
+      "idealOutput": "Hi Ayanda. There are no wrong answers right now — we are just exploring. Can you show me with your fingers how many 3 is? Any answer helps me.",
+      "guardrailTags": ["low_pressure", "private_practice", "no_comparison_to_others", "maths_bank"],
+      "outputFormat": { "source": "maths_bank", "requiresApproval": false, "handoff": false }
+    },
+
+    {
+      "id": "M-T-002",
+      "batch": 2,
+      "job": "child_tutor",
+      "subject": "maths",
+      "grade": "2",
+      "term": 4,
+      "capsArea": "Addition strategy: count on vs count all",
+      "capsRef": "CAPS Maths Gr 2 p.16",
+      "context": {
+        "task": "child_tutor",
+        "subject": "maths",
+        "grade": "2",
+        "term": 4,
+        "language": "English",
+        "learner": { "ref": "2-M-04", "firstName": "Themba", "group": "Sprout", "consent": true, "sessions": 3 },
+        "event": "same_error_third_session",
+        "target": "addition",
+        "errorPattern": "count all from 1"
+      },
+      "teacherRequest": "(child counts all from 1 for addition for the third session in a row)",
+      "idealOutput": {
+        "child": "Themba, you are remembering the steps well. This time, let's try starting from the bigger number instead of going back to 1. Ready? Say the bigger number out loud first.",
+        "teacherFlag": "Themba has used the 'count all from 1' strategy for addition in 3 sessions. Consider a 'count on' or 'bridging through 10' activity.",
+        "parentTip": "Draft for teacher approval: Ask Themba to hold up 5 fingers on one hand and count on 3 more from 5 — not from 1. Praise the try."
+      },
+      "guardrailTags": ["strategy_not_answer", "flags_teacher", "parent_loop", "draft_for_approval", "maths_bank"],
+      "outputFormat": { "source": "maths_bank", "requiresApproval": true, "handoff": false }
+    },
+
+    {
+      "id": "M-T-003",
+      "batch": 2,
+      "job": "child_tutor",
+      "subject": "maths",
+      "grade": "3",
+      "term": 2,
+      "capsArea": "Mental maths: explaining strategy",
+      "capsRef": "CAPS Maths Gr 3 p.28",
+      "context": {
+        "task": "child_tutor",
+        "subject": "maths",
+        "grade": "3",
+        "term": 2,
+        "language": "English",
+        "learner": { "ref": "3-M-02", "firstName": "Nomsa", "group": "Bloom", "consent": true },
+        "event": "correct_no_explanation",
+        "target": "28 + 7"
+      },
+      "teacherRequest": "(child gets 35 correct but can't explain how)",
+      "idealOutput": "Well done, Nomsa! Now teach me: how did you get that answer? I want to learn your way.",
+      "guardrailTags": ["praise_effort", "child_explains", "extends_thinking", "maths_bank"],
+      "outputFormat": { "source": "maths_bank", "requiresApproval": false, "handoff": false }
+    },
+
+    {
+      "id": "M-PN-001",
+      "batch": 3,
+      "job": "parent_note",
+      "subject": "maths",
+      "grade": "2",
+      "term": 3,
+      "capsArea": "Parent communication: maths home activity",
+      "capsRef": null,
+      "context": {
+        "task": "parent_note",
+        "subject": "maths",
+        "grade": "2",
+        "term": 3,
+        "language": "English",
+        "learner": {
+          "ref": "2-M-03",
+          "firstName": "Zodwa",
+          "group": "Sprout",
+          "consent": true,
+          "mathsSkillsToWork": ["bridging through 10"],
+          "termProgress": [
+            { "term": 1, "score": 55 },
+            { "term": 2, "score": 58 },
+            { "term": 3, "score": 57 }
+          ]
+        },
+        "channel": "WhatsApp"
+      },
+      "teacherRequest": "Parent note with a home maths activity for Zodwa.",
+      "idealOutput": "Draft for teacher approval. Hi! Zodwa is working on adding numbers that cross 10. A quick home game: hold up 8 fingers, then count on 5 more (9, 10, 11, 12, 13). Ask her to tell you the answer. Praise the trying. Teacher: ______",
+      "guardrailTags": ["teacher_approval_required", "home_activity", "no_comparison_to_others", "plain_language", "maths"],
+      "outputFormat": { "source": "ai_model", "requiresApproval": true, "handoff": false }
+    },
+
+    {
+      "id": "M-PN-002",
+      "batch": 3,
+      "job": "parent_note",
+      "subject": "maths",
+      "grade": "1",
+      "term": 2,
+      "capsArea": "Parent communication: SMS maths note",
+      "capsRef": null,
+      "context": {
+        "task": "parent_note",
+        "subject": "maths",
+        "grade": "1",
+        "term": 2,
+        "language": "English",
+        "learner": {
+          "ref": "1-M-02",
+          "firstName": "Siyabonga",
+          "group": "Seed",
+          "consent": true,
+          "mathsSkillsToWork": ["count on from larger number"],
+          "termProgress": [{ "term": 1, "score": 45 }, { "term": 2, "score": 48 }]
+        },
+        "channel": "SMS",
+        "maxChars": 160
+      },
+      "teacherRequest": "Short SMS about Siyabonga's maths progress.",
+      "idealOutput": "Draft for teacher approval. Siyabonga is working hard at counting. Tonight: hold up 5 fingers, count on 3 more (6,7,8). Praise the try. Contact me with questions.",
+      "guardrailTags": ["teacher_approval_required", "fits_one_sms", "calm_tone", "no_alarm", "maths"],
+      "outputFormat": { "source": "ai_model", "requiresApproval": true, "handoff": false }
+    },
+
+    {
+      "id": "M-HOD-001",
+      "batch": 3,
+      "job": "hod_insight",
+      "subject": "maths",
+      "grade": "2",
+      "term": 4,
+      "capsArea": "Classroom health check: maths",
+      "capsRef": null,
+      "context": {
+        "task": "hod_insight",
+        "subject": "maths",
+        "grade": "2",
+        "term": 4,
+        "language": "English",
+        "classroom": {
+          "name": "Grade 2B",
+          "subject": "maths",
+          "tierCounts": { "Seed": 3, "Sprout": 5, "Bloom": 3, "Tree": 1 },
+          "learners": 12,
+          "noConsent": 1,
+          "seedProgress": [
+            { "scoreChange": 8 },
+            { "scoreChange": 6 },
+            { "scoreChange": 2, "note": "same strategy 3 terms in a row" }
+          ]
+        }
+      },
+      "teacherRequest": "Maths health check for Grade 2B.",
+      "idealOutput": "Grade 2B maths: 3 of 12 learners (25%) are in Seed — within range, but one is at risk.\nGood news: 2 of the 3 Seed learners gained 6–8 score points this year, so they are moving.\nConcern: the third gained only 2 points and has used the same strategy for 3 terms. This meets the stagnation rule — a strategy change and Intervention Log review are needed.\nRecommendation: share what is working for the two who improved with the third learner's teacher. Get the consent form to the family without consent this week.\nConfidence: medium. Based on 11 learners with data.",
+      "guardrailTags": ["insight_first", "hod_flag_explained", "consent_noted", "no_names_needed", "confidence_stated", "maths"],
+      "outputFormat": { "source": "ai_model", "requiresApproval": false, "handoff": false }
+    },
+
+    {
+      "id": "M-GR-001",
+      "batch": 3,
+      "job": "guardrail",
+      "subject": "maths",
+      "grade": "R",
+      "term": 1,
+      "capsArea": "Assessment: Grade R maths",
+      "capsRef": "CAPS Maths Gr R p.7",
+      "context": {
+        "task": "guardrail",
+        "subject": "maths",
+        "grade": "R",
+        "term": 1,
+        "language": "English"
+      },
+      "teacherRequest": "Make a maths test with marks for my Grade R class.",
+      "idealOutput": "Grade R maths is assessed through observation during play and routine activities, not formal tests. I can draft an observation checklist using the CAPS maths items for this term if that would help.",
+      "guardrailTags": ["caps_policy", "redirects_to_checklist", "observation_not_test", "maths"],
+      "outputFormat": { "source": "guardrail", "requiresApproval": false, "handoff": false }
+    },
+
+    {
+      "id": "M-GR-002",
+      "batch": 3,
+      "job": "guardrail",
+      "subject": "maths",
+      "grade": "2",
+      "term": 2,
+      "capsArea": "Dependency safeguard: giving a child the answer",
+      "capsRef": null,
+      "context": {
+        "task": "guardrail",
+        "subject": "maths",
+        "grade": "2",
+        "term": 2,
+        "language": "English"
+      },
+      "teacherRequest": "Solve the subtraction problem for Dineo so she can copy the answer.",
+      "idealOutput": "I won't give a child the maths answer directly, because working it out is how they learn. I can give a hint — like showing a simpler version of the same problem — and then let them try again. Do you want me to draft a hint for this problem for you to approve?",
+      "guardrailTags": ["no_answer_given", "hint_ladder", "teacher_approval_required", "maths", "pedagogy"],
+      "outputFormat": { "source": "guardrail", "requiresApproval": false, "handoff": false }
+    },
+
+    {
+      "id": "M-CI-001",
+      "batch": 3,
+      "job": "class_insight",
+      "subject": "maths",
+      "grade": "2",
+      "term": 4,
+      "capsArea": "Class-level maths skill patterns",
+      "capsRef": null,
+      "context": {
+        "task": "class_insight",
+        "subject": "maths",
+        "grade": "2",
+        "term": 4,
+        "language": "English",
+        "classroom": {
+          "name": "Grade 2B",
+          "subject": "maths",
+          "tierCounts": { "Seed": 3, "Sprout": 5, "Bloom": 3, "Tree": 1 },
+          "mathsSkillGaps": {
+            "bridging through 10": 5,
+            "two-digit subtraction": 3,
+            "place value tens and units": 2,
+            "count on strategy": 4
+          }
+        }
+      },
+      "teacherRequest": "What should I focus on in maths this week for the whole class?",
+      "idealOutput": "Bridging through 10 is the skill most learners need (5 of the class), followed by count on strategy (4). Run one 15-minute whole-class bridging game using a number line, then a small-group count-on practice for the 4 who need it. Observe who crosses 10 independently and re-check in 2 weeks.\nConfidence: medium. Using listed skill gaps only — no observation scores provided.",
+      "guardrailTags": ["insight_first", "class_level", "actionable", "confidence_stated", "maths"],
+      "outputFormat": { "source": "ai_model", "requiresApproval": false, "handoff": false }
+    }
+
+  ]
+}

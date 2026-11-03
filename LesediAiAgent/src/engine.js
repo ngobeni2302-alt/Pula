@@ -1,152 +1,170 @@
 /**
  * engine.js
- * Lesedi task router and prompt builder — dataset v3.
+ * Lesedi task router and prompt builder — v4 (literacy + maths).
  *
- * Supported tasks:
- *   child_hint       — hint ladder (offline phrase bank, levels 1–3)
- *   child_tutor      — 1-to-1 tutor session (offline phrase bank + AI for complex events)
- *   teacher_activity — CAPS-aligned activity draft
- *   class_insight    — class-level sound / tier pattern analysis
- *   gap_explanation  — evidence-based tier placement explanation (v3: insight_first format)
- *   hod_insight      — HOD classroom health and stagnation alerts
+ * Supported tasks (8 total, both subjects):
+ *   child_hint       — hint ladder levels 1–3 (offline phrase bank, no AI)
+ *   child_tutor      — 1-to-1 session (offline phrase bank + AI fallback)
+ *   teacher_activity — CAPS-aligned activity draft (literacy OR maths)
+ *   class_insight    — class-level pattern analysis (literacy OR maths)
+ *   gap_explanation  — evidence-based tier explanation (literacy OR maths)
+ *   hod_insight      — HOD health check and stagnation alerts
  *   parent_note      — WhatsApp / SMS draft for teacher approval
- *   guardrail        — policy refusal explanations
+ *   guardrail        — policy refusal explanation
  *
- * Flow:
- *   1. checkGuardrails() — hard policy check, returns early if blocked
- *   2. child_hint / child_tutor — serve from phraseBank (no AI call)
- *   3. All other tasks — build system + user prompt and call the AI adapter
+ * WHAT CHANGED IN v4
+ *   - All 8 tasks are fully subject-aware (subject: 'literacy' | 'maths')
+ *   - child_hint and child_tutor route to mathsBank when subject === 'maths'
+ *   - teacher_activity uses activitySchema lookup + subject-specific AI prompt
+ *   - gap_explanation passes richer tier rule (capsRef + strategies) from tierRules v4
+ *   - hod_insight fires isSeedCritical() and isStagnant() IN CODE, not via AI prompt
+ *   - PROGRESSION_GATES now used in gap_explanation and hod_insight prompts (was unused)
+ *   - buildChildHintPrompt removed (was dead code — child_hint never reaches PROMPT_BUILDERS)
  *
- * The engine never reads data.json directly.
+ * FLOW
+ *   1. checkGuardrails() — blocks bad requests, returns early
+ *   2. child_hint        — routes to literacy OR maths phrase bank (no AI)
+ *   3. child_tutor       — routes to literacy OR maths phrase bank; AI for unknown events
+ *   4. All other tasks   — builds subject-aware prompt, calls AI adapter
  */
 
-import { checkGuardrails }                        from './guardrails.js';
-import { resolveChildPhrase, resolveTutorPhrase, PRAISE_PHRASES } from './phraseBank.js';
-import { callAI }                                 from './azureAdapter.js';
-import { formatAllTierRules, formatTierRule, PROGRESSION_GATES } from './tierRules.js';
+import { checkGuardrails }                                           from './guardrails.js';
+import { resolveChildPhrase, resolveTutorPhrase, PRAISE_PHRASES }   from './phraseBank.js';
+import { resolveMathsChildPhrase, resolveMathsTutorPhrase,
+         MATHS_PRAISE_PHRASES }                                      from './mathsBank.js';
+import { callAI }                                                    from './azureAdapter.js';
+import {
+  formatAllTierRules,
+  formatTierRule,
+  formatGate,
+  isSeedCritical,
+  isStagnant,
+  PROGRESSION_GATES,
+}                                                                    from './tierRules.js';
+import { lookupActivity, formatActivityForPrompt }                   from './activitySchema.js';
 
 // ---------------------------------------------------------------------------
-// System preamble — injected into every AI prompt
+// System preamble — injected into every AI call
+// Kept concise; subject-specific detail goes in the user prompt.
 // ---------------------------------------------------------------------------
-const CAPS_PREAMBLE = `You are Lesedi, a CAPS-aligned teaching assistant for South African Foundation Phase classrooms (Grades R to 3).
+const CAPS_PREAMBLE = `You are Lesedi, a CAPS-aligned teaching assistant for South African Foundation Phase classrooms (Grades R to 3), supporting both Literacy and Mathematics.
 
 Your rules:
-- Never give a child the answer directly. Use hint ladders (levels 1, 2, 3). At level 3 give a worked example, then let the child retry. Only hand off to the teacher after the retry fails.
+- Never give a child the answer directly. Use hint ladders (levels 1, 2, 3).
+  At level 3: give a worked example using a DIFFERENT number or word, invite the child to retry, then offer teacher handoff. Never end at a dead end.
 - Never diagnose a learner. Describe evidence from observations only.
 - Never assign a learner to a group. Groups are always the teacher's decision.
-- All activities, parent notes, and parent tips are drafts. They require teacher and HOD approval before use.
-- Grade R assessment is informal — never produce a marked test for Grade R.
-- Never repeat, store, or use phone numbers or parent contact details.
-- Always cite the CAPS page reference when suggesting an activity or noting a gap.
-- State your evidence limits honestly (number of observations, missing data, confidence level).
-- Use plain language suitable for a WhatsApp or SMS message when writing parent notes.
-- Sound names, not letter names, for Grade R and Grade 1 phonics work.
-- Tier groups (Seed, Sprout, Bloom, Tree) are used for Grades R to 3 and carry across grades.
-- Gap analysis output format (always follow this order):
-    1. One-line insight: "FirstName: [summary in plain language]."
-    2. "What the data shows:" — list evidence only.
-    3. "Why they are in [tier]:" — cite the tier rule.
-    4. "Why it matters:" — link to the relevant progression gate if applicable.
-    5. "Do this:" — one or two concrete next steps.
-    6. "Missing:" — name what evidence you don't have.
-    7. "Confidence:" — low | medium | medium-high | high, with a reason.
-- HOD insights follow the same format but use classroom-level data (no individual names unless flagging a critical risk).
+- All activities, parent notes, and parent tips are DRAFTS. They require teacher and HOD approval before use. Always mark drafts clearly.
+- Grade R assessment (literacy and maths) is informal and observational — never produce a marked test.
+- Never repeat, store, or use phone numbers or contact details.
+- Cite the CAPS page reference in every activity and gap explanation.
+- State your evidence limits honestly: number of observations, missing data, confidence level.
+- Use plain language for parent notes (WhatsApp or SMS).
+- For literacy: use sound names (not letter names) in Grade R and Grade 1.
+- For maths: name the strategy the child is using (count all, count on, bridging, mental).
+- Tiers (Seed, Sprout, Bloom, Tree) apply to BOTH literacy and maths, Grades R to 3, and carry across grades.
 - End every teacher-facing activity or parent note with: "Teacher and HOD to approve before use."
 
-Tier rules for placement explanations:
+Gap analysis output format — follow this order for EVERY gap_explanation and hod_insight:
+  1. "[FirstName]: [one-line plain-language summary]."
+  2. "What the data shows:" — list evidence only, no interpretation.
+  3. "Why they are in [tier]:" — cite the tier rule and CAPS reference.
+  4. "Why it matters:" — link to the relevant progression gate.
+  5. "Do this:" — one or two concrete next steps including a parent action.
+  6. "Missing:" — name what evidence you do not have.
+  7. "Confidence:" — low | medium | medium-high | high, with a reason.
+
+Tier rules (both subjects):
 ${formatAllTierRules()}`;
 
 // ---------------------------------------------------------------------------
-// Prompt builders
+// Prompt builders — one per task, each fully subject-aware
 // ---------------------------------------------------------------------------
 
-function buildChildHintPrompt(ctx) {
-  const { grade, term, learner, hintLevel, event, target } = ctx;
-  return {
-    system: CAPS_PREAMBLE,
-    user: `Task: child_hint
-Grade: ${grade} | Term: ${term}
-Learner first name: ${learner?.firstName ?? 'unknown'}
-Hint level: ${hintLevel}
-Event: ${event}
-Target skill: ${target}
-
-Give a single short hint (one or two sentences maximum) suitable for a child of this age. Do not give the answer. If this is level 3, give a worked example using a different but related word or problem, then invite the child to retry before mentioning the teacher.`,
-  };
-}
-
-function buildChildTutorPrompt(ctx) {
-  const { grade, term, learner, event, setting, target, errorPattern, sessions } = ctx;
-  return {
-    system: CAPS_PREAMBLE,
-    user: `Task: child_tutor
-Grade: ${grade} | Term: ${term}
-Learner first name: ${learner?.firstName ?? 'unknown'} | Group: ${learner?.group ?? 'unknown'}
-Setting: ${setting ?? 'one_to_one_with_Lesedi'}
-Event: ${event}
-${target       ? `Target: ${target}` : ''}
-${errorPattern ? `Error pattern: ${errorPattern}` : ''}
-${sessions     ? `Sessions so far: ${sessions}` : ''}
-
-Reply in three parts separated by "|||":
-CHILD: A short, warm, low-pressure reply directly to the child. Maximum two sentences. No answer given.
-TEACHER_FLAG: A brief flag for the teacher dashboard (only if the event signals a pattern or risk). Leave blank if not needed.
-PARENT_TIP: A short home activity tip, marked "Draft for teacher approval." Leave blank if not needed.`,
-  };
-}
-
 function buildTeacherActivityPrompt(ctx) {
-  const { grade, term, focus, minutes, groupSize, soundsLearnt = [] } = ctx;
-  const sounds = soundsLearnt.length ? `Sounds already learnt: ${soundsLearnt.join(', ')}.` : '';
-  const group  = groupSize ? `Group size: ${groupSize}.` : 'Whole class.';
+  const {
+    grade, term, subject = 'literacy',
+    focus, minutes, groupSize, tier,
+    soundsLearnt = [], mathsConcept,
+  } = ctx;
+
+  // Try to serve a built-in example as scaffolding context
+  const example = lookupActivity(subject, tier ?? 'Sprout', grade, term);
+  const exampleBlock = example
+    ? `Here is a built-in example activity for this tier/subject for reference:\n${formatActivityForPrompt(example)}`
+    : '';
+
+  const subjectLine = subject === 'maths'
+    ? `Maths concept: ${mathsConcept ?? focus}`
+    : `Literacy focus: ${focus}${soundsLearnt.length ? `\nSounds already learnt: ${soundsLearnt.join(', ')}` : ''}`;
+
   return {
     system: CAPS_PREAMBLE,
     user: `Task: teacher_activity
-Grade: ${grade} | Term: ${term}
-Focus: ${focus}
-Duration: ${minutes} minutes
-${group}
-${sounds}
+Subject: ${subject} | Grade: ${grade} | Term: ${term}
+${subjectLine}
+Duration: ${minutes ?? 15} minutes
+Group size: ${groupSize ?? 'whole class'}
 
-Draft a CAPS-aligned activity for teacher approval. Include: numbered steps, an observation note (what to look for, not a test), the CAPS page reference, and whether materials are needed. End with "Teacher and HOD to approve before use."`,
+${exampleBlock}
+
+Draft a CAPS-aligned ${subject} activity for teacher approval. The activity must:
+- Follow the shared activity structure: title, focus, materials needed (list none if none), numbered steps, observation note, home game for parents.
+- Include the CAPS page reference for this grade and concept.
+- Use an observation note (not a test): what to watch for and record.
+- Be appropriate for ${tier ?? 'this tier'} in Grade ${grade}.
+- End with "Teacher and HOD to approve before use."`,
   };
 }
 
 function buildClassInsightPrompt(ctx) {
   const { grade, term, subject = 'literacy', classroom = {} } = ctx;
-  const { soundsToPractise = {}, tierCounts = {} } = classroom;
-
-  const soundList = Object.entries(soundsToPractise)
-    .sort(([, a], [, b]) => b - a)
-    .map(([s, n]) => `  ${s}: ${n} learner${n !== 1 ? 's' : ''}`)
-    .join('\n') || '  (none provided)';
+  const { tierCounts = {}, soundsToPractise = {}, mathsSkillGaps = {} } = classroom;
 
   const tierList = Object.entries(tierCounts)
     .map(([t, n]) => `  ${t}: ${n}`)
     .join('\n') || '  (none provided)';
 
+  // Subject-specific gap summary
+  const gapBlock = subject === 'maths'
+    ? `Maths skill gaps across the class (skill: count of learners):\n` +
+      (Object.entries(mathsSkillGaps).sort(([, a], [, b]) => b - a)
+        .map(([k, n]) => `  ${k}: ${n} learner${n !== 1 ? 's' : ''}`)
+        .join('\n') || '  (none provided)')
+    : `Sounds most learners need (soundsToPractise):\n` +
+      (Object.entries(soundsToPractise).sort(([, a], [, b]) => b - a)
+        .map(([s, n]) => `  ${s}: ${n} learner${n !== 1 ? 's' : ''}`)
+        .join('\n') || '  (none provided)');
+
   return {
     system: CAPS_PREAMBLE,
     user: `Task: class_insight
-Grade: ${grade} | Term: ${term} | Subject: ${subject}
+Subject: ${subject} | Grade: ${grade} | Term: ${term}
 Class: ${classroom.name ?? 'unknown'}
 
-Tier counts:
+Tier distribution:
 ${tierList}
 
-Sounds most learners need (from soundsToPractise):
-${soundList}
+${gapBlock}
 
-Give a short class-level insight: which sound to teach this week and why, what the tier distribution means, and one concrete next step. State your confidence and what data you are missing.`,
+Give a short class-level insight:
+- For ${subject}: what to teach this week and why (most learners need it).
+- What the tier distribution means for this class right now.
+- One concrete next step for the teacher.
+State your confidence and what data you are missing.`,
   };
 }
 
 function buildGapExplanationPrompt(ctx) {
-  const { grade, term, learner, weeks, subject = 'literacy' } = ctx;
+  const { grade, term, subject = 'literacy', learner, weeks } = ctx;
   const observations = learner.observations  ?? [];
   const termProgress = learner.termProgress  ?? [];
   const weeksInTier  = learner.weeksInTier   ?? null;
   const dbeCode      = learner.dbeCode       ?? null;
+
+  // CODE-level HOD alert checks (no longer delegated to AI)
+  const seedAlert   = isSeedCritical(learner.group, weeksInTier);
+  const stagnantAlert = isStagnant(weeksInTier);
 
   const obs = observations
     .map(o => {
@@ -155,36 +173,60 @@ function buildGapExplanationPrompt(ctx) {
       if ('count' in o)                return `  - ${o.item}: ${o.count}`;
       if ('result' in o)               return `  - ${o.item}: ${o.result}`;
       if ('values' in o)               return `  - ${o.item}: ${o.values.join(', ')}`;
+      if ('strategy' in o)             return `  - ${o.item}: strategy used — ${o.strategy}`;
       return `  - ${o.item}`;
     })
     .join('\n');
 
-  const progress = termProgress
-    .map(t => `  Term ${t.term}: ${t.wpm} wpm, ${t.accuracy}% accuracy`)
-    .join('\n');
+  // For literacy: wpm/accuracy progress. For maths: scoreProgress or strategy notes.
+  const progress = subject === 'literacy'
+    ? termProgress
+        .filter(t => t.wpm != null)
+        .map(t => `  Term ${t.term}: ${t.wpm} wpm, ${t.accuracy}% accuracy`)
+        .join('\n')
+    : termProgress
+        .filter(t => t.score != null || t.strategy != null)
+        .map(t => `  Term ${t.term}: ${t.score != null ? `score ${t.score}%` : ''} ${t.strategy ? `| strategy: ${t.strategy}` : ''}`.trim())
+        .join('\n');
 
-  const tierRule = formatTierRule(learner.group, subject);
+  const tierRule  = formatTierRule(learner.group, subject);
+  const gateBlock = formatGate(grade);
+
+  const alertBlock = [
+    seedAlert    ? `⚠️ SEED ALERT: ${learner.firstName} has been in Seed for ${weeksInTier} weeks. HOD review and Intervention Log update are required.` : '',
+    stagnantAlert && !seedAlert ? `⚠️ STAGNATION ALERT: ${learner.firstName} has been in the same tier for ${weeksInTier} weeks. A strategy change is recommended.` : '',
+  ].filter(Boolean).join('\n');
+
+  // Subject-specific extra fields
+  const extraBlock = subject === 'literacy'
+    ? learner.soundsToPractise?.length ? `Sounds to practise: ${learner.soundsToPractise.join(', ')}` : ''
+    : learner.mathsSkillsToWork?.length ? `Maths skills to work on: ${learner.mathsSkillsToWork.join(', ')}` : '';
 
   return {
     system: CAPS_PREAMBLE,
     user: `Task: gap_explanation
-Grade: ${grade} | Term: ${term} | Subject: ${subject}
+Subject: ${subject} | Grade: ${grade} | Term: ${term}
 Learner: ${learner.firstName} | Group: ${learner.group}
-${dbeCode      ? `DBE code: ${dbeCode}`                             : 'DBE code: not yet recorded'}
-${weeksInTier  ? `Weeks in current tier: ${weeksInTier}`           : ''}
+${dbeCode      ? `DBE code: ${dbeCode}`               : 'DBE code: not yet recorded'}
+${weeksInTier  ? `Weeks in current tier: ${weeksInTier}` : ''}
 Observation window: ${weeks || '?'} weeks
 
+${alertBlock ? alertBlock + '\n' : ''}
 Relevant tier rule:
 ${tierRule}
+
+Relevant progression gate:
+${gateBlock}
 
 Observations:
 ${obs || '  (none provided)'}
 
 ${progress ? `Term progress:\n${progress}` : ''}
-${learner.checkInNote  ? `Teacher note: ${learner.checkInNote}`  : ''}
-${learner.soundsToPractise?.length ? `Sounds to practise: ${learner.soundsToPractise.join(', ')}` : ''}
+${learner.checkInNote ? `Teacher note: ${learner.checkInNote}` : ''}
+${extraBlock}
 
-Use the gap analysis output format from your rules. Include a parent action in "Do this". State whether the Seed 4-week HOD alert applies if weeksInTier >= 4 and group is Seed.`,
+Use the gap analysis output format. Include a parent action in "Do this".
+${seedAlert ? 'The Seed 4-week HOD alert has already been flagged above — acknowledge it in your response.' : ''}`,
   };
 }
 
@@ -192,72 +234,102 @@ function buildHodInsightPrompt(ctx) {
   const { grade, term, subject = 'literacy', learner, classroom = {} } = ctx;
   const { tierCounts = {}, seedProgress = [], noConsent = 0, learners: total = 0 } = classroom;
 
+  // Individual stagnation check in code
+  const stagnationAlert = learner && isStagnant(learner.weeksInTier)
+    ? `⚠️ STAGNATION ALERT: ${learner.firstName} has been in ${learner.group} for ${learner.weeksInTier} weeks (subject: ${learner.subject ?? subject}). A strategy change is recommended.`
+    : null;
+
   const tierSummary = Object.entries(tierCounts)
     .map(([t, n]) => `  ${t}: ${n}`)
     .join('\n') || '  (none provided)';
 
   const seedRows = seedProgress
-    .map((s, i) => `  Learner ${i + 1}: +${s.wpmChange ?? '?'} wpm${s.note ? ` (${s.note})` : ''}`)
+    .map((s, i) => {
+      const metric = subject === 'maths'
+        ? `score change: ${s.scoreChange ?? '?'}%`
+        : `wpm change: ${s.wpmChange ?? '?'}`;
+      return `  Learner ${i + 1}: ${metric}${s.note ? ` (${s.note})` : ''}`;
+    })
     .join('\n');
-
-  // Individual stagnation alert (HOD-002 pattern)
-  const stagnationBlock = learner
-    ? `Individual learner: ${learner.firstName} | Group: ${learner.group} | Subject: ${learner.subject ?? subject} | Weeks in tier: ${learner.weeksInTier ?? 'unknown'}`
-    : '';
 
   return {
     system: CAPS_PREAMBLE,
     user: `Task: hod_insight
-Grade: ${grade} | Term: ${term} | Subject: ${subject}
+Subject: ${subject} | Grade: ${grade} | Term: ${term}
 Class: ${classroom.name ?? 'unknown'} | Total learners: ${total}
 Learners without consent: ${noConsent}
 
 Tier distribution:
 ${tierSummary}
 
-Seed learner progress this year (wpm change, anonymised):
+Seed learner progress this year (anonymised):
 ${seedRows || '  (none provided)'}
 
-${stagnationBlock}
-
-Give an HOD-level insight following the gap analysis format. Do not use individual learner names unless flagging a critical risk. State whether any Seed learners exceed 4 weeks and trigger the Intervention Log review. Give one concrete recommendation. State confidence and missing data.`,
+${stagnationAlert ? stagnationAlert + '\n' : ''}
+Give an HOD-level insight:
+- Do not name individual learners unless flagging a critical risk that has already been flagged above.
+- Note if any Seed learners trigger the 4-week Intervention Log review (${total ? `${Math.round(noConsent/total*100)}% without consent` : 'consent data missing'}).
+- State whether the class distribution is healthy for this point in the year.
+- Give one concrete recommendation.
+- State confidence and missing data.`,
   };
 }
 
 function buildParentNotePrompt(ctx) {
-  const { grade, term, learner, channel, maxChars } = ctx;
-  const charLimit     = maxChars ? `Maximum ${maxChars} characters (fits one ${channel} message).` : '';
-  const latestProg    = (learner.termProgress ?? []).slice(-1)[0];
-  const latestLine    = latestProg
+  const { grade, term, subject = 'literacy', learner, channel, maxChars } = ctx;
+  const charLimit  = maxChars ? `Maximum ${maxChars} characters (fits one ${channel} message).` : '';
+  const latestProg = (learner.termProgress ?? []).slice(-1)[0];
+
+  const progressLine = subject === 'literacy' && latestProg?.wpm
     ? `Latest reading: Term ${latestProg.term}, ${latestProg.wpm} wpm, ${latestProg.accuracy}% accuracy.`
+    : subject === 'maths' && latestProg?.score != null
+    ? `Latest maths: Term ${latestProg.term}, ${latestProg.score}% score.`
     : '';
-  const soundsLine    = learner.soundsToPractise?.length
-    ? `Sounds to practise: ${learner.soundsToPractise.join(', ')}.`
+
+  const focusLine = subject === 'literacy'
+    ? learner.soundsToPractise?.length
+      ? `Sounds to practise: ${learner.soundsToPractise.join(', ')}.`
+      : ''
+    : learner.mathsSkillsToWork?.length
+    ? `Maths skills to work on: ${learner.mathsSkillsToWork.join(', ')}.`
     : '';
 
   return {
     system: CAPS_PREAMBLE,
     user: `Task: parent_note
-Grade: ${grade} | Term: ${term}
+Subject: ${subject} | Grade: ${grade} | Term: ${term}
 Learner: ${learner.firstName} | Group: ${learner.group}
 Channel: ${channel}
 ${charLimit}
-${latestLine}
-${soundsLine}
+${progressLine}
+${focusLine}
 
-Draft a short, warm parent note. Use plain language. Include one home activity linked to the sounds to practise or the current focus. Do not compare to other children. Do not diagnose. Do not include phone numbers or contact details. End with "Teacher: ______". If the channel is SMS stay under 160 characters. Mark as "Draft for teacher approval." Add a note if translation to another language needs a native-speaker reviewer.`,
+Draft a short, warm parent note:
+- Use plain language.
+- Include ONE home activity linked to ${subject === 'maths' ? 'the maths skill to work on' : 'the sounds to practise'}.
+- Do not compare to other children. Do not diagnose.
+- Do not include phone numbers or contact details.
+- End with "Teacher: ______".
+- If SMS: stay under 160 characters.
+- Mark as "Draft for teacher approval."
+- If a translation to another language is needed, add: "Translation needs a native-speaker reviewer."`,
   };
 }
 
 function buildGuardrailPrompt(ctx) {
-  const { grade, term, requestText } = ctx;
+  const { grade, term, subject = 'literacy', requestText } = ctx;
   return {
     system: CAPS_PREAMBLE,
     user: `Task: guardrail
-Grade: ${grade} | Term: ${term}
+Subject: ${subject} | Grade: ${grade} | Term: ${term}
 Teacher request: "${requestText}"
 
-Explain politely why this request cannot be fulfilled, citing the relevant CAPS or project policy. Offer an appropriate alternative.`,
+Explain politely why this request cannot be fulfilled. Cite the source of the rule:
+- CAPS (give the page reference)
+- POPIA (South African law)
+- Project policy (the school's own rule)
+- Teaching principle (pedagogical reason)
+Offer an appropriate alternative.`,
   };
 }
 
@@ -272,7 +344,7 @@ const PROMPT_BUILDERS = {
   hod_insight:      buildHodInsightPrompt,
   parent_note:      buildParentNotePrompt,
   guardrail:        buildGuardrailPrompt,
-  // child_hint and child_tutor are handled inline below (phrase bank first)
+  // child_hint and child_tutor handled inline — subject routing happens there
 };
 
 const TASKS_REQUIRE_APPROVAL = new Set(['teacher_activity', 'parent_note', 'hod_insight']);
@@ -280,65 +352,90 @@ const TASKS_REQUIRE_APPROVAL = new Set(['teacher_activity', 'parent_note', 'hod_
 /**
  * Main Lesedi entry point.
  * @param {object} ctx  Full request context from /api/lesedi
- * @returns {Promise<object>}  Lesedi response
+ * @returns {Promise<object>}
  */
 export async function runLesedi(ctx) {
-  // 1. Guardrail check — always first
+  // 1. Guardrail check — always first, now subject-aware
   const guard = checkGuardrails(ctx);
   if (guard.blocked) return guard.response;
 
-  const { task, hintLevel, event, learner, target, errorPattern, sessions } = ctx;
+  const { task, subject = 'literacy', hintLevel, event, learner,
+          target, errorPattern, sessions } = ctx;
   const firstName = learner?.firstName ?? 'there';
+  const isMaths   = subject === 'maths';
 
-  // 2. child_hint — fully offline via phrase bank
+  // ------------------------------------------------------------------
+  // 2. child_hint — fully offline, routes to correct phrase bank
+  // ------------------------------------------------------------------
   if (task === 'child_hint') {
+    const praiseBank = isMaths ? MATHS_PRAISE_PHRASES : PRAISE_PHRASES;
+
     if (event === 'correct') {
+      const phraseFn = isMaths ? praiseBank.correct : praiseBank.correct;
       return {
-        text:             PRAISE_PHRASES.correct(firstName),
-        source:           'phrase_bank',
+        text:             phraseFn(firstName),
+        source:           isMaths ? 'maths_bank' : 'phrase_bank',
         handoff:          false,
         requiresApproval: false,
         tags:             ['praise_effort', 'open_question', 'extends_thinking'],
       };
     }
+
     const level = Number(hintLevel) || 1;
+    const resolver = isMaths ? resolveMathsChildPhrase : resolveChildPhrase;
+
     if (level >= 3) {
       return {
-        ...resolveChildPhrase(3, event ?? 'default', firstName),
+        ...resolver(3, event ?? 'default', firstName),
         tags:             ['hint_L3', 'worked_example_not_answer', 'no_dead_end', 'handoff_to_teacher'],
         requiresApproval: false,
       };
     }
     return {
-      ...resolveChildPhrase(level, event ?? 'default', firstName),
+      ...resolver(level, event ?? 'default', firstName),
       tags:             [`hint_L${level}`, 'strategy_not_answer', 'fixed_phrase_bank'],
       requiresApproval: false,
     };
   }
 
-  // 3. child_tutor — phrase bank for known events, AI for unknown
+  // ------------------------------------------------------------------
+  // 3. child_tutor — phrase bank for known events; AI for unknown
+  // ------------------------------------------------------------------
   if (task === 'child_tutor') {
-    const knownEvents = new Set([
+    const knownLiteracyEvents = new Set([
       'whispers_or_stays_silent',
       'same_error_third_session',
       'asks_for_the_answer',
       'writes_one_sentence_and_stops',
       'read_one_page',
     ]);
+    const knownMathsEvents = new Set([
+      'silent_or_anxious',
+      'same_error_third_session',
+      'asks_for_the_answer',
+      'finishes_early',
+      'correct_no_explanation',
+      'still_using_fingers_gr3',
+    ]);
+
+    const knownEvents = isMaths ? knownMathsEvents : knownLiteracyEvents;
 
     if (knownEvents.has(event)) {
-      const result = resolveTutorPhrase(event, firstName, target, errorPattern);
+      const resolver = isMaths ? resolveMathsTutorPhrase : resolveTutorPhrase;
+      const result   = resolver(event, firstName, target, errorPattern);
       return {
         ...result,
-        tags: ['fixed_phrase_bank', 'strategy_not_answer', ...(result.teacherFlag ? ['flags_teacher'] : [])],
+        tags: [
+          isMaths ? 'maths_bank' : 'fixed_phrase_bank',
+          'strategy_not_answer',
+          ...(result.teacherFlag ? ['flags_teacher'] : []),
+        ],
       };
     }
 
-    // Unknown tutor event — fall through to AI with child_tutor prompt builder
+    // Unknown event — AI fallback (subject-aware prompt)
     const { system, user } = buildChildTutorPrompt(ctx);
-    const raw = await callAI(system, user);
-
-    // Parse the three-part response
+    const raw   = await callAI(system, user);
     const parts = raw.split('|||').map(s => s.trim());
     const [childText, teacherFlag, parentTip] = parts;
 
@@ -348,16 +445,19 @@ export async function runLesedi(ctx) {
       parentTip:        parentTip?.replace(/^PARENT_TIP:\s*/i, '').trim() || null,
       source:           'ai_model',
       requiresApproval: !!parentTip?.trim(),
-      tags:             ['child_tutor', 'strategy_not_answer', ...(teacherFlag ? ['flags_teacher'] : [])],
+      tags:             ['child_tutor', 'strategy_not_answer',
+                         ...(teacherFlag ? ['flags_teacher'] : [])],
       handoff:          false,
     };
   }
 
-  // 4. All other tasks — AI via prompt builder
+  // ------------------------------------------------------------------
+  // 4. All other tasks — AI via subject-aware prompt builder
+  // ------------------------------------------------------------------
   const builder = PROMPT_BUILDERS[task];
   if (!builder) {
     return {
-      text:             `Unknown task type: "${task}". Supported: child_hint, child_tutor, teacher_activity, class_insight, gap_explanation, hod_insight, parent_note, guardrail.`,
+      text: `Unknown task type: "${task}". Supported: child_hint, child_tutor, teacher_activity, class_insight, gap_explanation, hod_insight, parent_note, guardrail.`,
       source:           'engine_error',
       requiresApproval: false,
       tags:             ['unknown_task'],
@@ -369,8 +469,8 @@ export async function runLesedi(ctx) {
 
   const requiresApproval = TASKS_REQUIRE_APPROVAL.has(task);
   const tags = requiresApproval
-    ? ['teacher_approval_required', 'caps_aligned']
-    : ['insight_first', 'evidence_cited', 'teacher_decides'];
+    ? ['teacher_approval_required', 'caps_aligned', subject]
+    : ['insight_first', 'evidence_cited', 'teacher_decides', subject];
 
   return {
     text:             aiText,
@@ -378,5 +478,35 @@ export async function runLesedi(ctx) {
     requiresApproval,
     tags,
     handoff:          false,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// child_tutor AI fallback prompt — subject-aware
+// (only called for unknown events not in the phrase bank)
+// ---------------------------------------------------------------------------
+function buildChildTutorPrompt(ctx) {
+  const { grade, term, subject = 'literacy', learner, event,
+          setting, target, errorPattern, sessions } = ctx;
+  const subjectNote = subject === 'maths'
+    ? 'The child is working on a maths task. Encourage mathematical thinking. Name the strategy.'
+    : 'The child is working on a literacy task.';
+
+  return {
+    system: CAPS_PREAMBLE,
+    user: `Task: child_tutor
+Subject: ${subject} | Grade: ${grade} | Term: ${term}
+Learner: ${learner?.firstName ?? 'unknown'} | Group: ${learner?.group ?? 'unknown'}
+Setting: ${setting ?? 'one_to_one_with_Lesedi'}
+Event: ${event}
+${target       ? `Target: ${target}` : ''}
+${errorPattern ? `Error pattern: ${errorPattern}` : ''}
+${sessions     ? `Sessions so far: ${sessions}` : ''}
+${subjectNote}
+
+Reply in exactly three parts separated by "|||":
+CHILD: One or two warm, low-pressure sentences directly to the child. No answer given.
+TEACHER_FLAG: A brief flag for the teacher dashboard (leave blank if not a pattern or risk).
+PARENT_TIP: A short home activity tip, marked "Draft for teacher approval." (leave blank if not needed).`,
   };
 }
