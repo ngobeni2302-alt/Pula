@@ -417,6 +417,73 @@ export default function LearnerProfile({
           )}
         </div>
 
+        {/* Approved Activity Assessments (Lesedi Interactive Learning) */}
+        <div className="pula-section-card" data-testid="activity-assessments-section">
+          <div className="pula-section-header">
+            <h2 className="pula-section-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Sparkles size={18} color="#FF6B4A" /> Interactive Activity Assessments
+            </h2>
+            <span className="pula-badge-pill" style={{ background: '#eef2ff', color: '#3730a3' }}>
+              {(learner.activityAssessments || []).length} Recorded
+            </span>
+          </div>
+          {(learner.activityAssessments || []).length === 0 ? (
+            <p style={{ fontSize: '13px', color: '#68617d', margin: '4px 0 10px' }}>
+              No interactive activity assessments recorded yet for {record.fullName.split(' ')[0]}.
+            </p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
+              {(learner.activityAssessments || []).map((act, idx) => (
+                <div
+                  key={act.id || idx}
+                  style={{
+                    background: '#ffffff',
+                    border: '1px solid #ebd9c8',
+                    borderRadius: '14px',
+                    padding: '12px 14px',
+                    boxShadow: '0 1px 4px rgba(16, 20, 56, 0.05)'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <div>
+                      <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', color: act.subject === 'Mathematics' ? '#2563eb' : '#d946ef', marginRight: '6px' }}>
+                        {act.subject}
+                      </span>
+                      <strong style={{ fontSize: '14px', color: '#101438' }}>{act.activityName}</strong>
+                    </div>
+                    <span style={{ fontSize: '11px', fontWeight: 700, background: '#dcfce7', color: '#166534', padding: '2px 8px', borderRadius: '10px' }}>
+                      {act.status || 'Approved'}
+                    </span>
+                  </div>
+
+                  {act.percentage !== null && act.percentage !== undefined && (
+                    <div style={{ fontSize: '12.5px', color: '#101438', marginBottom: '6px' }}>
+                      <strong>Result: </strong>{act.score}/{act.maxScore} ({act.percentage}%)
+                    </div>
+                  )}
+
+                  {act.finding && (
+                    <p style={{ fontSize: '12.5px', color: '#4b5563', margin: '4px 0' }}>
+                      <strong>Lesedi Finding: </strong>{act.finding}
+                    </p>
+                  )}
+
+                  {act.teacherNotes && (
+                    <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0', fontStyle: 'italic' }}>
+                      <strong>Teacher notes: </strong>{act.teacherNotes}
+                    </p>
+                  )}
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#9ca3af', marginTop: '6px', borderTop: '1px solid #f3f4f6', paddingTop: '6px' }}>
+                    <span>Term: {act.term || 'Term 4'} · {act.academicYear || '2026'}</span>
+                    <span>Approved by {act.approvedBy || 'Teacher'} · {new Date(act.approvedAt || act.completedAt || Date.now()).toLocaleDateString('en-ZA')}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Reading Development & Tier Progression */}
         <div className="pula-section-card">
           <div className="pula-section-header">

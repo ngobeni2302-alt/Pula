@@ -1,0 +1,971 @@
+/* Pula Activities Stylesheet - High-Fidelity to Lesedi & Maths Reference Designs */
+
+:root {
+  --act-cream: #FFF9EE;
+  --act-navy: #101438;
+  --act-coral: #FF6B4A;
+  --act-periwinkle: #8E9BFF;
+  --act-soft-periwinkle: #DCE1FF;
+  --act-yellow: #FDD85D;
+  --act-pink: #F48FB1;
+  --act-border: #E8E0CF;
+}
+
+.act-shell {
+  min-height: 100dvh;
+  background: var(--act-cream);
+  color: var(--act-navy);
+  font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+  padding: 16px 16px 95px;
+  max-width: 480px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Header */
+.act-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 12px;
+}
+
+.act-top-bar h1 {
+  font-size: 26px;
+  font-weight: 900;
+  margin: 0;
+  color: var(--act-navy);
+  letter-spacing: -0.5px;
+}
+
+.act-icon-btn {
+  background: #ffffff;
+  border: 1px solid var(--act-border);
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--act-navy);
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+  flex-shrink: 0;
+}
+
+.act-icon-btn:hover {
+  background: #f7f2e7;
+  transform: scale(1.05);
+}
+
+.act-draft-badge {
+  background: #FEE79A;
+  color: #7B4B00;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 6px 14px;
+  border-radius: 20px;
+  letter-spacing: 0.3px;
+}
+
+.act-subject-tag {
+  background: var(--act-periwinkle);
+  color: var(--act-navy);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 12px;
+  display: inline-block;
+  margin-bottom: 8px;
+}
+
+/* Activity Cards on "What shall we play?" Home */
+.act-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 15px;
+}
+
+.act-menu-card {
+  background: #ffffff;
+  border: 1px solid var(--act-border);
+  border-radius: 24px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  box-shadow: 0 4px 14px rgba(16, 20, 56, 0.04);
+  width: 100%;
+}
+
+.act-menu-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--act-navy);
+  box-shadow: 0 8px 20px rgba(16, 20, 56, 0.08);
+}
+
+.act-card-icon-box {
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--act-navy);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.act-card-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.act-card-title {
+  display: block;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--act-navy);
+  margin-bottom: 3px;
+}
+
+.act-card-desc {
+  font-size: 12.5px;
+  color: #6C6680;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+/* Learner Selection ("Who's playing?") */
+.act-selection-header {
+  margin-bottom: 20px;
+}
+
+.act-selection-badge {
+  display: inline-block;
+  background: var(--act-soft-periwinkle);
+  color: var(--act-navy);
+  font-size: 12px;
+  font-weight: 800;
+  padding: 6px 12px;
+  border-radius: 14px;
+  margin-top: 6px;
+}
+
+.act-learner-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 90px;
+}
+
+.act-learner-cell {
+  background: #ffffff;
+  border: 1px solid var(--act-border);
+  border-radius: 20px;
+  padding: 14px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  min-height: 98px;
+}
+
+.act-learner-cell:hover:not(:disabled) {
+  border-color: var(--act-navy);
+  transform: translateY(-2px);
+}
+
+.act-learner-cell.selected {
+  border: 2.5px solid var(--act-navy) !important;
+  box-shadow: 0 4px 12px rgba(16, 20, 56, 0.12);
+  background: #fffefb;
+}
+
+.act-learner-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--act-navy);
+  margin-bottom: 8px;
+  position: relative;
+}
+
+.act-learner-name {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--act-navy);
+  max-width: 90%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.act-learner-tier {
+  font-size: 10px;
+  font-weight: 700;
+  color: #79738c;
+  margin-top: 2px;
+}
+
+.act-cell-check {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: #25D366;
+  color: #ffffff;
+  border-radius: 50%;
+  width: 17px;
+  height: 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.act-cell-lock {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  color: #8c8577;
+}
+
+/* Sticky Action Footer */
+.act-sticky-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(255, 249, 238, 1) 75%, rgba(255, 249, 238, 0));
+  padding: 16px 20px 22px;
+  max-width: 480px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  z-index: 40;
+}
+
+.act-primary-btn {
+  width: 100%;
+  background: var(--act-navy);
+  color: #ffffff !important;
+  font-size: 15px;
+  font-weight: 800;
+  padding: 16px 20px;
+  min-height: 48px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  touch-action: manipulation;
+  box-shadow: 0 6px 18px rgba(16, 20, 56, 0.2);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.act-primary-btn:hover:not(:disabled) {
+  background: #212555;
+  transform: translateY(-2px);
+}
+
+.act-primary-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.act-coral-btn {
+  background: var(--act-coral) !important;
+  box-shadow: 0 6px 18px rgba(255, 107, 74, 0.35) !important;
+}
+
+.act-secondary-btn {
+  width: 100%;
+  background: #ffffff;
+  color: var(--act-navy);
+  font-size: 15px;
+  font-weight: 800;
+  padding: 15px 20px;
+  border-radius: 20px;
+  border: 2px solid var(--act-navy);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+  transition: all 0.15s ease;
+}
+
+.act-secondary-btn:hover {
+  background: #fbf7ee;
+}
+
+/* Lesedi Bubble */
+.act-lesedi-bubble {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.act-lesedi-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--act-soft-periwinkle);
+  color: var(--act-navy);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.act-lesedi-text {
+  flex: 1;
+  background: var(--act-soft-periwinkle);
+  color: var(--act-navy);
+  padding: 14px 18px;
+  border-radius: 20px;
+  border-top-left-radius: 4px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+/* -------------------------------------------------------------------------- */
+/* MATHEMATICS ACTIVITIES STYLES                                               */
+/* -------------------------------------------------------------------------- */
+
+/* Add Numbers / Number Line */
+.act-math-formula {
+  font-size: 38px;
+  font-weight: 900;
+  text-align: center;
+  color: var(--act-navy);
+  margin: 15px 0 25px;
+  letter-spacing: 1px;
+}
+
+.act-numberline-box {
+  background: #ffffff;
+  border: 1px solid var(--act-border);
+  border-radius: 24px;
+  padding: 24px 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 14px rgba(16, 20, 56, 0.04);
+}
+
+.act-numberline-track {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  padding: 0 6px;
+}
+
+.act-numberline-line {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  right: 14px;
+  height: 3px;
+  background: var(--act-navy);
+  transform: translateY(-50%);
+  z-index: 1;
+}
+
+.act-numberline-node {
+  position: relative;
+  z-index: 2;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid var(--act-navy);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--act-navy);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.act-numberline-node.start-dot {
+  background: var(--act-coral) !important;
+  border-color: var(--act-coral) !important;
+  color: #ffffff !important;
+  transform: scale(1.18);
+  box-shadow: 0 2px 8px rgba(255, 107, 74, 0.4);
+}
+
+.act-numberline-node.hopped-dot {
+  background: var(--act-yellow);
+  border-color: var(--act-navy);
+}
+
+.act-numberline-node.active-land {
+  background: #25D366 !important;
+  border-color: #25D366 !important;
+  color: #ffffff !important;
+  transform: scale(1.25);
+  box-shadow: 0 2px 8px rgba(37, 211, 102, 0.4);
+}
+
+.act-instruction-sub {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--act-navy);
+  margin-top: 14px;
+}
+
+/* Bead String */
+.act-bead-card {
+  background: #ffffff;
+  border: 1px solid var(--act-border);
+  border-radius: 24px;
+  padding: 24px 16px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.act-bead-big-count {
+  font-size: 46px;
+  font-weight: 900;
+  color: var(--act-navy);
+  margin-bottom: 16px;
+}
+
+.act-bead-string-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  position: relative;
+  margin: 14px 0;
+  padding: 6px 0;
+}
+
+.act-bead-wire {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  background: #c9c2b4;
+  z-index: 1;
+}
+
+.act-bead-item {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1.5px solid var(--act-navy);
+  background: #ffffff;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+  transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.15s ease;
+}
+
+.act-bead-item.slid {
+  background: var(--act-coral);
+  transform: translateX(-6px) scale(1.1);
+  border-color: var(--act-coral);
+}
+
+/* Ten Frame */
+.act-tenframe-box {
+  background: #ffffff;
+  border: 1px solid var(--act-border);
+  border-radius: 24px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.act-tenframe-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.act-tenframe-slot {
+  aspect-ratio: 1;
+  border: 2px dashed #b9b3a5;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.act-tenframe-slot.filled {
+  border-style: solid;
+  border-color: #f7ded8;
+  background: #fff8f6;
+}
+
+.act-counter-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.act-counter-coral {
+  background: var(--act-coral);
+  box-shadow: 0 2px 6px rgba(255, 107, 74, 0.3);
+}
+
+.act-counter-blue {
+  background: var(--act-periwinkle);
+  box-shadow: 0 2px 6px rgba(142, 155, 255, 0.3);
+}
+
+.act-tray-container {
+  background: #e2e7ff;
+  border-radius: 28px;
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin: 16px 0;
+}
+
+/* Groups of 5 */
+.act-groups5-card {
+  background: #ffffff;
+  border: 1px solid var(--act-border);
+  border-radius: 24px;
+  padding: 22px 16px;
+  margin-bottom: 20px;
+}
+
+.act-groups5-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.act-group5-row-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.act-group5-row-item.active {
+  background: #fff5f2;
+}
+
+.act-group5-dots {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.act-group5-badge {
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--act-navy);
+  width: 32px;
+  text-align: right;
+}
+
+/* -------------------------------------------------------------------------- */
+/* ENGLISH ACTIVITIES STYLES                                                   */
+/* -------------------------------------------------------------------------- */
+
+/* Talk & Turn */
+.act-scene-card {
+  background: var(--act-soft-periwinkle);
+  border-radius: 24px;
+  padding: 24px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.act-scene-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--act-navy);
+  margin-bottom: 12px;
+}
+
+.act-illustration-art {
+  width: 100%;
+  max-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.act-vocab-pills {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 14px 0 6px;
+}
+
+.act-vocab-pill {
+  background: var(--act-soft-periwinkle);
+  color: var(--act-navy);
+  font-size: 13.5px;
+  font-weight: 800;
+  padding: 8px 18px;
+  border-radius: 18px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.act-vocab-pill.active {
+  background: var(--act-navy);
+  color: #ffffff;
+}
+
+/* Sound Hunt */
+.act-hunt-stages {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.act-stage-row {
+  background: #ffffff;
+  border: 1px solid var(--act-border);
+  border-radius: 20px;
+  padding: 16px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.act-stage-number {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--act-navy);
+  flex-shrink: 0;
+}
+
+.act-stage-content {
+  flex: 1;
+}
+
+.act-stage-title {
+  font-size: 15px;
+  font-weight: 800;
+  margin-bottom: 4px;
+  color: var(--act-navy);
+}
+
+.act-stage-instruction {
+  font-size: 13px;
+  color: #6C6680;
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.act-stage-items-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.act-chip-btn {
+  background: #f7f2e7;
+  border: 1px solid var(--act-border);
+  border-radius: 14px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--act-navy);
+  cursor: pointer;
+}
+
+.act-chip-btn.selected {
+  background: var(--act-navy);
+  color: #ffffff;
+}
+
+/* Sound Sorter */
+.act-sound-options-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 18px 0;
+}
+
+.act-sound-btn {
+  aspect-ratio: 1.1;
+  border-radius: 24px;
+  border: 3px solid var(--act-navy);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 52px;
+  font-weight: 900;
+  color: var(--act-navy);
+  cursor: pointer;
+  transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 6px 16px rgba(16, 20, 56, 0.08);
+}
+
+.act-sound-btn:hover {
+  transform: scale(1.05);
+}
+
+/* Blend a Word */
+.act-letters-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin: 24px 0 16px;
+}
+
+.act-letter-card {
+  width: 72px;
+  height: 90px;
+  background: #ffffff;
+  border: 2.5px solid var(--act-navy);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  font-weight: 900;
+  color: var(--act-navy);
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(16, 20, 56, 0.06);
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.15s ease;
+}
+
+.act-letter-card:hover {
+  transform: translateY(-4px) scale(1.06);
+  background: #fbf8f0;
+}
+
+.act-letter-card.speaking {
+  background: var(--act-yellow);
+  transform: scale(1.12);
+  border-color: var(--act-coral);
+}
+
+/* -------------------------------------------------------------------------- */
+/* LESEDI PERFORMANCE REVIEW STYLES (Page 4 of PDF)                           */
+/* -------------------------------------------------------------------------- */
+.act-review-header {
+  margin-bottom: 20px;
+}
+
+.act-review-title {
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--act-navy);
+  margin: 12px 0 4px;
+  letter-spacing: -0.5px;
+}
+
+.act-review-sub {
+  font-size: 13px;
+  color: #6a6480;
+  font-weight: 700;
+}
+
+.act-review-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.act-review-card {
+  background: #ffffff;
+  border: 1px solid var(--act-border);
+  border-radius: 22px;
+  padding: 18px 20px;
+  box-shadow: 0 3px 10px rgba(16, 20, 56, 0.03);
+}
+
+.act-review-label {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #79738f;
+  margin-bottom: 6px;
+  text-transform: capitalize;
+}
+
+.act-review-body {
+  font-size: 14.5px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--act-navy);
+  margin: 0;
+}
+
+.act-confidence-pill {
+  background: var(--act-soft-periwinkle);
+  color: var(--act-navy);
+  padding: 12px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  margin: 18px 0 24px;
+  line-height: 1.45;
+}
+
+/* Tier change suggestion banner */
+.act-tier-recommendation {
+  background: #fff8e8;
+  border: 2px solid #FDD85D;
+  border-radius: 20px;
+  padding: 16px;
+  margin: 16px 0;
+}
+
+.act-tier-rec-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.act-tier-rec-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #7A5200;
+}
+
+.act-tier-rec-p {
+  font-size: 13px;
+  color: var(--act-navy);
+  margin: 4px 0 10px;
+  font-weight: 700;
+}
+
+/* Modal for editing review */
+.act-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(16, 20, 56, 0.5);
+  backdrop-filter: blur(3px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.act-modal-window {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 24px;
+  max-width: 440px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+}
+
+.act-modal-title {
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--act-navy);
+  margin: 0 0 16px;
+}
+
+.act-modal-field {
+  margin-bottom: 14px;
+}
+
+.act-modal-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  color: #6C6680;
+  margin-bottom: 6px;
+}
+
+.act-modal-field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #d4cdbd;
+  font-family: inherit;
+  font-size: 13px;
+  resize: vertical;
+  min-height: 60px;
+}
+
+/* Completion Screen */
+.act-completion-shell {
+  text-align: center;
+  padding: 40px 16px;
+}
+
+.act-completion-circle {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: var(--act-soft-periwinkle);
+  color: var(--act-navy);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+  box-shadow: 0 8px 24px rgba(142, 155, 255, 0.35);
+}
+
+.act-completion-h1 {
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--act-navy);
+  margin: 0 0 8px;
+}
+
+.act-completion-p {
+  font-size: 15px;
+  color: #6C6680;
+  font-weight: 700;
+  margin: 0 0 32px;
+}
