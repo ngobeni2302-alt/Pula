@@ -1,0 +1,159 @@
+name: CI — test and build (pull requests)
+
+# Runs on every PR targeting main.
+# Failing tests or a broken build block the merge.
+# Nothing is pushed or deployed.
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-and-build:
+    name: Test, build image, smoke-test
+    runs-on: ubuntu-latest
+
+    # Throwaway Postgres for integration tests
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB:       pula_test
+          POSTGRES_USER:     pula
+          POSTGRES_PASSWORD: pula_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # Tests always use Postgres (not the JSON store)
+      DATABASE_URL:   postgres://pula:pula_test@localhost:5432/pula_test?sslmode=disable
+      USE_JSON_STORE: "false"
+      NODE_ENV:       test
+
+    steps:
+      # ── 1. Checkout ────────────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── 2. Node 20 ─────────────────────────────────────────────────────
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+
+      # ── 3. Install dependencies ─────────────────────────────────────────
+      - name: Install backend deps
+        run: npm ci
+        working-directory: backend
+
+      - name: Install frontend deps
+        run: npm ci
+        working-directory: frontend
+
+      - name: Install LesediAiAgent deps
+        run: npm ci
+        working-directory: LesediAiAgent
+
+      # ── 4. Run migrations on the test DB ───────────────────────────────
+      - name: Run database migrations
+        run: node src/db/migrate.js
+        working-directory: backend
+
+      # ── 5. Seed test DB ─────────────────────────────────────────────────
+      - name: Seed test database
+        run: node src/db/seed.js
+        working-directory: backend
+
+      # ── 6. Run backend tests ────────────────────────────────────────────
+      - name: Run backend tests
+        run: node --test
+        working-directory: backend
+
+      # ── 7. Run frontend tests ───────────────────────────────────────────
+      - name: Run frontend tests
+        run: node --test frontend/tests/
+        # Run from repo root so path.resolve() in tests resolves correctly
+
+      # ── 8. Build frontend (catches Vite errors early) ───────────────────
+      - name: Build frontend
+        run: npm run build
+        working-directory: frontend
+
+      # ── 9. Build Docker image (no push — just verify it compiles) ───────
+      - name: Build Docker image (no push)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: backend/Dockerfile
+          push: false
+          tags: pula:ci-${{ github.sha }}
+
+      # ── 10. Start container against the test DB ─────────────────────────
+      - name: Start container for smoke tests
+        run: |
+          docker run -d \
+            --name pula-smoke \
+            --network host \
+            -e DATABASE_URL="${{ env.DATABASE_URL }}" \
+            -e USE_JSON_STORE="false" \
+            -e PORT="4000" \
+            -e NODE_ENV="test" \
+            pula:ci-${{ github.sha }}
+          # Wait for the health endpoint
+          for i in $(seq 1 20); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:4000/api/health || echo "000")
+            if [ "$STATUS" = "200" ]; then echo "Container healthy after $i attempts"; break; fi
+            if [ "$i" = "20" ]; then echo "Health check timed out"; docker logs pula-smoke; exit 1; fi
+            sleep 2
+          done
+
+      # ── 11. Smoke test: /api/health returns postgres mode ───────────────
+      - name: Smoke — health endpoint
+        run: |
+          BODY=$(curl -sf http://localhost:4000/api/health)
+          echo "$BODY"
+          echo "$BODY" | grep -q '"mode":"postgres"' || (echo "Expected postgres mode" && exit 1)
+          echo "$BODY" | grep -q '"db":"connected"'  || (echo "Expected db connected" && exit 1)
+
+      # ── 12. Smoke test: Palesa (consent=false) cannot save an assessment ─
+      # Palesa is learner id "9" in data.json / seed.  We POST to the new
+      # endpoint and expect a 403 with reason="consent_required".
+      - name: Smoke — Palesa consent gate (must return 403)
+        run: |
+          # Find Palesa's learner id from the DB
+          PALESA_ID=$(psql "${{ env.DATABASE_URL }}" -t -c \
+            "SELECT id FROM learners WHERE first_name = 'Palesa' LIMIT 1;" | xargs)
+          echo "Palesa learner ID: $PALESA_ID"
+
+          HTTP_CODE=$(curl -s -o /tmp/palesa_response.json -w "%{http_code}" \
+            -X POST http://localhost:4000/api/activity-sessions \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"id\":\"$(uuidgen)\",
+              \"learnerId\":\"$PALESA_ID\",
+              \"activityId\":\"sound-sorter\",
+              \"subject\":\"English\",
+              \"term\":4,
+              \"academicYear\":2026
+            }")
+
+          cat /tmp/palesa_response.json
+          echo "HTTP status: $HTTP_CODE"
+          [ "$HTTP_CODE" = "403" ] || (echo "Expected 403, got $HTTP_CODE" && exit 1)
+          grep -q '"consent_required"' /tmp/palesa_response.json || \
+            (echo "Expected reason=consent_required" && exit 1)
+          echo "Palesa consent gate: PASS"
+
+      # ── 13. Tear down ───────────────────────────────────────────────────
+      - name: Stop container
+        if: always()
+        run: docker rm -f pula-smoke || true

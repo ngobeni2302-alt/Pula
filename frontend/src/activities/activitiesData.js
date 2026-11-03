@@ -130,7 +130,14 @@ export const MATHS_ACTIVITIES = [
 ];
 
 /**
- * Generate evidence-based Lesedi Assessment Review
+ * Generate evidence-based Lesedi Assessment Review — client-side fallback only.
+ *
+ * Phase 1 rules:
+ *  - Use firstName or ref only — never full names in findings (POPIA).
+ *  - No recommendedTier — tier changes are server-only and require teacher approval.
+ *  - No hasAudio branch — audio feature does not exist yet.
+ *  - Confidence is a session-level estimate only; the real confidence (REQ-08)
+ *    is computed server-side from the count of observation_items across sessions.
  */
 export function generateActivityLesediReview({
   activity,
@@ -138,15 +145,18 @@ export function generateActivityLesediReview({
   sessionData,
   subject
 }) {
-  const learnerName = learner?.name || 'Learner';
-  const tier = learner?.group || 'Seed';
-  const total = sessionData?.total ?? sessionData?.totalQuestions ?? 1;
+  // Never use learner.name — use firstName or ref only
+  const learnerName = learner?.firstName ?? learner?.ref ?? 'Learner';
+  const tier    = learner?.group || 'Seed';
+  const total   = sessionData?.total ?? sessionData?.totalQuestions ?? 1;
   const correct = sessionData?.correct ?? sessionData?.correctCount ?? 0;
-  const accuracy = sessionData?.accuracy !== undefined ? sessionData.accuracy : Math.round((correct / total) * 100);
-  const attempts = sessionData?.attempts || 1;
+  const accuracy = sessionData?.accuracy !== undefined
+    ? sessionData.accuracy
+    : Math.round((correct / total) * 100);
+  const attempts  = sessionData?.attempts || 1;
   const hintsUsed = sessionData?.hintsUsed || 0;
 
-  // Confidence is determined strictly by quantity and quality of evidence captured
+  // Session-level confidence estimate (server will recompute from observation count)
   let confidence = 'High';
   if (total < 3) confidence = 'Low';
   else if (total < 5 || hintsUsed > 2) confidence = 'Medium';
@@ -155,57 +165,52 @@ export function generateActivityLesediReview({
     switch (activity.id) {
       case 'add-numbers':
         return {
-          title: `Why ${learnerName} completed Add Numbers`,
-          finding: `${learnerName} hopped on the number line to solve ${activity.question || '5 + 3'}. Final answer: ${sessionData?.finalAnswer || 8} (${sessionData?.isCorrect ? 'Correct' : 'Needs practice'}). Requested ${hintsUsed} hint(s).`,
-          whyItMatters: `${learnerName} demonstrates ${sessionData?.isCorrect ? 'clear' : 'developing'} spatial and ordinal number reasoning along the 0-10 number line.`,
+          title: `Add Numbers — ${learnerName}`,
+          finding: `Hopped on the number line to solve ${activity.question || '5 + 3'}. Final answer: ${sessionData?.finalAnswer || 8} (${sessionData?.isCorrect ? 'Correct' : 'Needs practice'}). Requested ${hintsUsed} hint(s).`,
+          whyItMatters: `Demonstrates ${sessionData?.isCorrect ? 'clear' : 'developing'} spatial and ordinal number reasoning along the 0–10 number line.`,
           whatToCheck: `Check if ${learnerName} can solve 4 + 4 without visual line prompts.`,
           whatToDo: 'Practise finger hopping and backward counting from 10.',
           confidence,
-          recommendedTier: null
         };
 
       case 'bead-string':
         return {
-          title: `Why ${learnerName} completed Bead String`,
-          finding: `${learnerName} slid and counted ${sessionData?.slidCount || correct} beads out of ${activity.targetCount || 7} target count (${accuracy}% accuracy).`,
+          title: `Bead String — ${learnerName}`,
+          finding: `Slid and counted ${sessionData?.slidCount || correct} beads out of ${activity.targetCount || 7} target (${accuracy}% accuracy).`,
           whyItMatters: 'One-to-one correspondence and physical counting precision are essential Foundation Phase numeracy foundations.',
           whatToCheck: `Verify whether ${learnerName} can subitise groups of 5 beads without counting one-by-one.`,
           whatToDo: 'Repeat bead string counting with numbers between 10 and 20.',
           confidence,
-          recommendedTier: null
         };
 
       case 'make-a-ten':
         return {
-          title: `Why ${learnerName} completed Make a Ten`,
-          finding: `${learnerName} placed ${sessionData?.placedInFrame || 2} counter(s) to complete 10, and identified remaining ${sessionData?.remainingInTray || 3} counters to reach ${activity.totalAnswer || 13}.`,
+          title: `Make a Ten — ${learnerName}`,
+          finding: `Placed ${sessionData?.placedInFrame || 2} counter(s) to complete 10, and identified remaining ${sessionData?.remainingInTray || 3} counters to reach ${activity.totalAnswer || 13}.`,
           whyItMatters: 'Ten-frame structuring establishes the mental anchor needed for bridging through 10 in two-digit addition.',
           whatToCheck: 'Check number bonds to 10 (e.g. 7 + 3, 6 + 4).',
           whatToDo: 'Practise Make a Ten with double ten-frames for sums up to 20.',
           confidence,
-          recommendedTier: null
         };
 
       case 'group-of-5':
         return {
-          title: `Why ${learnerName} completed Group of 5`,
-          finding: `${learnerName} counted ${activity.rows || 4} groups of 5, arriving at total ${sessionData?.countedTotal || 20} (${sessionData?.isCorrect ? 'Correct' : 'Needs practice'}).`,
+          title: `Group of 5 — ${learnerName}`,
+          finding: `Counted ${activity.rows || 4} groups of 5, arriving at total ${sessionData?.countedTotal || 20} (${sessionData?.isCorrect ? 'Correct' : 'Needs practice'}).`,
           whyItMatters: 'Skip counting in fives is the gateway to multiplication readiness and grouping comprehension.',
           whatToCheck: `Test whether ${learnerName} can count backwards from 20 in fives.`,
           whatToDo: 'Reinforce grouping with 5-dot dominoes and rhythmic counting games.',
           confidence,
-          recommendedTier: null
         };
 
       default:
         return {
-          title: `Lesedi Assessment for ${learnerName}`,
-          finding: `${learnerName} engaged with ${activity.name} with ${accuracy}% recorded accuracy.`,
+          title: `Mathematics — ${learnerName}`,
+          finding: `Engaged with ${activity.name} with ${accuracy}% recorded accuracy.`,
           whyItMatters: 'Active mathematical manipulation reinforces concrete numeracy grasp.',
-          whatToCheck: `Observe ${learnerName}'s confidence in independent math rounds.`,
+          whatToCheck: `Observe ${learnerName}'s confidence in independent maths rounds.`,
           whatToDo: 'Continue daily Foundation Phase number checks.',
           confidence,
-          recommendedTier: null
         };
     }
   }
@@ -213,73 +218,62 @@ export function generateActivityLesediReview({
   // English Activities
   switch (activity.id) {
     case 'sound-sorter': {
-      let recTier = tier;
-      let tierNote = `Maintains solid competency in ${tier}.`;
-      if (accuracy >= 80 && (tier === 'Seed' || tier === 'Sprout')) {
-        recTier = tier === 'Seed' ? 'Sprout' : 'Bloom';
-        tierNote = `High initial sound accuracy (${accuracy}%) supports advancement to ${recTier}.`;
-      }
+      // recTier removed — tier recommendations are server-only (Phase 1)
+      const tierNote = accuracy >= 80
+        ? `Strong initial sound accuracy (${accuracy}%).`
+        : `Initial sound accuracy at ${accuracy}% — continue practising.`;
 
       return {
-        title: `Why ${learnerName} is in ${tier}`,
+        title: `Sound Sorter — ${learnerName}`,
         finding: `Correctly identified ${correct} out of ${total} initial sounds (${accuracy}% accuracy).`,
         whyItMatters: `Accurate initial sound identification is a critical phonemic milestone for Grade ${learner?.room || '2'}. ${tierNote}`,
         whatToCheck: `Check if ${learnerName} can recognise initial blend sounds such as "bl" and "st".`,
-        whatToDo: accuracy < 80 ? 'Repeat Sound Sorter with familiar vowel sounds.' : `Advance to Blend a Word with ${recTier} texts.`,
+        whatToDo: accuracy < 80
+          ? 'Repeat Sound Sorter with familiar vowel sounds.'
+          : 'Advance to Blend a Word with levelled texts.',
         confidence,
-        recommendedTier: recTier !== tier ? recTier : null,
-        tierReason: tierNote
       };
     }
 
-    case 'blend-a-word': {
-      let recTier = tier;
-      if (accuracy >= 75 && tier === 'Seed') recTier = 'Sprout';
-      else if (accuracy >= 90 && tier === 'Sprout') recTier = 'Bloom';
-
+    case 'blend-a-word':
       return {
-        title: `Why ${learnerName} is in ${tier}`,
+        title: `Blend a Word — ${learnerName}`,
         finding: `Blended ${correct} of ${total} phoneme sound cards. Average attempts per word: ${attempts}.`,
         whyItMatters: 'Phonemic blending bridges letter sounds to whole-word reading automaticity.',
-        whatToCheck: 'Listen to oral reading of simple CVC (consonant-vowel-consonant) words in connected text.',
+        whatToCheck: 'Listen to oral reading of simple CVC words in connected text.',
         whatToDo: 'Practise blending with digraphs (sh, ch, th) in small reading groups.',
         confidence,
-        recommendedTier: recTier !== tier ? recTier : null,
-        tierReason: `Demonstrated blending fluency of ${accuracy}%.`
       };
-    }
 
     case 'talk-and-turn':
       return {
-        title: `Why ${learnerName} is in ${tier}`,
-        finding: `${learnerName} described the picture using key vocabulary (${sessionData?.selectedPrompts?.join(', ') || 'market vocabulary'}). ${sessionData?.teacherNotes || 'Engaged with confidence and descriptive details.'}`,
+        title: `Talk & Turn — ${learnerName}`,
+        finding: `Described the picture using key vocabulary (${sessionData?.selectedPrompts?.join(', ') || 'market vocabulary'}). ${sessionData?.teacherNotes || 'Engaged with confidence and descriptive detail.'}`,
         whyItMatters: 'Expressive vocabulary and sentence length directly predict reading comprehension in the Foundation Phase.',
-        whatToCheck: `Listen for correct preposition usage and complete sentences during conversational turns.`,
+        whatToCheck: 'Listen for correct preposition usage and complete sentences during conversational turns.',
         whatToDo: 'Encourage pair-talk discussions using story cards and prompt words.',
-        confidence: sessionData?.hasAudio ? 'High' : 'Medium',
-        recommendedTier: null
+        // hasAudio branch removed — audio feature does not exist yet
+        confidence,
       };
 
     case 'sound-hunt':
       return {
-        title: `Why ${learnerName} is in ${tier}`,
+        title: `Sound Hunt — ${learnerName}`,
         finding: `Recognised target sound "${activity.targetSound || 'S'}" across ${correct} of ${total} multi-stage sound items.`,
         whyItMatters: 'Multi-sensory sound recognition (saying, finding, reading) solidifies phoneme-grapheme association.',
         whatToCheck: 'Verify whether the learner can write the letter while making its sound.',
-        whatToDo: `Try the Sound Hunt activity with ${tier} group again this week.`,
+        whatToDo: `Try the Sound Hunt activity with the ${tier} group again this week.`,
         confidence,
-        recommendedTier: null
       };
 
     default:
       return {
-        title: `Lesedi Assessment for ${learnerName}`,
-        finding: `${learnerName} completed ${activity.name} (${accuracy}% accuracy).`,
+        title: `English — ${learnerName}`,
+        finding: `Completed ${activity.name} (${accuracy}% accuracy).`,
         whyItMatters: 'Regular guided literacy practice develops foundational reading confidence.',
         whatToCheck: 'Monitor engagement and phonics recall in small group rounds.',
         whatToDo: 'Continue scheduled CAPS reading routines.',
         confidence,
-        recommendedTier: null
       };
   }
 }

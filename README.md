@@ -69,6 +69,40 @@ Open **http://localhost:5173**. The frontend proxies `/api` to the Express API a
 
 **Important:** Run these commands from the `Pula` folder (the one containing the root `package.json`).
 
+## Run with Docker
+
+Install Docker Desktop on the PC that will host the app, then from the repository root run:
+
+```bash
+docker compose up --build -d
+```
+
+The app and built frontend are packaged in `pula-team:local`; open
+**http://localhost:4000** on the host PC. Teammates on the same network can use
+**http://<host-LAN-IP>:4000**. Allow inbound TCP port 4000 through the host's
+firewall on the trusted private network if needed.
+
+The default container uses the existing JSON store. Its data is kept in the
+Docker volume `pula-data` across container restarts and image rebuilds. To stop
+the app, run `docker compose down`; this keeps the volume. Each separate Docker
+installation has its own data. This setup does not synchronize records between
+different PCs; use a shared database for that.
+
+To build the image without starting the app, run `docker compose build`.
+To share the built image without rebuilding it on another PC, export/import it:
+
+```powershell
+# On the host PC
+docker save -o pula-team.tar pula-team:local
+
+# On the teammate's PC, after copying pula-team.tar and this repository
+docker load -i pula-team.tar
+docker compose up -d
+```
+
+To use a different host port in PowerShell, set `$env:PULA_PORT = "4001"`
+before running `docker compose up`.
+
 ## What's implemented
 
 - Mobile-first screens: Pula welcome, class setup and demo class code, dashboard, reading selection, reading screen, completion, groups, activities, parent notes, learner management, assessment history.
@@ -144,3 +178,138 @@ Validation:
 node --test frontend/tests/dashboardData.test.mjs
 npm --prefix frontend run build
 ```
+
+
+---
+
+## Database (Phase 1 — PostgreSQL)
+
+### Run locally with Docker
+
+```bash
+# Start Postgres + backend in containers
+docker compose up --build
+
+# Or without Docker — JSON store fallback (no database needed)
+USE_JSON_STORE=true npm run dev --prefix backend
+```
+
+### Run migrations
+
+```bash
+cd backend
+cp .env.example .env          # fill in DATABASE_URL
+npm run db:migrate             # applies all pending migrations in order
+```
+
+### Seed from data.json
+
+```bash
+npm run db:seed                # seeds from backend/data.json
+```
+
+### Environment variables
+
+| Variable | Required | Default | Purpose |
+|---|---|---|---|
+| `USE_JSON_STORE` | no | `true` | `true` = JSON file store, `false` = PostgreSQL |
+| `DATABASE_URL` | if not JSON | — | Full Postgres connection string |
+| `PORT` | no | `4000` | Server port |
+| `NODE_ENV` | no | `development` | |
+| `AZURE_AI_ENDPOINT` | Phase 2 | — | Azure OpenAI / Foundry endpoint |
+| `AZURE_AI_KEY` | Phase 2 | — | API key (use Key Vault in production) |
+| `LESEDI_MODEL` | Phase 2 | `claude-sonnet-4-5` | Model deployment name |
+| `LESEDI_DAILY_CALL_CAP` | Phase 2 | `200` | Max AI calls per day |
+| `PROVIDER` | Phase 2 | `stub` | `azure` / `databricks` / `stub` |
+
+### Switch providers
+
+```bash
+# Demo / offline (no database, no AI)
+USE_JSON_STORE=true PROVIDER=stub npm run start --prefix backend
+
+# Production (Azure PostgreSQL + Azure OpenAI)
+USE_JSON_STORE=false \
+DATABASE_URL="postgres://...?sslmode=require" \
+PROVIDER=azure \
+AZURE_AI_ENDPOINT="https://..." \
+AZURE_AI_KEY="..." \
+npm run start --prefix backend
+```
+
+---
+
+## Deployment (Azure — South Africa North)
+
+### Target infrastructure
+
+| Component | Azure service | Region | Est. cost |
+|---|---|---|---|
+| App | App Service Basic B1 | South Africa North | ~$15/mo |
+| Database | PostgreSQL Flexible Server B1ms | South Africa North | ~$21/mo |
+| Secrets | Key Vault | South Africa North | minimal |
+| AI (Lesedi) | Azure OpenAI / AI Foundry | Sweden Central or East US 2 | per-call |
+
+### GitHub Actions secrets required
+
+Add these in **GitHub → Settings → Secrets and variables → Actions**:
+
+| Secret | Value |
+|---|---|
+| `DOCKERHUB_USERNAME` | Your Docker Hub username |
+| `DOCKERHUB_TOKEN` | Docker Hub access token (not password) |
+| `AZURE_CREDENTIALS` | JSON from `az ad sp create-for-rbac --sdk-auth` |
+| `AZURE_WEBAPP_NAME` | Your App Service name, e.g. `pula-app` |
+| `AZURE_APP_URL` | Public URL, e.g. `https://pula-app.azurewebsites.net` |
+
+### Two pipelines
+
+**CI** (`.github/workflows/ci.yml`) — runs on every pull request to `main`:
+1. Install deps
+2. Run all tests against a throwaway Postgres
+3. Build the Docker image (not pushed)
+4. Start the container and call `/api/health`
+5. Check that Palesa (consent=false) cannot save an assessment — **blocks merge if it fails**
+
+**Deploy** (`.github/workflows/deploy.yml`) — runs on merge to `main`:
+1. Run tests (JSON store mode — no external DB needed)
+2. Build and push image to Docker Hub tagged with the commit SHA
+3. Deploy to Azure App Service
+4. Wait for `/api/health` to return `ok: true`
+5. Smoke test: Palesa consent gate — **fails the deployment if broken**
+
+### App Service configuration
+
+In **Azure → App Service → Configuration → Application settings**, set:
+
+```
+USE_JSON_STORE         = false
+DATABASE_URL           = @Microsoft.KeyVault(SecretUri=https://<vault>.vault.azure.net/secrets/DATABASE-URL/)
+PORT                   = 8080
+NODE_ENV               = production
+WEBSITES_PORT          = 8080
+```
+
+The managed identity on the App Service needs the **Key Vault Secrets User** role.
+
+### PostgreSQL setup (once)
+
+```bash
+# From Azure Cloud Shell or local az CLI
+az postgres flexible-server firewall-rule create \
+  --resource-group <rg> \
+  --name <pg-server> \
+  --rule-name AllowAzureServices \
+  --start-ip-address 0.0.0.0 \
+  --end-ip-address 0.0.0.0
+
+# Then run migrations once (replace <connection-string>)
+DATABASE_URL="<connection-string>" node backend/src/db/migrate.js
+DATABASE_URL="<connection-string>" node backend/src/db/seed.js
+```
+
+SSL is always required for Azure PostgreSQL. Include `?sslmode=require` in `DATABASE_URL`.
+
+### Replacing Vercel
+
+The container already serves the built Vite PWA from Express (Copilot's Dockerfile handles the frontend build). `vercel.json` can be left in place — it won't interfere with App Service. Once Azure is working, remove the Vercel project from the Vercel dashboard.

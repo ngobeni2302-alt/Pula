@@ -1,5 +1,8 @@
 import express from 'express';
 import cors from 'cors';
+import { mountLesedi } from '../../LesediAiAgent/src/index.js';
+import { handlePostActivitySession } from './routes/activitySessions.js';
+import { checkConnection } from './store/pool.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -18,18 +21,51 @@ app.use(cors({origin:(origin,cb)=>cb(null,!origin||origin.startsWith('http://loc
 app.use(express.json({limit:'2mb'}));
 const wrap=f=>(req,res)=>{try{f(req,res)}catch(e){res.status(400).json({error:e.message})}};
 const must=(cond,msg)=>{if(!cond)throw Error(msg)};
-app.get('/api/health',(req,res)=>res.json({ok:true,mode:'local-demo'}));
+app.get('/api/health', async (req, res) => {
+  const useJson = (process.env.USE_JSON_STORE ?? 'true').toLowerCase() === 'true';
+  const mode    = useJson ? 'json' : 'postgres';
+  let   db      = 'n/a';
+  if (!useJson) {
+    db = (await checkConnection()) ? 'connected' : 'unreachable';
+  }
+  res.json({ ok: true, mode, db });
+});
+// ── Activity sessions (Phase 1) ──────────────────────────────────────────
+// POST /api/activity-sessions — idempotent on client id, consent-gated
+app.post('/api/activity-sessions', handlePostActivitySession);
+
 app.get('/api/state',(req,res)=>res.json(db));
 app.patch('/api/classroom',wrap((req,res)=>{db.classroom={...db.classroom,...req.body};save();res.json(db.classroom)}));
 app.post('/api/learners',wrap((req,res)=>{must(req.body.name?.trim(),'Learner name is required');let learner={id:crypto.randomUUID(),name:req.body.name.trim(),group:'Seed',consent:false,language:'English',channel:'SMS',parentContact:''};db.learners.push(learner);save();res.status(201).json(learner)}));
-app.patch('/api/learners/:id',wrap((req,res)=>{const l=db.learners.find(x=>x.id===req.params.id);must(l,'Learner not found');const allowed=['name','group','consent','language','channel','parentContact','recentlyMoved','groupJourney','soundsToPractise','termProgress','checkInNote'];for(const k of allowed)if(k in req.body)l[k]=req.body[k];save();res.json(l)}));
+app.patch('/api/learners/:id',wrap((req,res)=>{const l=db.learners.find(x=>x.id===req.params.id);must(l,'Learner not found');const allowed=['name','group','literacyGroup','mathsGroup','consent','language','channel','parentContact','recentlyMoved','groupJourney','soundsToPractise','mathsSkillsToWork','termProgress','mathsTermProgress','checkInNote','weeksInTier','mathsWeeksInTier','dbeCode'];for(const k of allowed)if(k in req.body)l[k]=req.body[k];save();res.json(l)}));
 app.delete('/api/learners/:id',wrap((req,res)=>{db.learners=db.learners.filter(x=>x.id!==req.params.id);save();res.json({ok:true})}));
 function words(s){return (s.toLowerCase().match(/[\p{L}']+/gu)||[])}
 function score(expected,spoken,durationSeconds){const a=words(expected),b=words(spoken);let dp=Array.from({length:a.length+1},()=>Array(b.length+1).fill(0));for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)dp[i][j]=a[i-1]===b[j-1]?dp[i-1][j-1]+1:Math.max(dp[i-1][j],dp[i][j-1]);let correct=dp[a.length][b.length];return{correct,total:a.length,accuracy:a.length?Math.round(100*correct/a.length):0,wpm:durationSeconds>0?Math.round(b.length*60/durationSeconds):0}}
 app.post('/api/assessments',wrap((req,res)=>{const {learnerId,passage,transcript,durationSeconds}=req.body;const l=db.learners.find(x=>x.id===learnerId);must(l,'Learner not found');must(l.consent,'Parent consent is required before assessment');must(passage?.trim()&&transcript?.trim(),'Passage and transcript required');must(Number(durationSeconds)>0,'Duration must be positive');const result=score(passage,transcript,Number(durationSeconds));const suggested=result.accuracy<60?'Seed':result.accuracy<78?'Sprout':result.accuracy<92?'Bloom':'Tree';const assessment={id:crypto.randomUUID(),learnerId,passage,transcript,durationSeconds:Number(durationSeconds),...result,suggestedGroup:suggested,createdAt:new Date().toISOString(),source:'browser-transcript',reviewed:false};db.assessments.unshift(assessment);save();res.status(201).json(assessment)}));
 app.post('/api/assessments/:id/approve',wrap((req,res)=>{const a=db.assessments.find(x=>x.id===req.params.id);must(a,'Assessment not found');const l=db.learners.find(x=>x.id===a.learnerId);must(l,'Learner not found');a.reviewed=true;if(req.body.applyGroup){l.group=req.body.group||a.suggestedGroup;l.recentlyMoved=true}save();res.json(a)}));
-const activityLibrary={Seed:{title:'Sound & letter hunt',steps:['Say three simple letter sounds together.','Find classroom objects starting with those sounds.','Blend short words and read them aloud.']},Sprout:{title:'Sound hunt',steps:['Say a word with the new sound. Children clap when they hear it.','Find three things that start with the sound.','Read a short passage together, then in pairs.']},Bloom:{title:'Story builders',steps:['Read a short paragraph aloud.','Identify the main idea and three details.','Retell the story with a partner.']},Tree:{title:'Reading detectives',steps:['Read a new passage independently.','Find evidence for two comprehension questions.','Explain the meaning of three new words.']}};
-app.post('/api/activities',wrap((req,res)=>{const group=req.body.group||'Sprout';must(activityLibrary[group],'Invalid group');const item={id:crypto.randomUUID(),group,grade:db.classroom.grade,...activityLibrary[group],minutes:3,source:'CAPS-aligned-micro-lesson',createdAt:new Date().toISOString()};db.activities.unshift(item);save();res.status(201).json(item)}));
+const activityLibrary={
+  literacy:{
+    Seed:{title:'Sound & letter hunt',focus:'matching letters to sounds',steps:['Say three simple letter sounds together.','Find classroom objects starting with those sounds.','Blend short words and read them aloud.'],observe:'Who matches letters to sounds independently?',homeGame:'Tap letters on a cereal box. Ask your child to say the sound each letter makes.'},
+    Sprout:{title:'Sound hunt',focus:'blending and word families',steps:['Say a word with the new sound. Children clap when they hear it.','Find three things that start with the sound.','Read a short passage together, then in pairs.'],observe:'Who can blend independently? Who still needs the model?',homeGame:"Say a word in sounds (b-u-s). Ask your child to say the whole word fast."},
+    Bloom:{title:'Story builders',focus:'reading fluency and retelling',steps:['Read a short paragraph aloud.','Identify the main idea and three details.','Retell the story with a partner.'],observe:'Does the child pause at full stops? Decode unfamiliar words?',homeGame:"Read one page of any book. Ask: 'What happened? Who was there?'"},
+    Tree:{title:'Reading detectives',focus:'deep comprehension',steps:['Read a new passage independently.','Find evidence for two comprehension questions.','Explain the meaning of three new words.'],observe:'Can the child infer meaning and support with evidence?',homeGame:"After a story, ask: 'Why do you think that happened?'"}
+  },
+  maths:{
+    Seed:{title:'Counting bodies',focus:'one-to-one correspondence',steps:['Hold up 3 fingers slowly, counting aloud: 1, 2, 3. Children copy.','Ask how many fingers and confirm together.','Put 3 blocks in a row, touch each one as you count.','Ask a child to show 4 fingers.'],observe:'Who touches each object once while counting? Who skips?',homeGame:'Count 5 raisins with your child, touching each one.'},
+    Sprout:{title:'Jump the 10 bridge',focus:'bridging through 10',steps:["Show 8 + 5 on the number line. 'How far to 10 from 8?' (2 jumps).","'We used 2. How many left from 5?' (3 left). Land on 13.",'Children copy with 7 + 6, then 9 + 4.','One child explains the jumps to the group.'],observe:'Who freezes crossing 10? Who splits the second number automatically?',homeGame:'Hold up 8 fingers, count on 5 more. Ask your child the total.'},
+    Bloom:{title:'Smart strategies race',focus:'mental maths strategies',steps:["Pose 28 + 7. Ask: 'Does anyone see a shortcut?'",'Model: 28 + 2 = 30, then 30 + 5 = 35.','Pairs race to solve three more problems using any smart strategy.','Each pair explains their method.'],observe:'Who uses a mental strategy vs. who counts on? Can they explain it?',homeGame:"Ask: '17 + 8 — can you do it in your head? Show me how.'"},
+    Tree:{title:'Problem detectives',focus:'multi-step word problems',steps:["Read a multi-step problem aloud: 'There are 125 learners. 48 go home. Then 17 arrive. How many now?'",'Children underline the key numbers and the question.','Each pair writes the number sentences for each step.','Pairs share different routes to the same answer.'],observe:'Who identifies the operation? Who can explain why?',homeGame:"Make a shopping problem: 'We have R50. Bread is R14, milk R18. How much change?'"}
+  }
+};
+app.post('/api/activities',wrap((req,res)=>{
+  const group   = req.body.group   || 'Sprout';
+  const subject = req.body.subject || 'literacy';
+  const library = activityLibrary[subject];
+  must(library,          `Invalid subject: ${subject}. Use 'literacy' or 'maths'.`);
+  must(library[group],   `Invalid group: ${group}`);
+  const item={id:crypto.randomUUID(),group,subject,grade:db.classroom.grade,...library[group],minutes:subject==='maths'?10:3,source:'CAPS-aligned-micro-lesson',createdAt:new Date().toISOString()};
+  db.activities.unshift(item);save();res.status(201).json(item);
+}));
 app.patch('/api/activities/:id',wrap((req,res)=>{const item=db.activities.find(x=>x.id===req.params.id);must(item,'Activity not found');if('title'in req.body)item.title=req.body.title;if('steps'in req.body)item.steps=req.body.steps;if('minutes'in req.body)item.minutes=req.body.minutes;save();res.json(item)}));
 app.post('/api/activities/complete',wrap((req,res)=>{if(!db.completedActivities)db.completedActivities=[];const entry={group:req.body.group||'Sprout',title:req.body.title||'Sound hunt',date:new Date().toISOString().split('T')[0]};db.completedActivities.unshift(entry);save();res.status(201).json(entry)}));
 app.post('/api/notes',wrap((req,res)=>{const l=db.learners.find(x=>x.id===req.body.learnerId);must(l,'Learner not found');const latest=db.assessments.find(a=>a.learnerId===l.id);const text=req.body.text||`Hello! ${l.name} took part in reading practice today. ${latest?`Their latest practice showed ${latest.accuracy}% word-match accuracy in the selected passage.`:'We are encouraging steady reading practice.'} Please read a short page together at home. — ${db.classroom.teacher}`;const note={id:crypto.randomUUID(),learnerId:l.id,text,status:'draft',language:l.language,channel:l.channel,createdAt:new Date().toISOString()};db.notes.unshift(note);save();res.status(201).json(note)}));
@@ -583,6 +619,27 @@ app.post('/api/messages/invitations/:id/respond', wrap((req, res) => {
 }));
 
 const distPath = path.resolve(here, '../../frontend/dist');
+
+// Mount Lesedi AI agent routes (/api/lesedi, /api/lesedi/health)
+// saveNote persists Lesedi-generated drafts directly to the DB (no internal HTTP round-trip).
+mountLesedi(app, {
+  saveNote: (learnerId, text) => {
+    const l = db.learners.find(x => x.id === learnerId);
+    if (!l) return;
+    const note = {
+      id: crypto.randomUUID(),
+      learnerId: l.id,
+      text,
+      status: 'draft',
+      language: l.language,
+      channel: l.channel,
+      createdAt: new Date().toISOString(),
+    };
+    db.notes.unshift(note);
+    save();
+  },
+});
+
 if (fs.existsSync(distPath)) {
   app.use(express.static(distPath));
   app.get('*', (req, res, next) => {
