@@ -60,8 +60,8 @@ jobs:
           NODE_ENV:       test
 
       - name: Run frontend tests
-        run: node --test tests/
-        working-directory: frontend
+        run: node --test frontend/tests/
+        # Run from repo root so path.resolve() in tests resolves correctly
 
       # ── 5. Docker login ──────────────────────────────────────────────────
       # Using Docker Hub. To switch to Azure Container Registry:

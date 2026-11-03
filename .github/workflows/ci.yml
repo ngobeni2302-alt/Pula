@@ -80,8 +80,8 @@ jobs:
 
       # ── 7. Run frontend tests ───────────────────────────────────────────
       - name: Run frontend tests
-        run: node --test tests/
-        working-directory: frontend
+        run: node --test frontend/tests/
+        # Run from repo root so path.resolve() in tests resolves correctly
 
       # ── 8. Build frontend (catches Vite errors early) ───────────────────
       - name: Build frontend
