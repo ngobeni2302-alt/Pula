@@ -18,6 +18,8 @@
  *   not a vague refusal. Source tags make that auditable.
  */
 
+import { HOD_ALERTS } from './tierRules.js';
+
 // ---------------------------------------------------------------------------
 // Policy definitions — source-tagged
 // ---------------------------------------------------------------------------
@@ -89,6 +91,12 @@ export const POLICIES = {
     capsRef: null,
     text: "I can't suggest a maths group placement without any observations. Please record what strategy the child uses — for example, does she count all, count on, or calculate mentally? With 3 or more observations I can explain the group and suggest a next step.",
     tags: ['insufficient_evidence', 'no_guessing', 'teacher_decides', 'maths'],
+  },
+  consent_overdue: {
+    source: 'PROJECT',
+    capsRef: null,
+    text: "This learner has been in the system for more than 2 weeks without a parent consent record. The HOD should be notified. I can't process this learner's data until consent is recorded. Would you like me to draft a consent request for the teacher to approve and send?",
+    tags: ['consent_required', 'hod_flag_consent_overdue', 'teacher_approval_required'],
   },
 };
 
@@ -185,9 +193,22 @@ export function checkGuardrails(ctx) {
     observations = [],
   } = ctx;
 
-  // 1. POPIA: Consent gate
+  // 1. POPIA: Consent gate — learner explicitly has no consent
   if (learner && learner.consent === false && CONSENT_GATED_TASKS.has(task)) {
     return blocked('no_consent');
+  }
+
+  // 1b. PROJECT: Consent overdue — learner has been in system > no_consent_max_weeks
+  //     with no consent recorded (consent is null/undefined, not false).
+  //     This fires for hod_insight and gap_explanation to flag the HOD.
+  if (
+    learner &&
+    learner.consent == null &&
+    learner.weeksInSystem != null &&
+    Number(learner.weeksInSystem) > HOD_ALERTS.no_consent_max_weeks &&
+    CONSENT_GATED_TASKS.has(task)
+  ) {
+    return blocked('consent_overdue');
   }
 
   // 2. CAPS: Grade R formal test (direct check before text rules)

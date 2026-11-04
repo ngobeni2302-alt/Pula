@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { mountLesedi } from '../../LesediAiAgent/src/index.js';
 import { handlePostActivitySession } from './routes/activitySessions.js';
+import { handleApproveOutput, handleListOutputs } from './routes/lesediOutputs.js';
 import { checkConnection } from './store/pool.js';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -40,6 +41,12 @@ app.use('/api', (req,res,next) => { res.set('Cache-Control','no-store'); next();
 // ── Activity sessions (Phase 1) ──────────────────────────────────────────
 // POST /api/activity-sessions — idempotent on client id, consent-gated
 app.post('/api/activity-sessions', handlePostActivitySession);
+
+// ── Lesedi output approval (Phase 1) ─────────────────────────────────────
+// PATCH /api/lesedi/outputs/:id/approve — teacher approves or rejects a draft
+// GET  /api/lesedi/outputs              — list outputs for a classroom
+app.patch('/api/lesedi/outputs/:id/approve', handleApproveOutput);
+app.get('/api/lesedi/outputs', handleListOutputs);
 
 app.get('/api/state',(req,res)=>res.json(db));
 app.patch('/api/classroom',wrap((req,res)=>{db.classroom={...db.classroom,...req.body};save();res.json(db.classroom)}));

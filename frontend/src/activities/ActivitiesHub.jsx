@@ -1,4 +1,4 @@
-import React,{useEffect,useRef,useState} from 'react';
+﻿import React,{useEffect,useRef,useState} from 'react';
 import {ArrowLeft,Mic,Volume2,RotateCcw} from 'lucide-react';
 import {coreApi,useCore} from '../core/CoreContext.jsx';
 import useVoiceCapture from './useVoiceCapture.jsx';
@@ -94,7 +94,7 @@ export default function ActivitiesHub({classroom,subject='English',onBack}) {
         {voice.notice&&<p className="game-mic-notice" role="alert">{voice.notice}</p>}
       </div>
       {permissionOpen&&<div className="game-mic-backdrop"><section className="game-mic-dialog" role="dialog" aria-modal="true" aria-labelledby="mic-permission-title"><h2 id="mic-permission-title">Ready to use the microphone?</h2><p>Teacher: confirm guardian permission before your learner begins. Browser speech recognition may send voice to its speech provider. Pula keeps audio only in memory and discards it after this activity.</p><label><input type="checkbox" checked={guardianConfirmed} onChange={e=>setGuardianConfirmed(e.target.checked)}/>{session.practice?'Guardian permission for this activity and microphone use is recorded.':'Guardian permission for microphone use is recorded.'}</label>{permissionError&&<p role="alert">{permissionError}</p>}<button className="game-primary" disabled={!guardianConfirmed} onClick={enableVoice}>Start microphone</button><button onClick={()=>setPermissionOpen(false)}>Continue without microphone</button></section></div>}
-      <div className="game-actions"><button disabled={busy} onClick={resetRound}><RotateCcw size={18}/>Start again</button><button className="game-primary" disabled={!canNext||busy||voice.status==='requesting'||voice.status==='stopping'} onClick={next}>{busy?'One moment…':round===session.activity.rounds.length-1?"I’m done":'Next'}</button></div>
+      <div className="game-actions"><button disabled={busy} onClick={resetRound}><RotateCcw size={18}/>Start again</button><button className="game-primary" disabled={!canNext||busy||voice.status==='requesting'||voice.status==='stopping'} onClick={next}>{busy?'One moment…':round===session.activity.rounds.length-1?"I'm done":'Next'}</button></div>
       {error&&<p role="alert">Your activity is still open. Your teacher can retry finishing it.</p>}
     </>}
     {view==='setup'&&error&&<p role="alert">{error}</p>}

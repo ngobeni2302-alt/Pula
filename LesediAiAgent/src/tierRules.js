@@ -167,14 +167,30 @@ export function formatAllTierRules(subject) {
 }
 
 /**
- * Return the progression gate block for a given grade transition.
- * @param {string} fromGrade  'R' | '1' | '2'
+ * Return the progression gate block for a given grade.
+ * For grades R, 1, 2: returns the UPCOMING gate (what the learner needs to move up).
+ * For grade 3: returns a note about Tree enrichment (no further gate in Foundation Phase).
+ * Never returns an empty string — always provides context for the prompt.
+ *
+ * @param {string} fromGrade  'R' | '1' | '2' | '3'
  * @returns {string}
  */
 export function formatGate(fromGrade) {
-  const key = fromGrade === 'R' ? 'R_to_1' : fromGrade === '1' ? '1_to_2' : '2_to_3';
+  // Grade 3 has no further Foundation Phase gate — return enrichment context
+  if (fromGrade === '3') {
+    return [
+      'Progression gate: Grade 3 — end of Foundation Phase',
+      'Summary: Grade 3 is the final year of Foundation Phase. Learners moving to Intermediate Phase (Grade 4) need strong reading fluency, written comprehension, and solid numeracy foundations.',
+      'Literacy: Advanced texts with expression; 8+ sentence stories with accurate grammar; deep comprehension (CAPS HL Gr 3 p.107–109).',
+      'Maths: Multi-step word problems; patterns; explains why a rule works (CAPS Maths Gr 3 p.28–32).',
+      'Note: A Tree-tier learner in Grade 3 should be given enrichment, not held back. A Seed-tier learner in Grade 3 needs intensive support before Intermediate Phase.',
+    ].join('\n');
+  }
+
+  const key  = fromGrade === 'R' ? 'R_to_1' : fromGrade === '1' ? '1_to_2' : '2_to_3';
   const gate = PROGRESSION_GATES[key];
-  if (!gate) return '';
+  if (!gate) return 'Progression gate: not available for this grade.';
+
   return [
     `Progression gate: ${gate.label}`,
     `Summary: ${gate.summary}`,

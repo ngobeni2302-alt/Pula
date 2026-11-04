@@ -2,18 +2,39 @@
  * azureAdapter.js
  * AI model adapter for Lesedi.
  *
- * Current target : Azure AI — Claude Sonnet 3.5 (claude-sonnet-4-5) via the
- *                  Azure AI Inference SDK (@azure-rest/ai-inference).
- * Databricks stub : swap PROVIDER env var to 'databricks' and fill in the
- *                   Databricks section below when the endpoint is ready.
+ * Per-task token limits (override with LESEDI_MAX_TOKENS_<TASK> env var):
+ *   gap_explanation, hod_insight  → 1500  (7-section structured output)
+ *   teacher_activity, class_insight → 900
+ *   parent_note                   → 400   (short, SMS-safe drafts)
+ *   child_tutor (AI fallback)     → 300   (|||‑delimited three-part reply)
+ *   guardrail                     → 500
+ *   default                       → 800
  *
- * Environment variables (set in .env or Azure App Service config):
- *   AZURE_AI_ENDPOINT   e.g. https://<your-resource>.services.ai.azure.com/models
- *   AZURE_AI_KEY        Your Azure AI Foundry API key
- *   LESEDI_MODEL        Model deployment name (default: claude-sonnet-4-5)
- *   PROVIDER            'azure' (default) | 'databricks' | 'stub'
- *   MAX_TOKENS          Response token limit (default: 600)
+ * Global MAX_TOKENS env var still applies when no per-task var is set.
  */
+
+// Per-task token budgets — conservative defaults that avoid truncation
+const TASK_TOKEN_LIMITS = {
+  gap_explanation:  1500,
+  hod_insight:      1500,
+  teacher_activity:  900,
+  class_insight:     900,
+  parent_note:       400,
+  child_tutor:       300,
+  guardrail:         500,
+};
+
+/**
+ * Resolve the token limit for a task.
+ * Checks LESEDI_MAX_TOKENS_<TASK> first, then MAX_TOKENS, then the table above.
+ */
+function resolveMaxTokens(task) {
+  const taskKey = task?.toUpperCase().replace(/-/g, '_');
+  const envKey  = taskKey ? `LESEDI_MAX_TOKENS_${taskKey}` : null;
+  if (envKey && process.env[envKey]) return Number(process.env[envKey]);
+  if (process.env.MAX_TOKENS)        return Number(process.env.MAX_TOKENS);
+  return TASK_TOKEN_LIMITS[task] ?? 800;
+}
 
 // ---------------------------------------------------------------------------
 // Lazy-load the Azure SDK so the server still starts when the package
@@ -28,11 +49,11 @@ async function getAzureClient() {
 // ---------------------------------------------------------------------------
 // Azure provider
 // ---------------------------------------------------------------------------
-async function callAzure(system, user) {
-  const endpoint = process.env.AZURE_AI_ENDPOINT;
-  const apiKey   = process.env.AZURE_AI_KEY;
-  const model    = process.env.LESEDI_MODEL ?? 'claude-sonnet-4-5';
-  const maxTokens = Number(process.env.MAX_TOKENS ?? 600);
+async function callAzure(system, user, task) {
+  const endpoint  = process.env.AZURE_AI_ENDPOINT;
+  const apiKey    = process.env.AZURE_AI_KEY;
+  const model     = process.env.LESEDI_MODEL ?? 'claude-sonnet-4-5';
+  const maxTokens = resolveMaxTokens(task);
 
   if (!endpoint || !apiKey) {
     throw new Error('AZURE_AI_ENDPOINT and AZURE_AI_KEY must be set in environment variables.');
@@ -62,31 +83,17 @@ async function callAzure(system, user) {
 // ---------------------------------------------------------------------------
 // Databricks stub — wire up when endpoint is confirmed
 // ---------------------------------------------------------------------------
-async function callDatabricks(system, user) {
+async function callDatabricks(system, user, task) {
   // TODO: Replace with real Databricks Model Serving endpoint when ready.
-  // Databricks exposes an OpenAI-compatible /chat/completions endpoint.
-  //
-  // const endpoint = process.env.DATABRICKS_ENDPOINT;  // e.g. https://<workspace>.azuredatabricks.net/serving-endpoints/<name>/invocations
-  // const token    = process.env.DATABRICKS_TOKEN;
-  //
-  // const res = await fetch(`${endpoint}`, {
-  //   method: 'POST',
-  //   headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-  //   body: JSON.stringify({
-  //     messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
-  //     max_tokens: Number(process.env.MAX_TOKENS ?? 600),
-  //   }),
-  // });
-  // const data = await res.json();
-  // return data.choices[0].message.content.trim();
-
+  void task; // reserved for per-task token limits once wired
   throw new Error('Databricks adapter is not yet configured. Set PROVIDER=azure or PROVIDER=stub.');
 }
 
 // ---------------------------------------------------------------------------
 // Stub provider — returns deterministic text for local dev and tests
 // ---------------------------------------------------------------------------
-function callStub(system, user) {
+function callStub(system, user, task) {
+  void task;
   console.warn('[Lesedi] Running in STUB mode — no real AI call made.');
   return Promise.resolve(
     `[STUB RESPONSE]\nSystem: ${system.slice(0, 60)}...\nUser: ${user.slice(0, 120)}...\n\nThis is a placeholder response. Set PROVIDER=azure and supply AZURE_AI_ENDPOINT + AZURE_AI_KEY to enable the real model.`
@@ -101,16 +108,17 @@ function callStub(system, user) {
  * Call the configured AI provider.
  * @param {string} system  System / preamble prompt
  * @param {string} user    User turn prompt
+ * @param {string} [task]  Task name for per-task token budget (e.g. 'gap_explanation')
  * @returns {Promise<string>} The model's text response
  */
-export async function callAI(system, user) {
+export async function callAI(system, user, task) {
   const provider = (process.env.PROVIDER ?? 'stub').toLowerCase();
 
   switch (provider) {
-    case 'azure':       return callAzure(system, user);
-    case 'databricks':  return callDatabricks(system, user);
+    case 'azure':       return callAzure(system, user, task);
+    case 'databricks':  return callDatabricks(system, user, task);
     case 'stub':
-    default:            return callStub(system, user);
+    default:            return callStub(system, user, task);
   }
 }
 
