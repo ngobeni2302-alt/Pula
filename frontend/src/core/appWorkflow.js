@@ -75,6 +75,41 @@ export async function appWorkflow(path,body){
     l.tierHistory=[...(l.tierHistory||[]),{previousTier:l.group,newTier:body.group,reason:body.reason,changedBy:c.teacher,changedAt:new Date().toISOString()}];l.group=body.group;localStorage.setItem(STORAGE_KEY,JSON.stringify(data));window.dispatchEvent(new Event('pula_dashboard_update'));return {ok:true};
   }
   if(parts[0]==='suggestions'){const c=teacher();return db.drafts.filter(d=>d.grade===c.grade&&d.learnerId===url.searchParams.get('learnerId')&&d.status==='APPROVED').slice(-3).map(d=>({id:d.id,text:d.intervention}));}
+  // ── Lesedi AI enrichment ───────────────────────────────────────────────
+  // POST /drafts/:id/lesedi — ask the real Lesedi AI for gap analysis and
+  // update the draft's analysis/intervention/parentUpdate fields.
+  // Falls back silently if the backend is unreachable (e.g. in tests).
+  if(parts[0]==='drafts'&&parts[2]==='lesedi'){
+    const c=teacher(),d=db.drafts.find(d=>d.id===parts[1]&&d.grade===c.grade);
+    if(!d)throw Error('Draft not found.');
+    if(d.status!=='DRAFT_PENDING_APPROVAL')return {status:d.status,lesediEnriched:false};
+    // Build the Lesedi request context from the draft evidence
+    const learnerName=d.learnerName||'the learner';
+    const subject=d.subject==='Mathematics'?'Mathematics':'English';
+    const obs=d.evidence?.total?[{item:d.activityName,correct:d.evidence.correct,of:d.evidence.total}]:[{item:d.activityName,result:'participation'}];
+    const apiBase=typeof import.meta!=='undefined'&&import.meta.env?.VITE_API_BASE?import.meta.env.VITE_API_BASE:(typeof window!=='undefined'&&window.location?.port==='5173'?'http://localhost:4000':'');
+    try{
+      const res=await fetch(`${apiBase}/api/lesedi`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task:'gap_explanation',subject,grade:String(c.grade),term:4,learner:{firstName:learnerName,group:'Sprout',consent:true,observations:obs,checkInNote:null},weeks:1,requestText:`Activity evidence: ${d.activityName} — ${d.evidence?.total?d.evidence.correct+'/'+d.evidence.total:'participation'}`})});
+      if(!res.ok)throw Error(`HTTP ${res.status}`);
+      const data=await res.json();
+      if(!data.ok||!data.text)throw Error('Empty response');
+      // Parse the 7-section gap analysis response
+      const text=data.text||'';
+      const lines=text.split('\n');
+      const findSection=(label)=>{const i=lines.findIndex(l=>new RegExp(label,'i').test(l));return i>=0?lines.slice(i+1).find(l=>l.trim())?.trim()||'':''};
+      d.analysis=findSection('what the data shows')||findSection('finding')||text.slice(0,300);
+      d.intervention=findSection('do this')||findSection('what to do')||d.intervention;
+      d.parentUpdate=findSection('parent')||d.parentUpdate;
+      d.lesediEnriched=true;
+      d.lesediSource=data.source||'ai_model';
+      d.lesediConfidence=data.confidence||'Low';
+      save(db);
+      return {ok:true,lesediEnriched:true,draft:d};
+    }catch(e){
+      // Backend unreachable — return the draft unchanged
+      return {ok:false,lesediEnriched:false,error:e.message,draft:d};
+    }
+  }
   if(path==='/progress'){
     if(profile?.role!=='Parent')return {learners:[],updates:[],assessments:[]};
     const c=currentClass(),l=c.learners.find(l=>l.id===profile.childId);

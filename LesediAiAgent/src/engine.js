@@ -415,7 +415,10 @@ export async function runLesedi(ctx) {
       'asks_for_the_answer',
       'finishes_early',
       'correct_no_explanation',
-      'still_using_fingers_gr3',
+      // still_using_fingers_gr3 is only appropriate for Grade 3 —
+      // finger use is developmentally expected in Grades R–2.
+      // The grade check is done here, not in the phrase bank.
+      ...(ctx.grade === '3' ? ['still_using_fingers_gr3'] : []),
     ]);
 
     const knownEvents = isMaths ? knownMathsEvents : knownLiteracyEvents;
@@ -435,7 +438,7 @@ export async function runLesedi(ctx) {
 
     // Unknown event — AI fallback (subject-aware prompt)
     const { system, user } = buildChildTutorPrompt(ctx);
-    const raw   = await callAI(system, user);
+    const raw   = await callAI(system, user, 'child_tutor');
     const parts = raw.split('|||').map(s => s.trim());
     const [childText, teacherFlag, parentTip] = parts;
 
@@ -465,7 +468,7 @@ export async function runLesedi(ctx) {
   }
 
   const { system, user } = builder(ctx);
-  const aiText = await callAI(system, user);
+  const aiText = await callAI(system, user, task);
 
   const requiresApproval = TASKS_REQUIRE_APPROVAL.has(task);
   const tags = requiresApproval
