@@ -187,3 +187,83 @@ Lesedi is a CAPS-aligned AI teaching assistant integrated into the Pula school m
 | child_tutor (AI) | 300 | Three-part ||| delimited reply |
 | guardrail | 500 | Policy explanation |
 | default | 800 | Fallback |
+
+---
+
+## Phase 2 — Child Learning Tutor (Added)
+
+### New Components
+
+| Component | File | Role |
+|---|---|---|
+| Activity Definitions | `shared/activityDefinitions.js` | Full pedagogical metadata for all 5 activities: learning objectives, CAPS refs, curriculum skill IDs, grade applicability, misconceptions, hint sequences (levels 0–3 + F), success criteria, evidence types. |
+| Scaffolding Engine | `LesediAiAgent/src/scaffoldingEngine.js` | Adaptive hint tracking. Escalates levels 0→1→2→3→F on repeated struggles. History-aware: starts at level 1 if child has needed hints 2+ times before. Detects self-corrections. Provides session summaries for the evaluation engine. |
+| Evaluation Engine | `LesediAiAgent/src/evaluationEngine.js` | Maps evidence + hint usage to the 5 observation levels (DEMONSTRATED, DEVELOPING, NEEDS_FURTHER_PRACTICE, INSUFFICIENT_EVIDENCE, TEACHER_REVIEW_REQUIRED). Multi-session pattern detection for Phase 3. |
+| Evidence Classification | `shared/activityEvidence.js` (enhanced) | `classifyEvidence()` maps each activity's evidence to structured types: cognitive, visual recognition, spoken production, reading accuracy, reading fluency, comprehension. Notes that maths pronunciation ≠ mathematical result, and tapping letters ≠ validated phonics score. |
+
+### New API Endpoints
+
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/api/lesedi/scaffold` | POST | Real-time hint during gameplay. Returns hint text, hint level, handoff flag, praise flag. |
+| `/api/lesedi/evaluate` | POST | Evaluate a completed session. Returns observation level, reason, evidence, confidence. |
+| `/api/lesedi/scaffold/:sessionId` | DELETE | Clear scaffolding state for a completed session. |
+
+### Scaffolding Levels
+
+```
+Level 0 — Independent attempt (no hint given)
+Level 1 — Gentle prompt (draw attention to what the child already knows)
+Level 2 — Guided hint (model a simpler version of the same problem)
+Level 3 — Worked example with a DIFFERENT number/word, invite retry, offer teacher handoff
+Level F — Final stage: give the learner another opportunity to solve independently
+```
+
+Adaptive rules:
+- Start at level 0 (let the child try independently)
+- Escalate +1 if the child struggles (wrong answer or no response)
+- Never skip levels (1 → 3 is not allowed; must go 1 → 2 → 3)
+- If the child succeeds at any level, reset to 0 for the next round
+- If the child self-corrects (wrong then right), do NOT escalate
+- If a child has needed hints 2+ times on a skill, start at level 1
+- Level 3 always ends with teacher handoff invitation (never a dead end)
+
+### Observation Levels (Internal Evidence Descriptions)
+
+These are internal evidence descriptions, NOT official DBE achievement codes:
+
+| Level | Meaning |
+|---|---|
+| DEMONSTRATED | Child completed independently (no hints, score ≥ 67%) |
+| DEVELOPING | Child completed with hints or moderate score |
+| NEEDS_FURTHER_PRACTICE | Child attempted but did not complete (score < 34%) |
+| INSUFFICIENT_EVIDENCE | No valid evidence captured |
+| TEACHER_REVIEW_REQUIRED | Anomaly (e.g. 100% on only 1 round) |
+
+### Activity Catalog (5 Activities)
+
+| Activity | Subject | Curriculum Skill ID | Evaluation Method | Grades |
+|---|---|---|---|---|
+| Reading Time | English | HL-READING-FLUENCY | Participation (null score) | R–3 |
+| Number Hunt | Mathematics | MATHS-NUMBER-RECOGNITION | Objective (correct/total) | R–2 |
+| Count and Pick | Mathematics | MATHS-ONE-TO-ONE-COUNTING | Objective (correct/total) | R–2 |
+| Rhyme Time | English | HL-RHYME-RECOGNITION | Objective (correct/total) | R–2 |
+| Sound It Out | English | HL-PHONEME-BLENDING | Participation (null score) | R–2 |
+
+### Evidence Type Classification
+
+Each activity classifies evidence into structured types:
+
+| Activity | Evidence Types |
+|---|---|
+| Reading Time | reading_accuracy, reading_fluency, comprehension |
+| Number Hunt | visual_recognition, cognitive, (spoken_production if transcript) |
+| Count and Pick | visual_recognition, cognitive |
+| Rhyme Time | cognitive, visual_recognition, (spoken_production if transcript) |
+| Sound It Out | cognitive, visual_recognition, (spoken_production if transcript) |
+
+Key rules:
+- A child who selects the correct number but pronounces it imperfectly should NOT receive an incorrect mathematical result
+- A child correctly identifying a rhyme without speaking has demonstrated the skill
+- Tapping letters in Sound It Out shows engagement but is NOT a validated phonics score
+- Browser speech recognition transcripts are unverified — teacher review required

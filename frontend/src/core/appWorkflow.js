@@ -2,6 +2,8 @@
 import {loadData,STORAGE_KEY} from '../dashboardData.js';
 import {ACTIVITIES,publicActivity} from '../../../shared/activityCatalog.js';
 import {evaluateEvidence} from '../../../shared/activityEvidence.js';
+import {getActivityDefinition,EVIDENCE_TYPES,OBSERVATION_LEVELS} from '../../../shared/activityDefinitions.js';
+import {evaluateObservation} from '../../../LesediAiAgent/src/evaluationEngine.js';
 import {getMessagingStore,openOrCreatePrivateConversation,sendMessage} from '../messaging/messagingService.js';
 const KEY='pula_activity_reviews_v1';
 let profile=null;
@@ -41,10 +43,23 @@ export async function appWorkflow(path,body){
     if(db.drafts.some(d=>d.id===s.id))return feedback;
     if((body.speech_transcript||body.recording_captured)&&!l.voiceConsent)throw Error('Guardian voice permission is not recorded.');
     const result=evaluateEvidence(s,body);
+    // Phase 3: Evaluate the observation level for this session
+    const observation=evaluateObservation({
+      activityId:s.activityId,score:result.score,total:result.total,correct:result.correct,
+      transcriptAvailable:result.transcriptAvailable,recordingCaptured:result.recordingCaptured,
+      sessionSummary:null,
+    });
     speechMemory.set(s.id,{grade:c.grade,transcript:body.speech_transcript.trim(),durationSeconds:result.speechDurationSeconds,recordingCaptured:result.recordingCaptured});
     if(speechMemory.size>50)speechMemory.delete(speechMemory.keys().next().value);
+    // Use the evaluation reason as the draft analysis (more meaningful than hardcoded text)
+    const analysisText=observation.level===OBSERVATION_LEVELS.INSUFFICIENT_EVIDENCE
+      ?(result.transcriptAvailable?'Speech captured with a browser transcript. Review what was heard before adding an assessment; recognition may be inaccurate.':'Reading participation recorded. Listen to the learner before adding your assessment.')
+      :observation.reason;
     db.drafts.push({id:s.id,grade:c.grade,learnerId:l.id,learnerName:l.name,activityName:s.activity.name,activityId:s.activityId,subject:s.subject,status:'DRAFT_PENDING_APPROVAL',version:1,score:result.score,createdAt:new Date().toISOString(),limitations:result.limitations,evidence:result,
-      analysis:result.total?`${result.correct} of ${result.total} first choices matched. Review the activity with ${l.name} before drawing conclusions.`:(result.transcriptAvailable?'Speech captured with a browser transcript. Review what was heard before adding an assessment; recognition may be inaccurate.':'Reading participation recorded. Listen to the learner before adding your assessment.'),
+      observationLevel:observation.level,
+      observationConfidence:observation.confidence,
+      evidenceClassification:result.evidenceClassification,
+      analysis:analysisText,
       intervention:s.subject==='Mathematics'?'Count familiar objects together, touching each object once.':'Read one short page together. Ask the learner to point to each word.',
       parentUpdate:`${l.name} practised ${s.activity.name} today. ${s.subject==='Mathematics'?'Count five familiar objects together at home.':'Share a short story together tonight.'}`,
       source:'Activity evidence · teacher review'});save(db);return feedback;
@@ -83,7 +98,6 @@ export async function appWorkflow(path,body){
     const c=teacher(),d=db.drafts.find(d=>d.id===parts[1]&&d.grade===c.grade);
     if(!d)throw Error('Draft not found.');
     if(d.status!=='DRAFT_PENDING_APPROVAL')return {status:d.status,lesediEnriched:false};
-    // Build the Lesedi request context from the draft evidence
     const learnerName=d.learnerName||'the learner';
     const subject=d.subject==='Mathematics'?'Mathematics':'English';
     const obs=d.evidence?.total?[{item:d.activityName,correct:d.evidence.correct,of:d.evidence.total}]:[{item:d.activityName,result:'participation'}];
@@ -93,7 +107,6 @@ export async function appWorkflow(path,body){
       if(!res.ok)throw Error(`HTTP ${res.status}`);
       const data=await res.json();
       if(!data.ok||!data.text)throw Error('Empty response');
-      // Parse the 7-section gap analysis response
       const text=data.text||'';
       const lines=text.split('\n');
       const findSection=(label)=>{const i=lines.findIndex(l=>new RegExp(label,'i').test(l));return i>=0?lines.slice(i+1).find(l=>l.trim())?.trim()||'':''};
@@ -106,8 +119,38 @@ export async function appWorkflow(path,body){
       save(db);
       return {ok:true,lesediEnriched:true,draft:d};
     }catch(e){
-      // Backend unreachable — return the draft unchanged
       return {ok:false,lesediEnriched:false,error:e.message,draft:d};
+    }
+  }
+  // ── Real-time scaffolding ─────────────────────────────────────────────
+  // POST /scaffold — get a Lesedi hint during gameplay.
+  // Calls the real backend; falls back to a simple encouragement if unreachable.
+  if(path==='/scaffold'){
+    const {sessionId,roundIndex,activityId,observedEvent,firstName,subject,learnerId,curriculumSkillId}=body;
+    const apiBase=typeof import.meta!=='undefined'&&import.meta.env?.VITE_API_BASE?import.meta.env.VITE_API_BASE:(typeof window!=='undefined'&&window.location?.port==='5173'?'http://localhost:4000':'');
+    try{
+      const res=await fetch(`${apiBase}/api/lesedi/scaffold`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId,roundIndex:roundIndex??0,activityId,observedEvent,firstName,subject,learnerId,curriculumSkillId})});
+      if(!res.ok)throw Error(`HTTP ${res.status}`);
+      const data=await res.json();
+      if(!data.ok)throw Error('Empty response');
+      return {ok:true,text:data.text,hintLevel:data.hintLevel,handoff:data.handoff,praise:data.praise};
+    }catch{
+      return {ok:true,text:`Good try, ${firstName||'there'}. Let's keep going!`,hintLevel:1,handoff:false,praise:false};
+    }
+  }
+  // ── Session evaluation ────────────────────────────────────────────────
+  // POST /evaluate — get the observation level for a completed session.
+  if(path==='/evaluate'){
+    const {activityId,score,total,correct,sessionId,transcriptAvailable,recordingCaptured}=body;
+    const apiBase=typeof import.meta!=='undefined'&&import.meta.env?.VITE_API_BASE?import.meta.env.VITE_API_BASE:(typeof window!=='undefined'&&window.location?.port==='5173'?'http://localhost:4000':'');
+    try{
+      const res=await fetch(`${apiBase}/api/lesedi/evaluate`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({activityId,score:score??null,total:total??0,correct:correct??0,sessionId,transcriptAvailable:transcriptAvailable??false,recordingCaptured:recordingCaptured??false})});
+      if(!res.ok)throw Error(`HTTP ${res.status}`);
+      const data=await res.json();
+      if(!data.ok)throw Error('Empty response');
+      return {ok:true,level:data.level,reason:data.reason,evidence:data.evidence,confidence:data.confidence};
+    }catch{
+      return {ok:false,error:'Evaluation unavailable',level:'INSUFFICIENT_EVIDENCE',reason:'Backend unreachable.',evidence:{},confidence:'insufficient'};
     }
   }
   if(path==='/progress'){

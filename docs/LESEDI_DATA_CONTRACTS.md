@@ -241,3 +241,125 @@ The spec requires these result levels for `observation_items`:
 | `TEACHER_REVIEW_REQUIRED` | Anomaly or unexpected result |
 
 Currently the `POST /api/activity-sessions` endpoint maps scores to `on_own` / `with_help` / `not_yet`. The migration to the spec's five levels is a Phase 2 task.
+
+---
+
+## Phase 2 — Child Learning Tutor Data Contracts (Added)
+
+### POST /api/lesedi/scaffold — Request
+
+```json
+{
+  "sessionId": "assignment-uuid",
+  "roundIndex": 0,
+  "activityId": "number-hunt",
+  "observedEvent": "wrong_selection | no_response | correct | stuck_on_word | says_separate_sounds | incomplete | wrong_blend",
+  "firstName": "Thando",
+  "subject": "English | Mathematics",
+  "learnerId": "learner-uuid",
+  "curriculumSkillId": "MATHS-NUMBER-RECOGNITION"
+}
+```
+
+### POST /api/lesedi/scaffold — Response
+
+```json
+{
+  "ok": true,
+  "text": "Good try, Thando. Look at the number I showed you...",
+  "hintLevel": 1,
+  "handoff": false,
+  "source": "activity_definition",
+  "praise": false
+}
+```
+
+### POST /api/lesedi/evaluate — Request
+
+```json
+{
+  "activityId": "number-hunt",
+  "score": 67,
+  "total": 3,
+  "correct": 2,
+  "sessionId": "assignment-uuid",
+  "transcriptAvailable": false,
+  "recordingCaptured": false
+}
+```
+
+### POST /api/lesedi/evaluate — Response
+
+```json
+{
+  "ok": true,
+  "level": "DEMONSTRATED | DEVELOPING | NEEDS_FURTHER_PRACTICE | INSUFFICIENT_EVIDENCE | TEACHER_REVIEW_REQUIRED",
+  "reason": "Child answered 3 of 3 correctly on first attempt (100%) with no hints. Evidence suggests the skill is demonstrated.",
+  "evidence": {
+    "activityId": "number-hunt",
+    "score": 100,
+    "total": 3,
+    "correct": 3,
+    "totalHints": 0,
+    "maxLevelReached": 0,
+    "selfCorrections": 0
+  },
+  "confidence": "medium | low | insufficient"
+}
+```
+
+### Evidence Classification (in evaluateEvidence result)
+
+The `evaluateEvidence()` function now returns an `evidenceClassification` object:
+
+```json
+{
+  "evidenceClassification": {
+    "activityId": "number-hunt",
+    "activityName": "Number Hunt",
+    "subject": "Mathematics",
+    "curriculumSkillId": "MATHS-NUMBER-RECOGNITION",
+    "capsRef": "CAPS Maths Gr R p.10; Gr 1 p.12",
+    "types": ["visual_recognition", "cognitive"],
+    "observations": [
+      {
+        "type": "visual_recognition",
+        "value": "3 of 3 numbers recognised on first attempt (100%)",
+        "confidence": "medium",
+        "note": "Number recognition from visual selection. Speech pronunciation is not assessed here."
+      }
+    ],
+    "note": "Objective scoring from first choices. Speech pronunciation does not affect the mathematical result."
+  }
+}
+```
+
+### Scaffolding State (In-Memory)
+
+The scaffolding engine maintains in-memory state per session/round:
+
+| Key | Value | Lifetime |
+|---|---|---|
+| `${sessionId}:${roundIndex}` | `{ level, attempts, lastEvent, history, resolved }` | Session only (cleared on `clearSession`) |
+| `${learnerId}:${curriculumSkillId}` | `{ successStreak, hintCount, totalSessions }` | Cross-session (persists for adaptive behaviour) |
+
+### Activity Definition Metadata
+
+Each activity in `shared/activityDefinitions.js` contains:
+
+| Field | Type | Description |
+|---|---|---|
+| `name` | string | Display name |
+| `subject` | string | English or Mathematics |
+| `grades` | string[] | Applicable grades (R, 1, 2, 3) |
+| `learningObjective` | string | CAPS-aligned objective |
+| `capsRef` | string | CAPS page reference |
+| `curriculumSkillId` | string | Unique skill identifier |
+| `expectedBehaviour` | string | What the child should do |
+| `evaluationMethod` | string | 'objective' or 'participation' |
+| `evidenceTypes` | string[] | Evidence types captured |
+| `misconceptions` | string[] | Common observable misconceptions |
+| `hintEvents` | object | Maps observed events to phrase bank events |
+| `hintOverrides` | object | Activity-specific hint phrases for levels 1, 2, 3, F, and praise |
+| `successCriteria` | string[] | What constitutes success |
+| `evidenceToRecord` | string[] | What evidence to capture |
