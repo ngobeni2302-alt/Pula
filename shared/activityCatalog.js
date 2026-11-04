@@ -1,6 +1,6 @@
 // Server-owned targets. Clients submit evidence, never authoritative goals or scores.
 export const ACTIVITIES = {
-  'reading-time': { name: 'Reading Time', subject: 'English', icon: '📖', rounds: [
+  'reading-time': { name: 'Sound and Rhyme Session', subject: 'English', icon: '', rounds: [
     { target: 'The sun is up. The cat sat on a mat.' },
     { target: 'We see a red bus. The bus stops at the shop.' },
     { target: 'The children plant a seed. They give it water every day.' }

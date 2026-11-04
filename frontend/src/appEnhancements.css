@@ -1,9 +1,20 @@
 /* Shared visual language from Pula Dashboards: cream, navy and clear playful accents. */
+.pd-shell{color:var(--pula-navy);background:var(--pula-cream);min-height:100dvh;font-family:'Nunito',system-ui,sans-serif;user-select:text;max-width:none;width:100%;}
 .pd-shell:not(.pd-messages-active){--pula-cream:#fff7e5;--pula-navy:#17183f;--pula-sand:#ffcf42;--pula-sage:#25c77a;--pula-lavender:#dedfff;--pula-blue:#4c88ff;--pula-peach:#ff87ce;}
 body{background:#f5efdf;}
 .pd-mobile{max-width:560px;padding:0 20px 112px;box-shadow:none;}
+.pd-reading-active{max-width:560px;padding:0;box-shadow:none;}
+@media (min-width: 768px){
+  .pd-mobile,
+  .pd-reading-active{max-width:760px;padding-left:24px;padding-right:24px;}
+}
+@media (min-width: 1024px){
+  .pd-mobile,
+  .pd-reading-active{max-width:1024px;padding-left:32px;padding-right:32px;}
+}
 .pd-shell:not(.pd-messages-active) .pd-top{border:0;margin-bottom:12px;padding:16px 0 6px;opacity:.8;}
 .pd-shell:not(.pd-messages-active) .pd-heading{align-items:center;gap:10px;margin-bottom:20px;}
+.pd-shell:not(.pd-messages-active) .pd-heading>div{flex:1;}
 .pd-shell:not(.pd-messages-active) .pd-heading h1{font-weight:950;font-size:27px;line-height:1.13;letter-spacing:-.8px;margin:2px 0 5px;}
 .app-heading-mascot{width:48px;height:58px;object-fit:contain;mix-blend-mode:multiply;}
 .pd-shell .pd-eyebrow{display:inline-block;background:#ffcf42;color:#17183f;padding:6px 10px;border-radius:18px;font-size:10px;letter-spacing:0;margin-bottom:10px;}
@@ -50,14 +61,43 @@ body{background:#f5efdf;}
 .core-review{padding:0;background:none;}.pd-shell .core-review>h1{display:none;}.core-review>.pd-card{border-top:6px solid #8c94ff!important;}.core-actions button{font-size:13px;background:#eeedff;}.core-actions .pd-primary{background:#17183f;}
 @media(min-width:801px){.pd-mobile{margin:24px auto;min-height:calc(100dvh - 48px);border-radius:32px;box-shadow:0 12px 80px #17183f0c;}.welcome-screen{min-height:100dvh;}}
 @media(max-width:380px){.pd-mobile{padding:0 14px 105px;}.pd-shell .pd-heading h1{font-size:23px;}.app-heading-mascot{width:38px;}.pd-shell .pd-week button{padding:12px 9px;}.app-work-row{padding:14px 12px;gap:9px;}.app-work-row>button{max-width:75px;}}
-/* The legacy teacher module applies padding to every main element. */
-.pd-shell>main{padding:0;}
-.pd-shell:not(.pd-messages-active) .pd-heading{justify-content:flex-start;}.pd-shell:not(.pd-messages-active) .pd-heading>div{flex:1;}
-.pd-shell .pd-card{margin:12px 0;}.pd-shell .pd-row{min-height:80px;}.pd-shell .app-next-lesson{min-height:73px;}
-.pd-shell .pd-row .pd-icon{width:40px;height:40px;border-radius:13px;}.pd-shell .pd-row b{font-size:14px;}.pd-shell .pd-row small{font-size:11px;}.pd-shell .pd-section{margin-top:20px;}.pd-shell .pd-section h2{font-size:18px;}
-.pd-shell .app-parent-group .pd-group{padding:10px 3px;}.pd-shell .app-parent-group .pd-selected{font-size:9px;}.pd-shell .app-parent-group>p{font-size:12px;}
-.app-heading-mascot{border-radius:45%;}.hod-brand-heading img{border-radius:45%;}
-.pd-shell .pd-choices:has(button:nth-child(3)){background:none;padding:0;gap:7px;}.pd-shell .pd-choices:has(button:nth-child(3)) button{flex:none;background:white;border-radius:20px;min-height:38px;font-size:11px;padding:9px 13px;}.pd-shell .pd-choices:has(button:nth-child(3)) button.active{background:#17183f;color:white;}
-.app-dialog-backdrop{position:fixed;inset:0;z-index:1100;background:#17183f55;display:flex;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(5px);}.app-planner-dialog{position:relative;width:100%;max-width:440px;max-height:92dvh;overflow-y:auto;background:#fff7e5;border-radius:30px;padding:26px;box-shadow:0 25px 90px #17183f30;}.app-planner-dialog h2{font-size:26px;font-weight:950;margin-top:10px;}.app-planner-dialog label{display:block;margin:15px 0;font-size:13px;font-weight:800;}.app-planner-dialog textarea{margin-top:9px;background:#fffef9!important;min-height:130px;}.app-planner-dialog input,.app-planner-dialog select{margin-top:8px;}.app-planner-dialog .pd-primary{margin-top:14px;}.app-dialog-close{position:absolute;right:20px;top:14px;border:0;background:white;font-size:25px;width:40px;height:40px;border-radius:50%;}.app-save-note{width:100%;padding:13px;margin-top:12px;border:1px solid #17183f!important;border-radius:15px;background:none;min-height:48px;}
-.pd-shell .pula-learner-card{border:0;border-radius:23px;padding:18px;box-shadow:none;}.pd-shell .pula-search-input{border:0!important;border-radius:20px!important;padding:15px 15px 15px 40px;}.pd-shell .pula-tier-chip{border:1px solid #ded7c5;border-radius:20px;min-height:42px;}.pd-shell .pula-tier-title{font-weight:950;letter-spacing:-.6px;}.pd-shell .pula-learner-avatar,.pd-shell .pula-hero-avatar{border-radius:18px;}.pd-shell .pula-learner-name{font-weight:900;}.pd-shell .pula-profile-hero{border:0;border-radius:26px;}.pd-shell .pula-hero-stat-card{background:#fff7e5;border-radius:18px;}.pd-shell .avatar-Bloom{background:#ff96d6;}.pd-shell .avatar-Tree{background:#83aaff;}
-.pd-shell .pula-calendar-wrapper{border:0;border-radius:25px;box-shadow:none;padding:16px;}.pd-shell .pula-cal-live-banner{border:0;background:#dedfff;border-radius:17px;}.pd-shell .pula-cal-nav-btn{background:#fff7e5;border:0;border-radius:12px;min-height:38px;min-width:38px;}.pd-shell .pula-cal-month-title{font-weight:950;}
+@media (min-width: 760px){
+  .pd-shell .pd-card,
+  .pd-shell .pd-row,
+  .pd-shell .pd-group,
+  .pd-shell .pd-week button,
+  .pd-shell .app-learning-tips,
+  .pd-shell .pd-round-card {
+    border-radius:22px;
+  }
+
+  .pd-shell .pd-week {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .pd-shell .pd-groups {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px){
+  .pd-shell:not(.pd-messages-active) .pd-heading {
+    margin-bottom:26px;
+  }
+
+  .pd-shell:not(.pd-messages-active) .pd-card {
+    padding:24px;
+  }
+
+  .pd-shell .pd-round-card {
+    padding:22px 24px;
+  }
+
+  .pd-shell .pd-week button {
+    min-height:150px;
+  }
+
+  .pd-shell .pd-nav {
+    max-width:520px;
+  }
+}

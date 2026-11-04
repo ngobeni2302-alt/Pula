@@ -35,10 +35,10 @@ export const ENGLISH_ACTIVITIES = [
         title: 'Find It',
         instruction: 'Spot items that start with the sound.',
         items: [
-          { label: 'Sun', startsWith: true, emoji: '☀️' },
-          { label: 'Spoon', startsWith: true, emoji: '🥄' },
-          { label: 'Book', startsWith: false, emoji: '📖' },
-          { label: 'Star', startsWith: true, emoji: '⭐' }
+          { label: 'Sun', startsWith: true },
+          { label: 'Spoon', startsWith: true },
+          { label: 'Book', startsWith: false },
+          { label: 'Star', startsWith: true }
         ]
       },
       {

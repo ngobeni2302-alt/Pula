@@ -163,7 +163,7 @@ export default function Dashboards() {
                     <div className="pd-heading">
                         <img className="app-heading-mascot" src="/lesedi.png" alt="Lesedi"/>
                         <div>
-                            <span className="pd-eyebrow">{teacher?`Your dashboard · Grade ${c.grade} only`:`${child.name}’s learning journey`}</span>
+                            <span className="pd-eyebrow">{teacher ? 'Teacher dashboard' : `${child.name}’s learning journey`}</span>
                             <h1>{page === 'Home' ? (teacher ? `Good morning, ${c.teacher}!` : 'Sawubona!') : page}</h1>
                             <p>{teacher ? `Grade ${c.room} · ${c.learners.length} learners` : `${child.name} · Grade ${c.room} · ${c.teacher}’s class`}</p>
                         </div>
@@ -179,11 +179,11 @@ export default function Dashboards() {
                                 <span className="pd-tag">{filter === 'Maths' ? 'Now · Mathematics' : `Now · ${c.grade === 'R' ? 'Listening and speaking' : 'Home Language'}`}</span>
                                 <small>{filter === 'Maths' ? `${c.mathChecked || 0} of ${c.learners.length} checked` : `${c.heard} of ${c.learners.length} heard`}</small>
                             </div>
-                            <h2>{filter === 'Maths' ? 'Maths round' : (c.grade === 'R' ? 'Sound and rhyme round' : 'Reading round')}</h2>
+                            <h2>{filter === 'Maths' ? 'Maths round' : (c.grade === 'R' ? 'Sound and Rhyme Session' : 'Reading round')}</h2>
                             {filter === 'Maths' ? (
                                 <button className="pd-primary" onClick={() => { setFilter('Maths'); changePage('Activities'); }}><Check size={18} /> Start number check</button>
                             ) : (
-                                <button className="pd-primary" onClick={() => { setFilter('English'); changePage('Activities'); }}><Mic size={18} /> Continue reading round</button>
+                                <button className="pd-primary" onClick={() => { setFilter('English'); changePage('Activities'); }}><Mic size={18} /> Continue Sound and Rhyme Session</button>
                             )}
                         </Card>
                         <div className="pd-section"><h2>Up next</h2><button onClick={()=>changePage('Planner')}>See my day →</button></div>

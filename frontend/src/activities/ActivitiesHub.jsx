@@ -4,7 +4,7 @@ import {coreApi,useCore} from '../core/CoreContext.jsx';
 import useVoiceCapture from './useVoiceCapture.jsx';
 import './activities.css';
 import './coreActivities.css';
-const ICONS={'reading-time':'📖','number-hunt':'7','count-and-pick':'🐘 🐘','rhyme-time':'cat · hat','sound-it-out':'v · a · n'};
+const ICONS={'reading-time':'Sound and Rhyme Session','number-hunt':'7','count-and-pick':'Count','rhyme-time':'Rhymes','sound-it-out':'Sound'};
 export function LesediFeedback({children,celebrate=false}) {
   return <div className={`game-lesedi ${celebrate?'celebrate':''}`}><span className="game-mascot"><img src="/lesedi.png" alt="Lesedi"/></span><p>{children}</p></div>;
 }
@@ -76,14 +76,33 @@ export default function ActivitiesHub({classroom,subject='English',onBack}) {
     {view==='setup'?<>{!workspace?<p>Select a teacher profile to choose your class.</p>:workspace.account.role!=='teacher'?<p>Your teacher launches your assigned activity.</p>:<>
       <details className="game-teacher-setup"><summary>{learner?.name} · Grade {c?.grade}<span>Change learner</span></summary><label>Class and grade<select value={c?.id||''} onChange={e=>setSelectedClass(e.target.value)}>{classes.map(c=><option key={c.id} value={c.id}>{c.name} · Grade {c.grade}</option>)}</select></label><label>Learner<select value={learner?.id||''} onChange={e=>setLearnerId(e.target.value)}>{c?.learners.map(l=><option key={l.id} value={l.id}>{l.name}</option>)}</select></label><small>{learner?.consent?'Teacher launches one assigned game at a time.':'Analysis consent absent: unrecorded practice only. No microphone, transcript or assessment will be saved.'}</small></details>
       <LesediFeedback>Pick a game. I will play with you!</LesediFeedback><div className="game-cards">{catalog.map((a,i)=><button className={`game-card game-${a.id}`} key={a.id} disabled={busy||!learner} onClick={()=>start(a.id)}><span aria-hidden="true">{ICONS[a.id]}</span><b>{a.name}</b></button>)}</div>
-      <p className="game-footnote">{maths?'Number Hunt and Count and Pick':'Rhyme Time, Sound It Out and Reading Time'} · Change English / Maths on class home.</p>
+      <p className="game-footnote">{maths?'Number Hunt and Count and Pick':'Sound and Rhyme Session, Sound It Out and Number Hunt'} · Change English / Maths on class home.</p>
     </>}</>:<>
       <section className="game-stage">
         {activityId==='number-hunt'&&<><h2>Find this number</h2><div className="game-number">{r.target}</div></>}
         {activityId==='count-and-pick'&&<><h2>{r.target}</h2><div className="game-objects">{Array.from({length:r.count},(_,i)=><span key={i} aria-label={r.target.replace('Count the ','')}>{r.picture}</span>)}</div></>}
         {activityId==='rhyme-time'&&<><h2>What rhymes with…</h2><div className="game-picture">{r.picture}</div><h2 className="game-word">{r.target}</h2><button onClick={async()=>{await stopSpeech();say(r.target);}}><Volume2 size={20}/> Hear it</button></>}
         {activityId==='sound-it-out'&&<><h2>Tap each letter. Blend the sounds.</h2><div className="game-letters">{[...r.target].map((l,i)=><button key={i} aria-label={`Explore letter ${l}`} aria-pressed={roundData.current.letters.includes(i)} onClick={()=>{roundData.current.letters.push(i);setInteraction(n=>n+1);if(workspace.phonicsAudioConfigured)new Audio(`/phonics/en-ZA/${l}.mp3`).play().catch(()=>setFeedback('Ask your teacher to model this sound.'));setFeedback('Ask your teacher to model the sound. Now try blending.');}}>{l}</button>)}</div><div className="game-blend" aria-hidden="true">⟶</div><button disabled={new Set(roundData.current.letters).size!==r.target.length} onClick={async()=>{await stopSpeech();setRevealed(true);say(r.target);}}>Blend the word · Hear it</button><div className="game-picture">{revealed?r.picture:'?'}</div>{!workspace.phonicsAudioConfigured&&<small>Teacher models English phonemes. Verified phonics audio is not configured; word playback is browser speech.</small>}</>}
-        {activityId==='reading-time'&&<><h2>{session.learner.name}’s turn</h2><p className="game-passage">{r.target}</p></>}
+        {activityId==='reading-time'&&<>
+          <div className="sound-rhyme-visual">
+            <div className="sound-rhyme-header">
+              <h2>{session.learner.name}’s turn</h2>
+              <button type="button" className="sound-rhyme-close" aria-label="Close session" onClick={() => onBack && onBack()}><ArrowLeft size={18} /></button>
+            </div>
+            <div className="sound-rhyme-bubble">
+              <p>{r.target}</p>
+            </div>
+            <div className={`sound-rhyme-orbit ${listening ? 'is-pulsing' : ''}`} aria-hidden="true">
+              <div className="sound-rhyme-ring ring-1" />
+              <div className="sound-rhyme-ring ring-2" />
+              <div className="sound-rhyme-ring ring-3" />
+              <div className="sound-rhyme-figure">
+                <img src="/lesedi.png" alt="Lesedi" />
+              </div>
+            </div>
+            <div className="sound-rhyme-pill" role="status">{listening ? 'Take your time. I’m listening.' : 'Take your time. I’m listening.'}</div>
+          </div>
+        </>}
       </section>
       {r.options&&<div className={`game-options ${activityId==='number-hunt'?'numbers':''}`}>{r.options.map(option=><button key={option} aria-pressed={selected===option} onClick={()=>{roundData.current.choices.push(option);setInteraction(n=>n+1);setFeedback('Thank you for trying! You can choose again or keep going.');}}>{option}</button>)}</div>}
       <LesediFeedback>{listening?'Listening…':feedback}</LesediFeedback>
