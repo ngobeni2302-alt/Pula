@@ -42,6 +42,7 @@ import {
 } from './messagingService.js';
 import { getParentForLearner } from '../dashboardData.js';
 import './messaging.css';
+import {coreApi,useCore} from '../core/CoreContext.jsx';
 
 export default function MessagingHub({
   profile,
@@ -51,6 +52,8 @@ export default function MessagingHub({
   initialTopic = null,
   onNavigateHome
 }) {
+  const {workspace}=useCore();
+  const [approvedSuggestions,setApprovedSuggestions]=useState([]);
   const isTeacher = profile?.role === 'Teacher';
   const currentGrade = String(classroom?.grade || profile?.grade || '2');
   const teacherId = `teacher-${currentGrade}`;
@@ -163,6 +166,14 @@ export default function MessagingHub({
       }
     }
   }, [initialLearnerId, initialTopic]);
+
+  useEffect(()=>{
+    let active=true;setApprovedSuggestions([]);
+    const learner=workspace?.classes.flatMap(c=>c.learners).find(l=>l.legacyId===activeConversation?.learnerId||l.id===activeConversation?.learnerId);
+    if(isTeacher&&workspace?.account.role==='teacher'&&learner)coreApi(`/suggestions?learnerId=${encodeURIComponent(learner.id)}`).then(s=>{if(active)setApprovedSuggestions(s);}).catch(()=>{});
+    try {setInputText(localStorage.getItem(`pula_chat_draft_${currentUserId}_${activeConversation?.id}`)||'');}catch{}
+    return()=>{active=false;};
+  },[activeConversation?.id,workspace]);
 
   // Load messages when active conversation changes or ticks
   useEffect(() => {
@@ -620,7 +631,7 @@ export default function MessagingHub({
     const activeDisplay = getConversationDisplayDetails(activeConversation);
 
     return (
-      <div className="msg-chat-pane">
+      <div className="msg-chat-pane msg-enhanced-conversation">
         {/* Chat Header */}
         <div className="msg-chat-header">
           {!isDesktop && (
@@ -643,6 +654,7 @@ export default function MessagingHub({
           >
             <h2>{activeDisplay.title}</h2>
             <small>{activeDisplay.subtitle}</small>
+            <small>Home language: {learners.find(l=>l.id===activeConversation.learnerId)?.language||'Not recorded'} · Translation not connected</small>
           </div>
 
           {isGroup && (
@@ -659,7 +671,7 @@ export default function MessagingHub({
         {/* Message Thread */}
         <div className="msg-messages-thread">
           <div className="msg-date-separator">
-            <span>Messages are end-to-end encrypted · Pula Demo</span>
+            <span>Device-local demo conversation · external delivery not connected</span>
           </div>
 
           {messages.length === 0 ? (
@@ -703,6 +715,9 @@ export default function MessagingHub({
           <div ref={messagesEndRef} />
         </div>
 
+        {isTeacher&&approvedSuggestions.length>0&&<section className="msg-approved-tips"><strong>Lesedi suggestions · from teacher-approved assessments</strong>{approvedSuggestions.map(s=><div key={s.id}><p>{s.text}</p><button onClick={()=>setInputText(t=>[t,s.text].filter(Boolean).join(' '))}>Add</button></div>)}<small>Add inserts text into the composer. Review it before sending.</small></section>}
+        {!isTeacher&&<div className="msg-quick-replies">{['Thank you.','Can we talk?','My child is unwell today.'].map(text=><button key={text} onClick={()=>setInputText(text)}>{text}</button>)}</div>}
+        {activeConversation&&<button className="msg-save-draft" onClick={()=>{try{localStorage.setItem(`pula_chat_draft_${currentUserId}_${activeConversation.id}`,inputText);setNotice('Composer saved as a draft on this device.');}catch{setNotice('Draft could not be saved.');}}}>Save composer draft</button>}
         {/* Lesedi AI Assistant Drawer for Teachers */}
         {isTeacher && (
           <div className="msg-lesedi-bar">

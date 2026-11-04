@@ -16,6 +16,11 @@ function load(){try{return JSON.parse(fs.readFileSync(dbPath,'utf8'))}catch{retu
 let db=load();function save(){fs.writeFileSync(dbPath,JSON.stringify(db,null,2))}
 const ALLOWED_ORIGINS=['https://pula-delta.vercel.app'];
 const app=express();
+if (process.env.TRUST_PROXY_HOPS) {
+  const hops=Number(process.env.TRUST_PROXY_HOPS);
+  if (!Number.isInteger(hops)||hops<1||hops>2) throw Error('TRUST_PROXY_HOPS must be 1 or 2');
+  app.set('trust proxy',hops);
+}
 // TODO (production): add CSRF tokens once session-based auth is introduced
 app.use(cors({origin:(origin,cb)=>cb(null,!origin||origin.startsWith('http://localhost')||ALLOWED_ORIGINS.includes(origin))}));
 app.use(express.json({limit:'2mb'}));
@@ -30,6 +35,8 @@ app.get('/api/health', async (req, res) => {
   }
   res.json({ ok: true, mode, db });
 });
+// Keep the original app API available; profile selection has no login dependency.
+app.use('/api', (req,res,next) => { res.set('Cache-Control','no-store'); next(); });
 // ── Activity sessions (Phase 1) ──────────────────────────────────────────
 // POST /api/activity-sessions — idempotent on client id, consent-gated
 app.post('/api/activity-sessions', handlePostActivitySession);
@@ -73,7 +80,7 @@ app.patch('/api/notes/:id',wrap((req,res)=>{const n=db.notes.find(x=>x.id===req.
 app.post('/api/notes/approve-all',wrap((req,res)=>{let count=0;for(const n of db.notes){if(n.status==='draft'||n.status==='to_review'){n.status='sent';count++}}save();res.json({ok:true,count,notes:db.notes})}));
 app.delete('/api/notes/:id',wrap((req,res)=>{db.notes=db.notes.filter(x=>x.id!==req.params.id);save();res.json({ok:true})}));
 app.post('/api/terms/:id/hod-review',wrap((req,res)=>{if(!db.terms)db.terms=[];const termId=Number(req.params.id);const t=db.terms.find(x=>x.id===termId);must(t,'Term not found');t.hodReviewed=true;t.reviewedBy=req.body.reviewedBy||'Mrs. Khumalo (HOD)';t.reviewedAt=new Date().toISOString();save();res.json(t)}));
-app.get('/api/integrations/mtn-summary',(req,res)=>{const total=db.learners.length;const consented=db.learners.filter(l=>l.consent).length;const movedUp=db.yearSummary?.movedUp||17;const notesSent=db.notes.filter(n=>n.status==='approved'||n.status==='sent').length;res.json({anonymizedTotals:{totalLearners:total,consentedLearners:consented,movedUpCount:movedUp,parentNotesDelivered:notesSent+(db.yearSummary?.parentNotesSent||112),termAverages:db.terms||[],zeroRatedReachPct:Math.round((db.learners.filter(l=>l.channel==='WhatsApp'||l.channel==='SMS').length/(total||1))*100)},compliance:'POPIA compliant - No child personal names, audio, or biometric data shared',status:'Synced with MTN Foundation Dashboard'})});
+app.get('/api/integrations/mtn-summary',(req,res)=>{const total=db.learners.length;const consented=db.learners.filter(l=>l.consent).length;const movedUp=db.learners.filter(l=>l.recentlyMoved===true).length;const notesSent=db.notes.filter(n=>n.status==='approved'||n.status==='sent').length;res.json({anonymizedTotals:{totalLearners:total,consentedLearners:consented,movedUpCount:movedUp,parentNotesDelivered:notesSent,termAverages:db.terms||[],zeroRatingConfirmed:false},compliance:'Demo aggregate only; no external privacy certification',status:'Not connected to MTN Foundation',externalReportingEnabled:false})});
 app.get('/api/integrations/sa-sams',(req,res)=>{const records=db.learners.map(l=>({learnerRef:`SASAMS-${l.id.padStart(4,'0')}`,grade:db.classroom.grade,homeLanguage:l.language,consentRecorded:l.consent?'YES':'PENDING',currentReadingTier:l.group,term1Wpm:l.termProgress?.find(t=>t.term===1)?.wpm||null,term2Wpm:l.termProgress?.find(t=>t.term===2)?.wpm||null,term3Wpm:l.termProgress?.find(t=>t.term===3)?.wpm||null,term4Wpm:l.termProgress?.find(t=>t.term===4)?.wpm||null}));res.json({schoolCode:'EMIS-70021144',class:db.classroom.name,term:4,year:2026,records})});
 
 // ==================== WHATSAPP-STYLE MESSAGING SYSTEM ====================
@@ -649,7 +656,8 @@ if (fs.existsSync(distPath)) {
 }
 
 const port = process.env.PORT || 4000;
-const server = app.listen(port, () => console.log(`Teacher Copilot running on http://localhost:${port}`));
+const host = process.env.HOST || (process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1');
+const server = app.listen(port, host, () => console.log(`Teacher Copilot running on http://localhost:${port}`));
 server.on('error', e => {
   if (e.code === 'EADDRINUSE') {
     console.error(`\nPort ${port} is already in use.\nStop the other process or set a different port:\n  PORT=4001 npm run dev\n`);

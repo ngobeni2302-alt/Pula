@@ -1,0 +1,10 @@
+.core-account,.core-review {color:#101438;background:#fff9ee;border-radius:24px;padding:20px;margin:16px 0;text-align:left;}
+.core-account h2 {font-size:22px;}
+.core-account small,.core-review small {display:block;margin:8px 0;color:#55566c;}
+.core-account label,.core-review label {display:block;font-weight:700;margin:12px 0;}
+.core-account input,.core-review textarea {box-sizing:border-box;width:100%;border:1px solid #cccbdc;border-radius:14px;padding:12px;min-height:48px;background:white;color:#101438;font:inherit;}
+.core-review textarea {min-height:110px;resize:vertical;}
+.core-actions {display:flex;flex-wrap:wrap;gap:10px;margin:18px 0;}
+.core-account button,.core-actions button {min-height:48px;border:1px solid #101438;border-radius:14px;padding:10px 16px;cursor:pointer;}
+.core-account form {display:grid;gap:8px;}
+.core-account button:disabled,.core-actions button:disabled {opacity:.6;cursor:wait;}

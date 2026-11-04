@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, BookOpen, MessageCircle, CalendarDays, Home, TrendingUp, Download, ChevronRight, Mic, Check, Leaf, Bean, Sprout, Flower2, TreeDeciduous, CircleAlert, Clock, Users, X, Sparkles } from 'lucide-react';
 import HodDashboard from './hod/HodDashboard.jsx';
 import TeacherApp from '../../teacher/App.jsx';
@@ -8,11 +8,15 @@ import SchoolCalendar from './calendar/SchoolCalendar.jsx';
 import ReadingTierList from './learners/ReadingTierList.jsx';
 import LearnerProfile from './learners/LearnerProfile.jsx';
 import TeacherReadingExperience from './reading/TeacherReadingExperience.jsx';
+import {useCore} from './core/CoreContext.jsx';
+import ReviewPanel, {PendingDraftCard} from './core/ReviewPanel.jsx';
 import ActivitiesHub from './activities/ActivitiesHub.jsx';
 import { GROUPS, TOPICS, PLANS, loadData, STORAGE_KEY, tips } from './dashboardData.js';
 import { getUnreadMessagesCountForUser, getLatestUnreadMessageForUser, formatMessageTime } from './messaging/messagingService.js';
 import './dashboards.css';
 import WelcomeScreen from './WelcomeScreen.jsx';
+import {ParentProgress,ProgressLine,SchoolworkList,PlannerNote,EditSchoolwork} from './AppScreens.jsx';
+import './appEnhancements.css';
 
 const uid = () => crypto.randomUUID();
 const date = d => new Date(`${d}T12:00:00`).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' });
@@ -24,7 +28,10 @@ function Chart({ history }) { return <div className="pd-chart" aria-label={`Word
 function Field({ label, children }) { return <label className="pd-field"><span>{label}</span>{children}</label>; }
 
 export default function Dashboards() {
+    const {chooseProfile}=useCore();
+    const notificationsSince=useRef(Date.now());
     const [data, setData] = useState(loadData);
+    useEffect(()=>{const reload=()=>setData(loadData());window.addEventListener('pula_dashboard_update',reload);return()=>window.removeEventListener('pula_dashboard_update',reload);},[]);
     const [profile, setProfile] = useState(null);
     const [switchCount, setSwitchCount] = useState(0);
     const [page, setPage] = useState('Home');
@@ -32,6 +39,10 @@ export default function Dashboards() {
     const [notice, setNotice] = useState('');
     const [resource, setResource] = useState(null);
     const [legacy, setLegacy] = useState(false);
+    const [calendarView,setCalendarView]=useState(false);
+    const [showAddWork,setShowAddWork]=useState(false);
+    const [parentNoteItem,setParentNoteItem]=useState(null);
+    const [editingWork,setEditingWork]=useState(null);
     const [saved, setSaved] = useState(() => {
         try {
             return JSON.parse(localStorage.getItem('pula_offline_plans') || '{}');
@@ -64,7 +75,7 @@ export default function Dashboards() {
 
             if (count > 0 && page !== 'Messages') {
                 const latest = getLatestUnreadMessageForUser({ role: profile.role, userId: currentUserId, grade: currentGrade });
-                if (latest && !dismissedNotificationIds.has(latest.message.id || latest.conversation.id)) {
+                if (latest && new Date(latest.message.createdAt).getTime()>=notificationsSince.current && !dismissedNotificationIds.has(latest.message.id || latest.conversation.id)) {
                     setToastNotification({
                         id: latest.message.id || latest.conversation.id,
                         senderName: latest.message.senderName || latest.conversation.title,
@@ -97,11 +108,11 @@ export default function Dashboards() {
         return () => clearTimeout(timer);
     }, [toastNotification]);
 
-    const select = p => { setProfile(p); setPage('Home'); setResource(null); setNotice(''); setTierView('All'); setActiveLearnerId(null); setSwitchCount(n => n + 1); };
+    const select = p => { notificationsSince.current=Date.now();chooseProfile(p);setData(loadData());setProfile(p); setPage('Home'); setResource(null); setNotice(''); setTierView('All'); setActiveLearnerId(null); setSwitchCount(n => n + 1); };
     function startMessage(topic = 'Progress', item = null, learnerId = null) { setMsgLearnerId(learnerId || null); setMsgTopic(topic || null); setPage('Messages'); }
 
     const nav = teacher ? [['Home', Home], ['Activities', Sparkles], ['Students', Users], ['Planner', CalendarDays], ['Messages', MessageCircle]] : [['Home', Home], ['Progress', TrendingUp], ['Schoolwork', BookOpen], ['Messages', MessageCircle]];
-    const changePage = p => { if (p === 'Groups' || p === 'Students') { setTierView('All'); setActiveLearnerId(null); setPage('Students'); } else { setPage(p); } setMsgLearnerId(null); setMsgTopic(null); setNotice(''); if (p !== 'Activities' && p !== 'Read') setFilter('All'); };
+    const changePage = p => { if (p === 'Groups' || p === 'Students') { setTierView('All'); setActiveLearnerId(null); setPage('Students'); } else { setPage(p); } setMsgLearnerId(null); setMsgTopic(null); setNotice(''); if (p !== 'Activities' && p !== 'Read' && !(p==='Home'&&filter==='Maths')) setFilter('All'); };
     if (legacy) return <><div className="pd-legacy"><button onClick={() => setLegacy(false)}>← Back to dashboards</button><span>Original reading demo · separate data</span></div><TeacherApp /></>;
     if (!profile) return <WelcomeScreen key={switchCount} classes={data.classes} onSelect={select} />;
     const header = <header className="pd-top"><button onClick={() => { setProfile(null); setLegacy(false); setSwitchCount(n => n + 1); }}><ArrowLeft size={16} /> Switch profile</button><span><Leaf size={16} /> Pula · {profile.role}</span></header>;
@@ -111,7 +122,7 @@ export default function Dashboards() {
 
     return (
         <div className={`pd-shell ${page === 'Messages' ? 'pd-messages-active' : (page === 'Activities' || page === 'Read') ? 'pd-reading-active pd-activities-active' : 'pd-mobile'}`}>
-            {toastNotification && page !== 'Messages' && (
+            {toastNotification && !['Messages','Activities','Read'].includes(page) && (
                 <div
                     className="pd-whatsapp-toast"
                     role="alert"
@@ -150,20 +161,22 @@ export default function Dashboards() {
             <main>
                 {page !== 'Messages' && page !== 'TierLearners' && page !== 'Students' && page !== 'LearnerProfile' && page !== 'Activities' && page !== 'Read' && page !== 'Progress' && (
                     <div className="pd-heading">
+                        <img className="app-heading-mascot" src="/lesedi.png" alt="Lesedi"/>
                         <div>
-                            <span className="pd-eyebrow">GRADE {c.grade} ONLY · TERM 4</span>
+                            <span className="pd-eyebrow">{teacher?`Your dashboard · Grade ${c.grade} only`:`${child.name}’s learning journey`}</span>
                             <h1>{page === 'Home' ? (teacher ? `Good morning, ${c.teacher}!` : 'Sawubona!') : page}</h1>
                             <p>{teacher ? `Grade ${c.room} · ${c.learners.length} learners` : `${child.name} · Grade ${c.room} · ${c.teacher}’s class`}</p>
                         </div>
                     </div>
                 )}
                 {page !== 'Activities' && page !== 'Read' && notice && <div role="status" className="pd-note">{notice}</div>}
+                {page === 'Review' && <ReviewPanel/>}
                 {page === 'Home' && teacher && (
                     <>
                         <Choices values={['English', 'Maths']} value={filter === 'All' ? 'English' : filter} onChange={setFilter} />
-                        <Card className="pd-coral">
+                        <Card className="pd-round-card">
                             <div className="pd-split">
-                                <span className="pd-tag">{filter === 'Maths' ? 'Mathematics · 10:30' : `Now · ${c.grade === 'R' ? 'Listening and speaking' : 'Home Language'}`}</span>
+                                <span className="pd-tag">{filter === 'Maths' ? 'Now · Mathematics' : `Now · ${c.grade === 'R' ? 'Listening and speaking' : 'Home Language'}`}</span>
                                 <small>{filter === 'Maths' ? `${c.mathChecked || 0} of ${c.learners.length} checked` : `${c.heard} of ${c.learners.length} heard`}</small>
                             </div>
                             <h2>{filter === 'Maths' ? 'Maths round' : (c.grade === 'R' ? 'Sound and rhyme round' : 'Reading round')}</h2>
@@ -173,6 +186,8 @@ export default function Dashboards() {
                                 <button className="pd-primary" onClick={() => { setFilter('English'); changePage('Activities'); }}><Mic size={18} /> Continue reading round</button>
                             )}
                         </Card>
+                        <div className="pd-section"><h2>Up next</h2><button onClick={()=>changePage('Planner')}>See my day →</button></div>
+                        {c.items.length>0&&<button className="pd-card pd-row app-next-lesson" onClick={()=>changePage('Planner')}><span className="app-date-pill">{date([...c.items].sort((a,b)=>a.date.localeCompare(b.date))[0].date)}</span><span><b>{[...c.items].sort((a,b)=>a.date.localeCompare(b.date))[0].title}</b><small>Open your class planner</small></span><ChevronRight size={18}/></button>}
                         <div className="pd-section">
                             <h2>This week for parents</h2>
                             <button onClick={() => changePage('Planner')}>Planner →</button>
@@ -202,7 +217,7 @@ export default function Dashboards() {
                         {[
                             ['Guidelines', `Grade ${c.grade} guidelines and resources`, 'CAPS plan, weekly focus and teaching resources', BookOpen],
                             ['Messages', 'Parent messages', 'Message a group or one parent', MessageCircle],
-                            ['Planner', 'Class planner', 'Tests, exams, spelling and homework', CalendarDays]
+                            ['Planner', `Grade ${c.grade} plan`, c.description, CalendarDays]
                         ].map(([target, title, sub, Icon]) => (
                             <button className="pd-row pd-card" key={target} onClick={() => changePage(target)}>
                                 <span className="pd-icon"><Icon /></span>
@@ -210,27 +225,26 @@ export default function Dashboards() {
                                 <ChevronRight />
                             </button>
                         ))}
-                        <button className="pd-note pd-full" onClick={() => changePage('Messages')}>
-                            {data.messages.filter(m => m.grade === c.grade && m.status === 'draft').length} parent notes ready · Lesedi drafts, you approve →
-                        </button>
+                        <PendingDraftCard onOpen={()=>changePage('Review')}/>
+
                     </>
                 )}
                 {page === 'Guidelines' && (
                     <>
                         <button className="pd-link" onClick={() => changePage('Home')}>← Class home</button>
-                        <Card>
+                        <Card className="app-guideline-focus">
                             <span className="pd-pill">Grade {c.grade} · This week</span>
                             <h2>{c.focus}</h2>
                             <p>{c.description}</p>
-                            <div className="pd-split"><b>Term 4 plan (ATP)</b><small>Week 4 of 9</small></div>
-                            <progress value={4} max={9} />
+                            <div className="pd-split"><b>Teaching plan</b><small>Demonstration guidance · curriculum verification pending</small></div>
+
                         </Card>
                         <h2>How to teach it</h2>
-                        <Card><ol>{c.steps.map(s => <li key={s}>{s}</li>)}</ol></Card>
+                        <Card className="app-teaching-steps"><ol>{c.steps.map(s => <li key={s}>{s}</li>)}</ol></Card>
                         <h2>Resources for Grade {c.grade}</h2>
                         {c.resources.map((r, i) => (
                             <button key={r} className="pd-card pd-row" onClick={() => setResource(resource === i ? null : i)}>
-                                <b>{r}</b><small>{i % 2 ? 'Printable' : 'Activity'}</small>
+                                <b>{r}</b><small className={`app-resource-badge resource-${i}`}>{['Lesson','Printable','Big Book','Activity'][i%4]}</small>
                             </button>
                         ))}
                         {typeof resource === 'number' && (
@@ -263,109 +277,16 @@ export default function Dashboards() {
                         classroom={c}
                         subject={filter === 'Maths' ? 'Mathematics' : 'English'}
                         onBack={() => changePage('Home')}
-                        onSaveAssessment={(payload) => {
-                            updateClass(c.grade, old => {
-                                const session = payload.session || {};
-                                const draft = payload.draft || {};
-                                const learnerId = payload.learnerId || session.learnerId;
-                                const subject = payload.subject || session.subject || (filter === 'Maths' ? 'Mathematics' : 'English');
-                                const isMath = subject === 'Mathematics';
-                                const targetAssessedIds = isMath ? (old.mathAssessedIds || []) : (old.assessedIds || []);
-                                const wasAssessed = targetAssessedIds.includes(learnerId);
-                                const updatedAssessedIds = [...new Set([...targetAssessedIds, learnerId])];
 
-                                let updatedHeard = old.heard || 0;
-                                let updatedMathChecked = old.mathChecked || 0;
-                                if (!wasAssessed) {
-                                    if (isMath) {
-                                        updatedMathChecked = Math.min(old.learners.length, updatedMathChecked + 1);
-                                    } else {
-                                        updatedHeard = Math.min(old.learners.length, updatedHeard + 1);
-                                    }
-                                }
-
-                                const actId = payload.activityId || session.activityId || 'activity';
-                                const actName = payload.activityName || session.activityName || 'Activity';
-                                const approvedTier = typeof payload.approvedTierChange === 'string' ? payload.approvedTierChange : payload.approvedTierChange?.newTier;
-
-                                const updatedLearners = old.learners.map(l => {
-                                    if (l.id !== learnerId) return l;
-
-                                    const newAssessment = {
-                                        id: payload.id || session.sessionId || uid(),
-                                        sessionId: session.sessionId || payload.id || uid(),
-                                        activityId: actId,
-                                        activityName: actName,
-                                        subject: subject,
-                                        academicYear: '2026',
-                                        term: 'Term 4',
-                                        completedAt: payload.completedAt || session.completedAt || new Date().toISOString(),
-                                        score: payload.rawScore ?? payload.score ?? session.summary?.score ?? null,
-                                        maxScore: payload.maxScore ?? session.summary?.maxScore ?? null,
-                                        percentage: payload.percentage ?? session.summary?.percentage ?? null,
-                                        status: 'Approved',
-                                        finding: payload.finding || draft.finding || '',
-                                        whyItMatters: payload.whyItMatters || draft.whyItMatters || '',
-                                        whatToCheck: payload.whatToCheck || draft.whatToCheck || '',
-                                        whatToDo: payload.whatToDo || draft.whatToDo || '',
-                                        confidence: payload.confidence || draft.confidence || 'High',
-                                        approvedAt: new Date().toISOString(),
-                                        approvedBy: c.teacher || 'Teacher',
-                                        teacherNotes: payload.teacherNotes || session.teacherNotes || ''
-                                    };
-
-                                    const currentAssessments = l.activityAssessments || [];
-                                    const nextAssessments = [newAssessment, ...currentAssessments.filter(a => a.sessionId !== newAssessment.sessionId)];
-
-                                    let nextGroup = l.group;
-                                    let nextTierHistory = l.tierHistory || [];
-                                    if (approvedTier && approvedTier !== l.group) {
-                                        nextGroup = approvedTier;
-                                        nextTierHistory = [
-                                            ...nextTierHistory,
-                                            {
-                                                previousTier: l.group,
-                                                newTier: approvedTier,
-                                                changedAt: new Date().toISOString(),
-                                                changedBy: c.teacher || 'Teacher',
-                                                term: 'Term 4',
-                                                reason: 'Approved following Lesedi activity assessment recommendation',
-                                                supportingActivity: actName
-                                            }
-                                        ];
-                                    }
-
-                                    return {
-                                        ...l,
-                                        group: nextGroup,
-                                        tierHistory: nextTierHistory,
-                                        activityAssessments: nextAssessments,
-                                        lastActivityAt: new Date().toISOString(),
-                                        lastActivityName: actName
-                                    };
-                                });
-
-                                return {
-                                    ...old,
-                                    heard: updatedHeard,
-                                    assessedIds: isMath ? old.assessedIds : updatedAssessedIds,
-                                    mathChecked: updatedMathChecked,
-                                    mathAssessedIds: isMath ? updatedAssessedIds : old.mathAssessedIds,
-                                    learners: updatedLearners
-                                };
-                            });
-
-                            const targetId = payload.learnerId || payload.session?.learnerId;
-                            const learnerName = c.learners.find(l => l.id === targetId)?.name || 'Learner';
-                            setNotice(`Activity assessment for ${learnerName} approved and recorded.`);
-                        }}
                     />
                 )}
                 {false && <TeacherReadingExperience classroom={c} onBack={() => {}} onSaveSession={() => {}} />}
                 {(page === 'Planner' || page === 'Schoolwork') && (
                     <>
                         <Choices values={['All', 'Test', 'Exam', 'Spelling test', 'Homework']} value={filter} onChange={setFilter} />
-                        {teacher && (
+                        {teacher && <button className="pd-primary pd-full" onClick={()=>setShowAddWork(v=>!v)}>＋ {showAddWork?'Close new schoolwork':'Add test, exam or homework'}</button>}
+                        <button className="app-view-toggle" onClick={()=>setCalendarView(v=>!v)}><CalendarDays size={16}/>{calendarView?'List view':'Calendar view'}</button>
+                        {teacher && showAddWork && (
                             <Card>
                                 <h2>Add schoolwork</h2>
                                 <form onSubmit={e => { e.preventDefault(); const f = new FormData(e.currentTarget); if (updateClass(c.grade, old => ({ ...old, items: [...old.items, { id: uid(), type: f.get('type'), title: f.get('title').trim(), date: f.get('date'), detail: f.get('detail').trim(), told: false }] }))) { e.currentTarget.reset(); setNotice('Schoolwork added. Parents can see it in their dashboard.'); } }}>
@@ -379,12 +300,13 @@ export default function Dashboards() {
                                 </form>
                             </Card>
                         )}
-                        <SchoolCalendar role={profile.role} classroom={c} classes={data.classes} items={c.items.filter(i => filter === 'All' || i.type === filter)} onDeleteItem={id => { updateClass(c.grade, old => ({ ...old, items: old.items.filter(i => i.id !== id) })); setNotice('Schoolwork removed from calendar.'); }} onEditItem={upd => { updateClass(c.grade, old => ({ ...old, items: old.items.map(i => i.id === upd.id ? upd : i) })); setNotice('Schoolwork updated on calendar.'); }} onNotifyParents={(type, item) => startMessage(type, item)} childrenList={!teacher ? [{ id: child.id, name: child.name, grade: c.grade }, ...(data.classes.filter(cl => cl.grade !== c.grade).slice(0, 1).map(cl => ({ id: cl.learners[1]?.id || `${cl.grade}-2`, name: cl.learners[1]?.name || 'Lerato', grade: cl.grade })))] : []} activeChildId={child?.id} onSelectChild={cid => { const target = data.classes.find(cl => cl.learners.some(l => l.id === cid)); if (target) setProfile(p => ({ ...p, grade: target.grade, childId: cid })); }} />
+                        {!calendarView&&<SchoolworkList items={c.items.filter(i=>filter==='All'||i.type===filter)} teacher={teacher} onTell={(type,item)=>setParentNoteItem(item)} onDone={id=>updateClass(c.grade,old=>({...old,items:old.items.map(i=>i.id===id?{...i,completed:!i.completed}:i)}))} onEdit={setEditingWork}/>}
+                        {calendarView&&<SchoolCalendar role={profile.role} classroom={c} classes={data.classes} items={c.items.filter(i => filter === 'All' || i.type === filter)} onDeleteItem={id => { updateClass(c.grade, old => ({ ...old, items: old.items.filter(i => i.id !== id) })); setNotice('Schoolwork removed from calendar.'); }} onEditItem={upd => { updateClass(c.grade, old => ({ ...old, items: old.items.map(i => i.id === upd.id ? upd : i) })); setNotice('Schoolwork updated on calendar.'); }} onNotifyParents={(type, item) => startMessage(type, item)} childrenList={!teacher ? [{ id: child.id, name: child.name, grade: c.grade }, ...(data.classes.filter(cl => cl.grade !== c.grade).slice(0, 1).map(cl => ({ id: cl.learners[1]?.id || `${cl.grade}-2`, name: cl.learners[1]?.name || 'Lerato', grade: cl.grade })))] : []} activeChildId={child?.id} onSelectChild={cid => { const target = data.classes.find(cl => cl.learners.some(l => l.id === cid)); if (target) {const p={...profile,grade:target.grade,childId:cid};chooseProfile(p);setProfile(p);} }} />}
                     </>
                 )}
                 {!teacher && page === 'Home' && (
                     <>
-                        <Card>
+                        <Card className="app-parent-group">
                             <small>{child.name}’s reading group</small>
                             <h2 className="pd-group-title">{child.group}</h2>
                             <div className="pd-groups pd-parent-groups">
@@ -403,8 +325,7 @@ export default function Dashboards() {
                                 <h2>Reading speed</h2>
                                 <small>Up {child.history.at(-1) - child.history[0]} since Term 1</small>
                             </div>
-                            <strong className="pd-number">{child.history.at(-1)}</strong>
-                            <span>words a minute</span>
+                            <div className="app-speed-row"><div><strong className="pd-number">{child.history.at(-1)}</strong><span>words a minute</span></div><ProgressLine history={child.history}/></div>
                         </Card>
                         <div className="pd-section">
                             <h2>Coming up</h2>
@@ -420,19 +341,14 @@ export default function Dashboards() {
                         ))}
                     </>
                 )}
-                {!teacher && page === 'Progress' && (
-                    <LearnerProfile
-                        learner={child}
-                        classroom={c}
-                        isParent={true}
-                        onBack={() => changePage('Home')}
-                        onStartMessage={(topic, item, lid) => startMessage(topic, item, lid)}
-                    />
-                )}
+                {!teacher&&page==='Home'&&<><button className="pd-card pd-row app-message-card" onClick={()=>changePage('Messages')}><span className="pd-icon"><MessageCircle/></span><span><b>Message {c.teacher}</b><small>{unreadCount?`${unreadCount} unread message${unreadCount===1?'':'s'}`:'A question, an update, a little support'}</small></span><ChevronRight/></button><section className="app-home-tip"><b>Try this at home</b><p>{child.strategy||'Read one short page together tonight. Ask your child to point at each word.'}</p><small>From {c.teacher}</small></section></>}
+                {!teacher && page === 'Progress' && <><div className="pd-heading"><h1>Progress</h1></div><ParentProgress learner={child} classroom={c} onMessage={()=>startMessage('Progress',null,child.id)}/></>}
                 {page === 'Messages' && (
                     <MessagingHub profile={profile} classroom={c} classes={data.classes} initialLearnerId={msgLearnerId} initialTopic={msgTopic} onNavigateHome={() => changePage('Home')} />
                 )}
             </main>
+            {parentNoteItem&&<PlannerNote item={parentNoteItem} classroom={c} onClose={()=>setParentNoteItem(null)} onSaved={upd=>updateClass(c.grade,old=>({...old,items:old.items.map(i=>i.id===upd.id?upd:i)}))}/>}
+            {editingWork&&<EditSchoolwork item={editingWork} onClose={()=>setEditingWork(null)} onSaved={upd=>updateClass(c.grade,old=>({...old,items:old.items.map(i=>i.id===upd.id?upd:i)}))}/>}
             {page !== 'Activities' && page !== 'Read' && (
                 <nav className="pd-nav" aria-label={`${profile.role} navigation`}>
                     {nav.map(([name, Icon]) => {

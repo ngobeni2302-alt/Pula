@@ -28,7 +28,7 @@ async function migrate() {
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.DATABASE_URL.includes('sslmode=disable')
       ? false
-      : { rejectUnauthorized: false },
+      : { rejectUnauthorized: true },
   });
 
   const client = await pool.connect();
