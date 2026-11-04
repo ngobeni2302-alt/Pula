@@ -153,6 +153,39 @@ export async function appWorkflow(path,body){
       return {ok:false,error:'Evaluation unavailable',level:'INSUFFICIENT_EVIDENCE',reason:'Backend unreachable.',evidence:{},confidence:'insufficient'};
     }
   }
+  // ── Learner analytics ────────────────────────────────────────────────
+  // POST /analytics — aggregate evidence across sessions for a learner.
+  if(path==='/analytics'){
+    const {learnerId,learnerName,subject,grade,sessions}=body;
+    const apiBase=typeof import.meta!=='undefined'&&import.meta.env?.VITE_API_BASE?import.meta.env.VITE_API_BASE:(typeof window!=='undefined'&&window.location?.port==='5173'?'http://localhost:4000':'');
+    try{
+      const res=await fetch(`${apiBase}/api/lesedi/analytics`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({learnerId,learnerName,subject,grade,sessions})});
+      if(!res.ok)throw Error(`HTTP ${res.status}`);
+      const data=await res.json();
+      if(!data.ok)throw Error('Empty response');
+      return data;
+    }catch{
+      // Fallback: minimal local aggregation
+      const scored=sessions.filter(s=>s.score!=null);
+      const avg=scored.length?Math.round(scored.reduce((a,s)=>a+s.score,0)/scored.length):null;
+      return {ok:true,learnerId,learnerName,subject,grade,totalSessions:sessions.length,averageScore:avg,overallTrend:'unknown',skills:[],skillGaps:[],strengths:[],summary:`${sessions.length} session(s) recorded. Backend analytics unavailable.`,confidence:'low'};
+    }
+  }
+  // ── Class analytics ───────────────────────────────────────────────────
+  // POST /class-analytics — aggregate evidence across learners in a class.
+  if(path==='/class-analytics'){
+    const {grade:grd,subject:sub,classroomName,learners}=body;
+    const apiBase=typeof import.meta!=='undefined'&&import.meta.env?.VITE_API_BASE?import.meta.env.VITE_API_BASE:(typeof window!=='undefined'&&window.location?.port==='5173'?'http://localhost:4000':'');
+    try{
+      const res=await fetch(`${apiBase}/api/lesedi/class-analytics`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({grade:grd,subject:sub,classroomName,learners})});
+      if(!res.ok)throw Error(`HTTP ${res.status}`);
+      const data=await res.json();
+      if(!data.ok)throw Error('Empty response');
+      return data;
+    }catch{
+      return {ok:false,error:'Class analytics unavailable',classroomName,grade:grd,subject:sub,totalLearners:learners?.length||0,summary:'Backend class analytics unavailable.',confidence:'insufficient'};
+    }
+  }
   if(path==='/progress'){
     if(profile?.role!=='Parent')return {learners:[],updates:[],assessments:[]};
     const c=currentClass(),l=c.learners.find(l=>l.id===profile.childId);

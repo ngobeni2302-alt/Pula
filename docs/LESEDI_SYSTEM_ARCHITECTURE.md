@@ -267,3 +267,67 @@ Key rules:
 - A child correctly identifying a rhyme without speaking has demonstrated the skill
 - Tapping letters in Sound It Out shows engagement but is NOT a validated phonics score
 - Browser speech recognition transcripts are unverified — teacher review required
+
+---
+
+## Phase 3 — Learning Analytics and Teacher Copilot (Added)
+
+### New Components
+
+| Component | File | Role |
+|---|---|---|
+| Analytics Engine | `LesediAiAgent/src/analyticsEngine.js` | Evidence aggregation across sessions. Per-learner: groups by skill, detects patterns (improving, declining, stagnant), identifies gaps and strengths. Per-class: tier distribution, common skill gaps (30%+ threshold), class strengths (50%+ threshold), teaching recommendations. |
+
+### New API Endpoints
+
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/api/lesedi/analytics` | POST | Per-learner analytics: aggregated evidence, skill groups, patterns, gaps, strengths. |
+| `/api/lesedi/class-analytics` | POST | Class-level analytics: tier distribution, common skill gaps, teaching recommendations. |
+
+### Enhanced Existing Components
+
+| Component | Enhancement |
+|---|---|
+| `appWorkflow.js` `/assignments/:id/complete` | Drafts now include `observationLevel`, `observationConfidence`, and `evidenceClassification` from the evaluation engine. Analysis text uses the evaluation reason instead of hardcoded text. |
+| `engine.js` `gap_explanation` | Accepts optional `analytics` context from the analytics engine, included in the AI prompt as verified data (not AI interpretation). |
+
+### Analytics Data Flow
+
+```
+Session completes
+  └─► evaluateEvidence() → score + evidenceClassification
+  └─► evaluateObservation() → observation level (DEMONSTRATED/DEVELOPING/etc.)
+  └─► Draft created with observationLevel + evidenceClassification + analysis reason
+
+Multiple sessions accumulate
+  └─► aggregateLearnerEvidence() → per-skill patterns, gaps, strengths, trends
+  └─► aggregateClassEvidence() → class-level tier distribution, common gaps, recommendations
+
+Teacher requests gap explanation
+  └─► engine.js gap_explanation with analytics context
+  └─► AI receives verified data + pattern analysis
+  └─► AI interpretation is separate from verified scores
+```
+
+### Key Analytics Rules
+
+- Deterministic scoring (never let the LLM invent scores)
+- AI used only for interpretation and recommendations
+- Repeated patterns identified, not single mistakes
+- Evidence quality considered (validated scores vs participation only)
+- Subject-specific learning histories preserved
+- Progress and regression tracked
+- AI-generated observations distinguishable from verified activity results
+- Response time alone is never a measure of ability
+- Where evidence is insufficient, stated explicitly
+
+### Class-Level Recommendations
+
+| Type | Trigger |
+|---|---|
+| `targeted_teaching` | 30%+ of learners struggling with a skill |
+| `class_review` | Class average below 50% |
+| `differentiated_grouping` | 40%+ of learners need attention |
+| `enrichment` | 50%+ of learners demonstrated a skill |
+| `gather_evidence` | 30%+ of learners have insufficient evidence |

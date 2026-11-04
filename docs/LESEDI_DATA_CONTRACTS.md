@@ -363,3 +363,146 @@ Each activity in `shared/activityDefinitions.js` contains:
 | `hintOverrides` | object | Activity-specific hint phrases for levels 1, 2, 3, F, and praise |
 | `successCriteria` | string[] | What constitutes success |
 | `evidenceToRecord` | string[] | What evidence to capture |
+
+---
+
+## Phase 3 — Analytics Data Contracts (Added)
+
+### POST /api/lesedi/analytics — Request
+
+```json
+{
+  "learnerId": "learner-uuid",
+  "learnerName": "Thando",
+  "subject": "Mathematics",
+  "grade": "2",
+  "sessions": [
+    {
+      "activityId": "number-hunt",
+      "activityName": "Number Hunt",
+      "score": 100,
+      "total": 3,
+      "correct": 3,
+      "transcriptAvailable": false,
+      "recordingCaptured": false,
+      "hintsUsed": 0,
+      "maxHintLevel": 0,
+      "selfCorrections": 0,
+      "createdAt": "2026-01-15T10:00:00.000Z",
+      "curriculumSkillId": "MATHS-NUMBER-RECOGNITION"
+    }
+  ]
+}
+```
+
+### POST /api/lesedi/analytics — Response
+
+```json
+{
+  "ok": true,
+  "learnerId": "learner-uuid",
+  "learnerName": "Thando",
+  "subject": "Mathematics",
+  "grade": "2",
+  "totalSessions": 3,
+  "scoredSessions": 2,
+  "participationSessions": 1,
+  "averageScore": 89,
+  "observationPeriod": { "start": "2026-01-10", "end": "2026-01-24", "weeks": 2 },
+  "overallTrend": "improving",
+  "skills": [
+    {
+      "skillId": "MATHS-NUMBER-RECOGNITION",
+      "activityName": "Number Hunt",
+      "sessionCount": 3,
+      "mostCommonLevel": "DEMONSTRATED",
+      "pattern": { "pattern": "mastered", "sessions": 3, "trend": "stable", "confidence": "medium" },
+      "scoreTrend": "improving",
+      "patternReason": "3 sessions consistently demonstrate this skill...",
+      "evidenceQuality": "adequate",
+      "validatedSessions": 3,
+      "participationOnly": 0,
+      "observations": [{ "level": "DEMONSTRATED", "reason": "...", "confidence": "medium" }],
+      "verified": [{ "activityId": "number-hunt", "score": 100, "total": 3, "correct": 3, "date": "2026-01-10" }]
+    }
+  ],
+  "skillGaps": [],
+  "strengths": [{ "skillId": "MATHS-NUMBER-RECOGNITION", "activityName": "Number Hunt", "level": "DEMONSTRATED", "sessions": 3 }],
+  "summary": "Thando: 3 sessions over 2 weeks. Average score: 89%. Overall trend: improving. 1 skill area demonstrated.",
+  "confidence": "medium"
+}
+```
+
+### POST /api/lesedi/class-analytics — Request
+
+```json
+{
+  "grade": "2",
+  "subject": "Mathematics",
+  "classroomName": "Grade 2 — Mrs Khumalo",
+  "learners": [
+    { "learnerId": "l1", "learnerName": "A", "overallTrend": "stable",
+      "skills": [{ "skillId": "X", "mostCommonLevel": "DEMONSTRATED", "pattern": { "pattern": "mastered" }, "activityName": "X" }],
+      "skillGaps": [], "strengths": [{ "skillId": "X", "activityName": "X" }], "averageScore": 90, "totalSessions": 2 }
+  ]
+}
+```
+
+### POST /api/lesedi/class-analytics — Response
+
+```json
+{
+  "ok": true,
+  "classroomName": "Grade 2 — Mrs Khumalo",
+  "grade": "2",
+  "subject": "Mathematics",
+  "totalLearners": 4,
+  "classAverageScore": 70,
+  "tierDistribution": { "DEMONSTRATED": 2, "DEVELOPING": 1, "NEEDS_FURTHER_PRACTICE": 1, "INSUFFICIENT_EVIDENCE": 0, "TEACHER_REVIEW_REQUIRED": 0 },
+  "commonSkillGaps": [{ "skillId": "MATHS-NUMBER-RECOGNITION", "activityName": "Number Hunt", "learnersAffected": 2, "percentage": 50 }],
+  "classStrengths": [{ "skillId": "MATHS-ONE-TO-ONE-COUNTING", "learnersDemonstrating": 3, "percentage": 75 }],
+  "learnersNeedingAttention": [{ "learnerId": "l2", "learnerName": "B", "gapCount": 1, "trend": "stagnant" }],
+  "recommendations": [
+    { "type": "targeted_teaching", "skill": "Number Hunt", "learnersAffected": 2, "percentage": 50, "capsRef": "CAPS Maths Gr R p.10", "recommendation": "50% of the class (2 learners) are struggling..." },
+    { "type": "enrichment", "skill": "MATHS-ONE-TO-ONE-COUNTING", "recommendation": "75% of the class has demonstrated..." }
+  ],
+  "summary": "Grade 2 — Mrs Khumalo: 4 learners analysed. Class average: 70%.",
+  "confidence": "medium"
+}
+```
+
+### Enhanced Draft (from /assignments/:id/complete)
+
+Drafts now include Phase 3 fields:
+
+```json
+{
+  "id": "session-uuid",
+  "observationLevel": "DEVELOPING",
+  "observationConfidence": "medium",
+  "evidenceClassification": {
+    "activityId": "number-hunt",
+    "activityName": "Number Hunt",
+    "subject": "Mathematics",
+    "curriculumSkillId": "MATHS-NUMBER-RECOGNITION",
+    "capsRef": "CAPS Maths Gr R p.10; Gr 1 p.12",
+    "types": ["visual_recognition", "cognitive"],
+    "observations": [{ "type": "visual_recognition", "value": "2 of 3 recognised", "confidence": "medium", "note": "..." }],
+    "note": "Objective scoring from first choices..."
+  },
+  "analysis": "Child answered 2 of 3 correctly (67%) with 1 hint. The skill is developing — continue practice.",
+  "intervention": "Count familiar objects together...",
+  "parentUpdate": "Thando practised Number Hunt today...",
+  "source": "Activity evidence · teacher review"
+}
+```
+
+### Verified vs AI-Generated Data
+
+The analytics engine explicitly separates:
+
+| Type | Source | Fields |
+|---|---|---|
+| Verified results | Deterministic scoring from UI choices | `score`, `total`, `correct`, `date` |
+| AI-evaluated observations | Evaluation engine interpretation | `level`, `reason`, `confidence` |
+| AI-generated analysis | Lesedi AI model (teacher approval required) | `analysis`, `intervention`, `parentUpdate` |
