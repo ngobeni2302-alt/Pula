@@ -1,4 +1,6 @@
-# Teacher Copilot — Pula (fresh PWA MVP)
+# Teacher Copilot — Pula
+
+The whole-app PDF enhancement is documented in [Pula enhancement](docs/LESEDI_CORE.md). Open the original role picker directly—no login or credentials are required. Landing, Teacher, Parent, Activities, Guidelines, Planner, conversations and HOD screens are enhanced while preserving existing app data.
 
 A mobile-first, installable teacher reading companion inspired by the supplied UI screenshots and data-flow diagram.
 

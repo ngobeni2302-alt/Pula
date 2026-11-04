@@ -5,6 +5,7 @@ COPY frontend/package*.json ./frontend/
 RUN npm ci --prefix frontend
 COPY frontend ./frontend
 COPY teacher ./teacher
+COPY shared ./shared
 RUN npm run build --prefix frontend
 
 FROM node:20-alpine AS runtime
@@ -17,6 +18,7 @@ RUN npm ci --omit=dev && npm cache clean --force
 WORKDIR /app
 COPY backend/src ./backend/src
 COPY backend/migrations ./backend/migrations
+COPY shared ./shared
 COPY LesediAiAgent/src ./LesediAiAgent/src
 COPY --from=frontend-build /app/frontend/dist ./frontend/dist
 RUN mkdir -p /app/backend/data \

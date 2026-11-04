@@ -22,7 +22,7 @@ export function getPool() {
       connectionString: process.env.DATABASE_URL,
       ssl: process.env.DATABASE_URL.includes('sslmode=disable')
         ? false
-        : { rejectUnauthorized: false },
+        : { rejectUnauthorized: true },
       max:             10,
       idleTimeoutMillis: 30_000,
       connectionTimeoutMillis: 5_000,

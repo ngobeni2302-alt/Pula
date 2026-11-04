@@ -14,9 +14,9 @@
 .pd-shell h1{font-size:29px;line-height:1.15;letter-spacing:-.7px;margin:8px 0}
 .pd-shell h2{font-size:21px;margin:8px 0 14px}
 .pd-shell h3{font-size:16px;margin:20px 0 12px}
-.pd-shell p{font-size:14px;line-height:1.6;color:#575779}
+:where(.pd-shell) p{font-size:14px;line-height:1.6;color:#575779}
 .pd-shell small{display:block;font-size:12px;line-height:1.5;color:#575779}
-.pd-shell button,.pd-legacy button{border:0;color:inherit;font-weight:800}
+:where(.pd-shell) button,.pd-legacy button{border:0;color:inherit;font-weight:800}
 .pd-shell button.re-primary-btn,.pd-shell button.re-confirm-keep-btn,.pd-shell button.re-btn-next-friend,.pd-shell button.re-btn-done,.pd-shell button.re-btn-again{color:#ffffff!important}
 .pd-shell button:focus-visible,.pd-shell input:focus-visible,.pd-shell select:focus-visible,.pd-shell textarea:focus-visible{outline:3px solid #6357c5;outline-offset:3px}
 .pd-shell button{cursor:pointer}

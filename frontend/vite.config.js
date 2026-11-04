@@ -12,7 +12,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.png'],
+      includeAssets: ['icon.png', 'lesedi.png'],
       manifest: {
         name: 'Teacher Copilot — Pula',
         short_name: 'Teacher Copilot',
@@ -35,19 +35,13 @@ export default defineConfig({
       workbox: {
         maximumFileSizeToCacheInBytes: 3000000,
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
-        runtimeCaching: [
-          {
-            urlPattern: ({ url }) => url.pathname.startsWith('/api'),
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              networkTimeoutSeconds: 2,
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          }
-        ]
+        runtimeCaching: [{
+          urlPattern: ({ url }) => url.pathname.startsWith('/api'),
+          handler: 'NetworkOnly'
+        }],
+        cleanupOutdatedCaches: true,
+        importScripts: ['/clear-private-cache.js']
+
       }
     })
   ],

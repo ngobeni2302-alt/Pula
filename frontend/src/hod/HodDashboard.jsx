@@ -249,7 +249,7 @@ export default function HodDashboard({ onBack }) {
   const supportTierCount = data.classes.flatMap(cl => cl.learners).filter(l => l.code <= 2).length;
   const capsBehind = data.classes.reduce((s, cl) => s + cl.logs.filter(x => !x).length, 0);
 
-  const TABS = ['Class performance', 'CAPS tracker', 'Teacher logs', 'Interventions', 'Action items', 'Calendar'];
+  const TABS = ['Class performance', 'CAPS tracker', 'Teacher logs', 'Interventions', 'Action items', 'Teachers', 'Calendar'];
 
   return (
     <div className='hod-shell'>
@@ -261,7 +261,7 @@ export default function HodDashboard({ onBack }) {
       <div className='hod-heading'>
         <div>
           <span className='hod-eyebrow'>FOUNDATION PHASE &middot; GRADES R TO 3 &middot; TERM 4, 2026</span>
-          <h1>Quality assurance</h1>
+          <div className='hod-brand-heading'><img src='/lesedi.png' alt='Lesedi'/><h1>Quality assurance</h1></div>
           <p>A shared plan. A clear next step.</p>
         </div>
         <span className='hod-pill'>Term 4 sign-off due</span>
@@ -269,7 +269,7 @@ export default function HodDashboard({ onBack }) {
 
       <div className='hod-stats'>
         {[
-          ['Classes monitored', data.classes.length, '148 learners, Grades R to 3'],
+          ['Classes monitored', data.classes.length, `${data.classes.reduce((n,c)=>n+c.learners.length,0)} learners, Grades R to 3`],
           ['Support Tier learners', supportTierCount, 'Codes 1 and 2, below grade level'],
           ['CAPS areas behind', capsBehind, 'Against the Annual Teaching Plan'],
           ['Open action items', openActions, openActions + ' due this week'],
@@ -298,11 +298,12 @@ export default function HodDashboard({ onBack }) {
       {tab === 'Teacher logs'      && <TeacherLogsTab data={data} persist={persist} setNotice={setNotice} />}
       {tab === 'Interventions'     && <InterventionsTab data={data} updateClass={updateClass} />}
       {tab === 'Action items'      && <ActionItemsTab data={data} persist={persist} setNotice={setNotice} />}
+      {tab === 'Teachers'&&<section className='hod-card'><h2>Your teaching team</h2><div className='hod-teacher-grid'>{[...data.classes.map(c=>({id:`TCH-${c.grade}`,name:c.teacher,grade:c.grade,code:`TCH-${c.grade}`})),...(data.teachers||[])].map(t=><details className='hod-teacher-profile' key={t.id}><summary><span className='hod-teacher-initial'>{t.name[0]}</span><span><b>{t.name}</b><small>Grade {t.grade} · {t.code||t.id}</small></span></summary><p>{t.email||'No email recorded'}</p><small>Teacher ID: {t.code||t.id}</small></details>)}</div><h3>Register Teacher</h3><form onSubmit={e=>{e.preventDefault();const f=new FormData(e.currentTarget),id=uid(),record={id,code:`TCH-${id.slice(0,8).toUpperCase()}`,name:f.get('name').trim(),email:f.get('email').trim(),grade:f.get('grade')};if(persist({...data,teachers:[...(data.teachers||[]),record]})){e.currentTarget.reset();setNotice(`${record.name} added · ${record.code}`);}}}><div className='hod-form-grid'><Field label='Teacher name'><input name='name' required/></Field><Field label='Email'><input name='email' type='email'/></Field><Field label='Grade'><select name='grade'>{['R','1','2','3'].map(g=><option key={g}>{g}</option>)}</select></Field></div><button className='hod-primary'>Register Teacher</button></form></section>}
       {tab === 'Calendar'          && <HodCalendar data={data} plans={PLANS} />}
 
       <footer className='hod-footer'>
         Lesedi suggests, people decide. Demo data is stored on this device.
-        Confidentiality requires authenticated access before real use.
+        Sample school workspace · saved on this device.
       </footer>
     </div>
   );

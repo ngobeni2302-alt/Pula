@@ -130,7 +130,7 @@ test('3. Parent 3-dots menu in Messages contains "Message Teacher" and strictly 
   assert.ok(menuContent.includes('Message Teacher'));
 });
 
-test('4. Parent Progress page renders full LearnerProfile scoped to their child only', () => {
+test('4. Parent Progress page renders the PDF progress view scoped to their child only', () => {
   const dashboardsJsx = fs.readFileSync(path.resolve('frontend/src/Dashboards.jsx'), 'utf8');
 
   // Verify Progress page uses LearnerProfile with isParent={true}
@@ -139,10 +139,10 @@ test('4. Parent Progress page renders full LearnerProfile scoped to their child 
     'Parent progress page section exists'
   );
   assert.ok(
-    dashboardsJsx.includes('<LearnerProfile') &&
+    dashboardsJsx.includes('<ParentProgress') &&
     dashboardsJsx.includes('learner={child}') &&
-    dashboardsJsx.includes('isParent={true}'),
-    'Parent progress page must render LearnerProfile with child and isParent={true}'
+    dashboardsJsx.includes('classroom={c}'),
+    'Parent progress page must render ParentProgress with the selected child'
   );
 
   // Verify academic profile data has all required parts
