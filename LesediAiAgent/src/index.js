@@ -78,6 +78,15 @@ export function mountLesedi(app, opts = {}) {
       must(body.grade !== undefined, 'body.grade is required (R | 1 | 2 | 3)');
       must(body.term !== undefined,  'body.term is required (1–4)');
 
+      // Normalize subject field: 'Mathematics' | 'English' → 'maths' | 'literacy'
+      if (body.subject) {
+        if (body.subject === 'Mathematics') body.subject = 'maths';
+        else if (body.subject === 'English') body.subject = 'literacy';
+        else if (!['maths', 'literacy'].includes(body.subject)) {
+          return res.status(400).json({ ok: false, error: 'body.subject must be "Mathematics", "English", "maths", or "literacy"' });
+        }
+      }
+
       // Consent is checked inside the engine/guardrails, but we surface
       // a clear error early if the field is present and explicitly false.
       if (body.learner && body.learner.consent === false && body.task !== 'guardrail') {

@@ -190,7 +190,7 @@ export function checkGuardrails(ctx) {
     subject = 'literacy',
     learner,
     requestText = '',
-    observations = [],
+    observations = learner?.observations ?? [],
   } = ctx;
 
   // 1. POPIA: Consent gate — learner explicitly has no consent
