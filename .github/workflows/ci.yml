@@ -75,13 +75,14 @@ jobs:
 
       # ── 6. Run backend tests ────────────────────────────────────────────
       - name: Run backend tests
-        run: node --test
+        run: node --test --test-reporter=spec
         working-directory: backend
 
       # ── 7. Run frontend tests ───────────────────────────────────────────
       - name: Run frontend tests
-        run: node --test frontend/tests/
-        # Run from repo root so path.resolve() in tests resolves correctly
+        # Run from repo root so ../../shared and ../../LesediAiAgent imports resolve.
+        # Use explicit glob to be safe across Node 20 and Node 26.
+        run: node --test --test-reporter=spec $(find frontend/tests -name '*.test.mjs' | sort | tr '\n' ' ')
 
       # ── 8. Build frontend (catches Vite errors early) ───────────────────
       - name: Build frontend

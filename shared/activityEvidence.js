@@ -1,5 +1,6 @@
 import {serverRounds} from './activityCatalog.js';
 import {getActivityDefinition, EVIDENCE_TYPES, OBSERVATION_LEVELS} from './activityDefinitions.js';
+import {assessSpeechConfidence, SPEECH_CONFIDENCE} from '../LesediAiAgent/src/speechIntelligence.js';
 export function evaluateEvidence(assignment, evidence) {
   const rounds=serverRounds(assignment.activityId,assignment.grade);
   if(!Array.isArray(evidence.rounds)||evidence.rounds.length!==rounds.length)throw Error('Complete every assigned round');
@@ -33,7 +34,7 @@ export function evaluateEvidence(assignment, evidence) {
   // ── Phase 2: Evidence type classification ──────────────────────────────
   // Classify what the evidence tells us about the child's learning.
   // This does NOT change the score — it adds context for the teacher copilot.
-  result.evidenceClassification = classifyEvidence(assignment.activityId, result, evidence);
+  result.evidenceClassification = classifyEvidence(assignment, result, evidence);
   return result;
 }
 
@@ -59,7 +60,8 @@ export function evaluateEvidence(assignment, evidence) {
  * @param {object} rawEvidence — the raw evidence submitted (rounds, speech_transcript, etc.)
  * @returns {object} structured evidence classification
  */
-export function classifyEvidence(activityId, evalResult, rawEvidence) {
+export function classifyEvidence(assignment, evalResult, rawEvidence) {
+  const activityId = assignment.activityId;
   const def = getActivityDefinition(activityId);
   if (!def) return { types: [], note: 'Unknown activity — no classification available.' };
 
@@ -81,19 +83,40 @@ export function classifyEvidence(activityId, evalResult, rawEvidence) {
     // ── Reading Time: reading accuracy + fluency + comprehension ──────────
     case 'reading-time': {
       if (evalResult.transcriptAvailable && evalResult.speechDurationSeconds > 0) {
-        // Speech transcript available — can estimate reading fluency
+        // Speech transcript available — use speech intelligence for assessment
+        const speechAssessment = assessSpeechConfidence({
+          expectedText: serverRounds('reading-time', assignment.grade)?.[0]?.target ?? '',
+          transcript: rawEvidence.speech_transcript,
+          durationSeconds: evalResult.speechDurationSeconds,
+          activityId: 'reading-time',
+          subject: 'English',
+        });
         classification.types.push(EVIDENCE_TYPES.READING_ACCURACY);
         classification.types.push(EVIDENCE_TYPES.READING_FLUENCY);
-        // Words per minute estimate (rough — Phase 5 will refine with speech intelligence)
-        const words = rawEvidence.speech_transcript.trim().split(/\s+/).filter(Boolean).length;
-        const wpm = words > 0 ? Math.round((words / evalResult.speechDurationSeconds) * 60) : 0;
         classification.observations.push({
-          type: EVIDENCE_TYPES.READING_FLUENCY,
-          value: `${wpm} words per minute (estimated from browser transcript — unverified)`,
-          confidence: 'low',
-          note: 'Browser speech recognition is not a validated measure of reading fluency. Teacher review required.',
+          type: EVIDENCE_TYPES.READING_ACCURACY,
+          value: `${speechAssessment.matchedWords} of ${speechAssessment.totalWords} words matched (${speechAssessment.matchPercentage}%)`,
+          confidence: speechAssessment.confidence,
+          note: speechAssessment.note,
         });
-        classification.note = 'Speech transcript captured. Reading fluency estimate is unverified — teacher should listen to the recording.';
+        if (speechAssessment.fluencyEstimate) {
+          classification.observations.push({
+            type: EVIDENCE_TYPES.READING_FLUENCY,
+            value: `${speechAssessment.fluencyEstimate.wpm} words per minute (estimated from browser transcript — unverified)`,
+            confidence: 'low',
+            note: speechAssessment.fluencyEstimate.note,
+          });
+        }
+        // Include child speech pattern observations
+        for (const obs of speechAssessment.observations || []) {
+          classification.observations.push({
+            type: EVIDENCE_TYPES.SPOKEN_PRODUCTION,
+            value: `${obs.pattern}: ${obs.note}`,
+            confidence: 'low',
+            note: 'Child speech pattern observed. Consider it alongside other classroom evidence.',
+          });
+        }
+        classification.note = speechAssessment.note;
       } else {
         // No transcript — participation only
         classification.types.push(EVIDENCE_TYPES.READING_ACCURACY);
