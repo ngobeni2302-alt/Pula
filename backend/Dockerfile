@@ -6,6 +6,7 @@ RUN npm ci --prefix frontend
 COPY frontend ./frontend
 COPY teacher ./teacher
 COPY shared ./shared
+COPY LesediAiAgent ./LesediAiAgent
 RUN npm run build --prefix frontend
 
 FROM node:20-alpine AS runtime
