@@ -14,6 +14,9 @@ import { adapterHealth } from './azureAdapter.js';
 import { resolveScaffold, getSessionSummary, clearSession } from './scaffoldingEngine.js';
 import { evaluateObservation } from './evaluationEngine.js';
 import { aggregateLearnerEvidence, aggregateClassEvidence } from './analyticsEngine.js';
+import { draftParentNote, draftTermReport, draftParentResponse } from './parentCopilot.js';
+import { generateHodReport } from './hodIntelligence.js';
+import { processSpeechEvidence, assessSpeechConfidence, SPEECH_CONFIDENCE } from './speechIntelligence.js';
 import { getActivityDefinition, OBSERVATION_LEVELS } from '../../shared/activityDefinitions.js';
 
 const must = (cond, msg) => { if (!cond) throw new Error(msg); };
@@ -266,6 +269,146 @@ export function mountLesedi(app, opts = {}) {
   });
 
   // ------------------------------------------------------------------
+  // POST /api/lesedi/parent-report
+  // Draft a term progress report for a learner using analytics.
+  //
+  // Required body fields:
+  //   learnerName, subject, grade, term
+  //   analytics — output from aggregateLearnerEvidence (or raw sessions to aggregate)
+  // Optional: sessions (array) — if analytics not provided, will aggregate
+  // Optional: type — 'note' (default) | 'term_report' | 'response'
+  // Optional: parentQuestion — for type 'response'
+  // Optional: teacherName
+  // ------------------------------------------------------------------
+  app.post('/api/lesedi/parent-report', (req, res) => {
+    try {
+      const body = req.body ?? {};
+      must(body.learnerName, 'body.learnerName is required');
+      must(body.subject, 'body.subject is required');
+
+      const type = body.type ?? 'note';
+
+      if (type === 'term_report') {
+        // Aggregate sessions if analytics not provided
+        let analytics = body.analytics;
+        if (!analytics && body.sessions) {
+          analytics = aggregateLearnerEvidence({
+            learnerId: body.learnerId ?? 'auto',
+            learnerName: body.learnerName,
+            subject: body.subject,
+            grade: body.grade ?? '2',
+            sessions: body.sessions,
+          });
+        }
+        const result = draftTermReport({
+          learnerName: body.learnerName,
+          subject: body.subject,
+          grade: body.grade ?? '2',
+          term: body.term ?? 4,
+          analytics: analytics ?? { totalSessions: 0, strengths: [], skillGaps: [], observationPeriod: {} },
+          teacherName: body.teacherName,
+        });
+        return res.json({ ok: true, ...result });
+      }
+
+      if (type === 'response') {
+        must(body.parentQuestion, 'body.parentQuestion is required for type "response"');
+        const result = draftParentResponse({
+          learnerName: body.learnerName,
+          parentQuestion: body.parentQuestion,
+          analytics: body.analytics ?? null,
+          subject: body.subject,
+        });
+        return res.json({ ok: true, ...result });
+      }
+
+      // Default: single session note
+      const result = draftParentNote({
+        learnerName: body.learnerName,
+        activityName: body.activityName ?? 'activity',
+        subject: body.subject,
+        score: body.score ?? null,
+        total: body.total ?? 0,
+        correct: body.correct ?? 0,
+        observationLevel: body.observationLevel ?? null,
+        curriculumSkillId: body.curriculumSkillId ?? null,
+        transcriptAvailable: body.transcriptAvailable ?? false,
+      });
+      return res.json({ ok: true, ...result });
+    } catch (err) {
+      return res.status(400).json({ ok: false, error: err.message });
+    }
+  });
+
+  // ------------------------------------------------------------------
+  // POST /api/lesedi/hod-qa
+  // Generate an HOD quality assurance report for a grade and subject.
+  //
+  // Required body fields:
+  //   grade, subject
+  //   classAnalytics — array of class analytics objects (from /class-analytics)
+  // Optional: context, interventionLog, consentStats
+  // ------------------------------------------------------------------
+  app.post('/api/lesedi/hod-qa', (req, res) => {
+    try {
+      const body = req.body ?? {};
+      must(body.grade, 'body.grade is required');
+      must(body.subject, 'body.subject is required');
+
+      const result = generateHodReport({
+        grade: body.grade,
+        subject: body.subject,
+        classAnalytics: body.classAnalytics ?? [],
+        context: body.context ?? {},
+        interventionLog: body.interventionLog ?? [],
+        consentStats: body.consentStats ?? null,
+      });
+
+      return res.json({ ok: true, ...result });
+    } catch (err) {
+      return res.status(400).json({ ok: false, error: err.message });
+    }
+  });
+
+  // ------------------------------------------------------------------
+  // POST /api/lesedi/speech-evaluate
+  // Process speech evidence with consent validation and privacy controls.
+  // Never persists raw audio or transcripts.
+  //
+  // Required body fields:
+  //   consent          — boolean (learner has general consent)
+  //   expectedText     — text the child was supposed to read/say
+  // Optional body fields:
+  //   voiceConsent     — boolean (learner has voice consent)
+  //   transcript       — speech-to-text transcript
+  //   durationSeconds  — recording duration
+  //   recordingCaptured — was audio captured?
+  //   activityId       — which activity
+  //   subject           — 'English' | 'Mathematics'
+  // ------------------------------------------------------------------
+  app.post('/api/lesedi/speech-evaluate', (req, res) => {
+    try {
+      const body = req.body ?? {};
+      must(body.consent !== undefined, 'body.consent is required (boolean)');
+
+      const result = processSpeechEvidence({
+        consent:           body.consent === true,
+        voiceConsent:      body.voiceConsent === true,
+        expectedText:      body.expectedText ?? '',
+        transcript:         body.transcript ?? '',
+        durationSeconds:   body.durationSeconds ?? 0,
+        recordingCaptured: body.recordingCaptured ?? false,
+        activityId:         body.activityId ?? null,
+        subject:            body.subject ?? 'English',
+      });
+
+      return res.json({ ok: true, ...result });
+    } catch (err) {
+      return res.status(400).json({ ok: false, error: err.message });
+    }
+  });
+
+  // ------------------------------------------------------------------
   // GET /api/lesedi/health
   // Returns the adapter status + environment summary (no secrets).
   // ------------------------------------------------------------------
@@ -288,5 +431,5 @@ export function mountLesedi(app, opts = {}) {
     });
   });
 
-  console.log('[Lesedi] Routes mounted: POST /api/lesedi  POST /api/lesedi/scaffold  POST /api/lesedi/evaluate  POST /api/lesedi/analytics  POST /api/lesedi/class-analytics  GET /api/lesedi/health');
+  console.log('[Lesedi] Routes mounted: POST /api/lesedi  POST /api/lesedi/scaffold  POST /api/lesedi/evaluate  POST /api/lesedi/analytics  POST /api/lesedi/class-analytics  POST /api/lesedi/parent-report  POST /api/lesedi/hod-qa  POST /api/lesedi/speech-evaluate  GET /api/lesedi/health');
 }

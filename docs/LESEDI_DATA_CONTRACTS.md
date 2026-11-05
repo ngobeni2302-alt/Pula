@@ -506,3 +506,196 @@ The analytics engine explicitly separates:
 | Verified results | Deterministic scoring from UI choices | `score`, `total`, `correct`, `date` |
 | AI-evaluated observations | Evaluation engine interpretation | `level`, `reason`, `confidence` |
 | AI-generated analysis | Lesedi AI model (teacher approval required) | `analysis`, `intervention`, `parentUpdate` |
+
+---
+
+## Phase 4 — Parent and HOD Data Contracts (Added)
+
+### POST /api/lesedi/parent-report — Request
+
+**Type: note** (single session):
+```json
+{
+  "type": "note",
+  "learnerName": "Thando",
+  "activityName": "Number Hunt",
+  "subject": "Mathematics",
+  "score": 100,
+  "total": 3,
+  "correct": 3,
+  "observationLevel": "DEMONSTRATED",
+  "curriculumSkillId": "MATHS-NUMBER-RECOGNITION",
+  "transcriptAvailable": false
+}
+```
+
+**Type: term_report** (end of term):
+```json
+{
+  "type": "term_report",
+  "learnerName": "Thando",
+  "subject": "Mathematics",
+  "grade": "2",
+  "term": 1,
+  "sessions": [...],
+  "teacherName": "Mrs Khumalo"
+}
+```
+
+**Type: response** (parent question):
+```json
+{
+  "type": "response",
+  "learnerName": "Thando",
+  "parentQuestion": "How is Thando doing in maths?",
+  "analytics": { "totalSessions": 5, "averageScore": 75, "overallTrend": "improving" },
+  "subject": "Mathematics"
+}
+```
+
+### POST /api/lesedi/parent-report — Response
+
+```json
+{
+  "ok": true,
+  "text": "Thando practised Number Hunt today. Thando did well — 3 of 3 correct on the first try. At home: Look for numbers around the house... Thank you for your support.",
+  "homeActivity": "Look for numbers around the house — on a clock, a phone, a bus...",
+  "source": "parent_copilot",
+  "requiresApproval": true,
+  "metadata": {
+    "observationLevel": "DEMONSTRATED",
+    "curriculumSkillId": "MATHS-NUMBER-RECOGNITION",
+    "charCount": 185,
+    "channel": "WhatsApp"
+  }
+}
+```
+
+### POST /api/lesedi/hod-qa — Request
+
+```json
+{
+  "grade": "2",
+  "subject": "Mathematics",
+  "classAnalytics": [
+    { "classroomName": "Grade 2A", "totalLearners": 20, "classAverageScore": 70,
+      "commonSkillGaps": [{ "skillId": "MATHS-NUMBER-RECOGNITION", "activityName": "Number Hunt", "learnersAffected": 8, "percentage": 40 }],
+      "classStrengths": [], "learnersNeedingAttention": [], "tierDistribution": {}, "confidence": "medium" }
+  ],
+  "context": { "classSize": 35, "attendance": 75, "resources": "limited" },
+  "interventionLog": [{ "learnerId": "l1", "date": "2026-01-10", "action": "Small group", "followUpDate": "2026-01-20", "resolved": false }],
+  "consentStats": { "total": 20, "withConsent": 18, "withoutConsent": 2 }
+}
+```
+
+### POST /api/lesedi/hod-qa — Response
+
+```json
+{
+  "ok": true,
+  "grade": "2",
+  "subject": "Mathematics",
+  "totalClasses": 1,
+  "totalLearners": 20,
+  "flags": [
+    {
+      "classroomName": "Grade 2A",
+      "issue": "40% of learners (8) are struggling with Number Hunt",
+      "evidence": "Class analytics: 8 of 20 learners classified as NEEDS_FURTHER_PRACTICE",
+      "timePeriod": "Current term",
+      "curriculumArea": "MATHS-NUMBER-RECOGNITION",
+      "possibleReasons": ["Number Hunt is a foundational skill...", "Large class size (35)...", "Low attendance rate (75%)..."],
+      "suggestedActions": ["Observe a Number Hunt lesson...", "Discuss with the teacher...", "Consider additional resources..."],
+      "severity": "medium"
+    }
+  ],
+  "strengths": [],
+  "recommendations": [
+    { "priority": "high", "recommendation": "1 high-severity flag requires immediate HOD review..." },
+    { "priority": "medium", "recommendation": "Limited resources may be contributing..." }
+  ],
+  "contextualFactors": [
+    { "factor": "Class size", "value": 35, "note": "Large classes make individual attention harder" }
+  ],
+  "consentStatus": { "status": "good", "percentage": 90, "note": "90% of learners have consent recorded." },
+  "interventionFollowUp": { "total": 1, "pending": 1, "resolved": 0, "overdue": 0, "note": "1 intervention pending follow-up." },
+  "summary": "HOD Quality Assurance Report: Grade 2, Mathematics. 1 class, 20 learners analysed. 1 flag identified.",
+  "confidence": "medium"
+}
+```
+
+---
+
+## Phase 5 — Speech Intelligence Data Contracts (Added)
+
+### POST /api/lesedi/speech-evaluate — Request
+
+```json
+{
+  "consent": true,
+  "voiceConsent": true,
+  "expectedText": "The sun is up. The cat sat on a mat.",
+  "transcript": "The sun is up. The cat sat on a mat.",
+  "durationSeconds": 8,
+  "recordingCaptured": true,
+  "activityId": "reading-time",
+  "subject": "English"
+}
+```
+
+### POST /api/lesedi/speech-evaluate — Response
+
+```json
+{
+  "ok": true,
+  "confidence": "high | medium | low | inconclusive",
+  "type": "reading_accuracy | reading_fluency | spoken_production | comprehension",
+  "matchedWords": 9,
+  "totalWords": 10,
+  "matchPercentage": 90,
+  "observations": [
+    {
+      "pattern": "stuttering",
+      "count": 1,
+      "note": "1 instance of word/sound repetition detected. This is common in young children and is NOT evidence of a learning difficulty. Do not diagnose."
+    },
+    {
+      "pattern": "self_correction",
+      "count": 1,
+      "note": "1 self-correction detected. Self-correction shows the child is monitoring their own reading — this is a positive sign."
+    }
+  ],
+  "fluencyEstimate": {
+    "wpm": 72,
+    "note": "Estimated from browser transcript duration. This is NOT a validated measure of reading fluency."
+  },
+  "note": "Speech transcript shows 90% word match. This is a good sign, but browser speech recognition is not a validated measure of reading ability. Teacher review is still recommended.",
+  "consentVerified": true,
+  "voiceConsentVerified": true,
+  "privacyCleared": true,
+  "rawTranscriptDiscarded": true,
+  "audioDiscarded": true
+}
+```
+
+### Consent Blocked Response
+
+```json
+{
+  "ok": true,
+  "confidence": "inconclusive",
+  "consentBlocked": true,
+  "note": "Learner does not have consent recorded. No speech processing was performed. No audio or transcript was stored.",
+  "privacyCleared": true,
+  "rawTranscriptDiscarded": true
+}
+```
+
+### Fields That Are NEVER in the Response
+
+| Field | Reason |
+|---|---|
+| `transcript` | Raw transcript must not persist in learner history |
+| `audio` / `audioUrl` | Raw audio must not persist anywhere |
+| `audioBytes` | Never stored |
+| `rawTranscript` | Only structured evidence is permitted |

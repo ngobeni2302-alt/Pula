@@ -186,6 +186,54 @@ export async function appWorkflow(path,body){
       return {ok:false,error:'Class analytics unavailable',classroomName,grade:grd,subject:sub,totalLearners:learners?.length||0,summary:'Backend class analytics unavailable.',confidence:'insufficient'};
     }
   }
+  // ── Parent report ─────────────────────────────────────────────────────
+  // POST /parent-report — draft a parent note, term report, or response.
+  if(path==='/parent-report'){
+    const apiBase=typeof import.meta!=='undefined'&&import.meta.env?.VITE_API_BASE?import.meta.env.VITE_API_BASE:(typeof window!=='undefined'&&window.location?.port==='5173'?'http://localhost:4000':'');
+    try{
+      const res=await fetch(`${apiBase}/api/lesedi/parent-report`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      if(!res.ok)throw Error(`HTTP ${res.status}`);
+      const data=await res.json();
+      if(!data.ok)throw Error('Empty response');
+      return data;
+    }catch{
+      return {ok:false,error:'Parent report unavailable',text:`${body.learnerName||'Your child'} practised activities today. Thank you for your support.`,source:'fallback',requiresApproval:true};
+    }
+  }
+  // ── HOD QA report ─────────────────────────────────────────────────────
+  // POST /hod-qa — generate HOD quality assurance report.
+  if(path==='/hod-qa'){
+    const apiBase=typeof import.meta!=='undefined'&&import.meta.env?.VITE_API_BASE?import.meta.env.VITE_API_BASE:(typeof window!=='undefined'&&window.location?.port==='5173'?'http://localhost:4000':'');
+    try{
+      const res=await fetch(`${apiBase}/api/lesedi/hod-qa`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      if(!res.ok)throw Error(`HTTP ${res.status}`);
+      const data=await res.json();
+      if(!data.ok)throw Error('Empty response');
+      return data;
+    }catch{
+      return {ok:false,error:'HOD QA unavailable',grade:body.grade,subject:body.subject,flags:[],recommendations:[],summary:'Backend HOD QA unavailable.',confidence:'insufficient'};
+    }
+  }
+  // ── Speech evaluation ─────────────────────────────────────────────────
+  // POST /speech-evaluate — process speech evidence with consent + privacy.
+  if(path==='/speech-evaluate'){
+    const {consent,voiceConsent,expectedText,transcript,durationSeconds,recordingCaptured,activityId,subject}=body;
+    // Consent check happens client-side too — never process without consent
+    if(!consent){
+      return {ok:true,confidence:'inconclusive',consentBlocked:true,note:'No consent. Speech processing skipped.',privacyCleared:true,rawTranscriptDiscarded:true};
+    }
+    const apiBase=typeof import.meta!=='undefined'&&import.meta.env?.VITE_API_BASE?import.meta.env.VITE_API_BASE:(typeof window!=='undefined'&&window.location?.port==='5173'?'http://localhost:4000':'');
+    try{
+      const res=await fetch(`${apiBase}/api/lesedi/speech-evaluate`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({consent:true,voiceConsent:voiceConsent??false,expectedText,transcript,durationSeconds,recordingCaptured,activityId,subject})});
+      if(!res.ok)throw Error(`HTTP ${res.status}`);
+      const data=await res.json();
+      if(!data.ok)throw Error('Empty response');
+      return data;
+    }catch{
+      // Fallback: minimal local assessment
+      return {ok:true,confidence:'inconclusive',consentBlocked:false,note:'Speech evaluation backend unavailable. Teacher should listen to the child directly.',privacyCleared:true,rawTranscriptDiscarded:true};
+    }
+  }
   if(path==='/progress'){
     if(profile?.role!=='Parent')return {learners:[],updates:[],assessments:[]};
     const c=currentClass(),l=c.learners.find(l=>l.id===profile.childId);

@@ -331,3 +331,123 @@ Teacher requests gap explanation
 | `differentiated_grouping` | 40%+ of learners need attention |
 | `enrichment` | 50%+ of learners demonstrated a skill |
 | `gather_evidence` | 30%+ of learners have insufficient evidence |
+
+---
+
+## Phase 4 — Parent and HOD Intelligence (Added)
+
+### New Components
+
+| Component | File | Role |
+|---|---|---|
+| Parent Copilot | `LesediAiAgent/src/parentCopilot.js` | Analytics-enhanced parent communication: session notes (based on observation level), term progress reports (comprehensive summaries), parent question responses (categorised by question type). Practical home-learning activities for South African households. |
+| HOD Intelligence | `LesediAiAgent/src/hodIntelligence.js` | HOD quality assurance reports: flags with supporting evidence, possible reasons (considering contextual factors), suggested actions. Consent tracking, intervention follow-up, class strengths recognition. |
+
+### New API Endpoints
+
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/api/lesedi/parent-report` | POST | Draft parent note (`type: 'note'`), term report (`type: 'term_report'`), or response to parent question (`type: 'response'`). |
+| `/api/lesedi/hod-qa` | POST | Generate HOD quality assurance report with flags, contextual factors, and recommendations. |
+
+### Parent Communication Types
+
+| Type | When | Content |
+|---|---|---|
+| `note` | After a single session | Short, warm message with observation level, home activity |
+| `term_report` | End of term | Comprehensive: overview, strengths, areas for growth, home activities, teacher closing |
+| `response` | When parent asks a question | Categorised response based on question type (progress, help, concern, general) |
+
+### HOD Report Structure
+
+Each flag includes:
+- `issue` — what was observed
+- `evidence` — supporting data
+- `timePeriod` — when observed
+- `curriculumArea` — which skill/subject
+- `possibleReasons` — contextual factors considered (never blames teacher)
+- `suggestedActions` — support actions for HOD
+- `severity` — high, medium, or low
+
+### Contextual Factors Considered
+
+| Factor | Effect on Interpretation |
+|---|---|
+| Class size > 35 | Individual attention harder |
+| Attendance < 80% | Reduced practice opportunities |
+| Resources limited | Affects activity variety |
+| Additional language | May affect pace |
+| Teacher experience | Newer teachers need more support |
+
+### Key Principles
+
+- Parent notes never compare to other children
+- Parent notes never diagnose learning difficulties
+- HOD reports never conclude a teacher is underperforming solely because scores are low
+- HOD reports always consider contextual factors (class size, attendance, resources, language)
+- Pula's learning tiers are NOT equated with official DBE achievement codes
+- All parent communications require teacher approval before sending
+- The HOD is responsible for all decisions and interventions
+
+---
+
+## Phase 5 — Speech Intelligence (Added)
+
+### New Components
+
+| Component | File | Role |
+|---|---|---|
+| Speech Intelligence | `LesediAiAgent/src/speechIntelligence.js` | Consent-gated speech processing with child-speech-aware confidence assessment. Handles stuttering, self-correction, pauses, incomplete words, language switching. Produces structured evidence — never returns raw transcript or audio. |
+
+### New API Endpoint
+
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/api/lesedi/speech-evaluate` | POST | Process speech evidence with consent validation, child-speech pattern detection, and privacy controls. Returns structured confidence assessment. |
+
+### Enhanced Existing Components
+
+| Component | Enhancement |
+|---|---|
+| `activityEvidence.js` `classifyEvidence()` | Reading Time classification now uses Speech Intelligence to assess transcript match percentage, fluency estimate, and child speech patterns (stuttering, self-correction) instead of raw word counts. |
+
+### Child Speech Patterns Handled
+
+| Pattern | Detection | Teacher Guidance |
+|---|---|---|
+| Stuttering | Consecutive repeated words ("the the cat") | NOT evidence of a learning difficulty. Common in young children. |
+| Self-correction | Word followed by "no/sorry/wait" + different word | POSITIVE sign — shows child monitors their reading. |
+| Long pauses | Very short transcript relative to recording duration | Inconclusive — child may need encouragement, not correction. |
+| Incomplete words | Very short tokens not matching common short words | Hesitation or uncertainty — teacher should listen directly. |
+| Language switching | Words not in expected text and not common English | NOT an error. Common in SA multilingual classrooms. Do not mark as incorrect. |
+
+### Confidence Levels
+
+| Level | Meaning |
+|---|---|
+| `high` | ≥ 80% word match, ≤ 2 self-corrections |
+| `medium` | 50–79% word match |
+| `low` | > 0% but < 50% word match — browser may have failed |
+| `inconclusive` | No transcript, long pauses, or consent blocked |
+
+### Key Separations
+
+The spec requires separating:
+
+| Measured Separately | Explanation |
+|---|---|
+| Cognitive understanding vs spoken production | A child may understand a concept but struggle to say it |
+| Visual recognition vs spoken production | A child may identify a number visually but mispronounce it |
+| Reading accuracy vs reading fluency vs comprehension | Each requires separate evidence |
+| Phonics knowledge vs speech-to-text accuracy | Browser STT is not a validated measure of phonics ability |
+
+### Privacy Rules (Enforced in Code)
+
+| Rule | Enforcement |
+|---|---|
+| Consent required before any processing | `processSpeechEvidence()` checks `consent === true` first |
+| Voice consent required if recording captured | `voiceConsent === true` required when `recordingCaptured === true` |
+| Raw transcript never returned | Result object never includes `transcript`, `audio`, `audioUrl` |
+| Audio always discarded | `audioDiscarded: true` in all results |
+| `rawTranscriptDiscarded: true` | Always set in result — caller must clear buffers |
+| Third-party providers NOT declared zero-retention | Notes say "browser speech recognition may send voice to its speech provider" |
