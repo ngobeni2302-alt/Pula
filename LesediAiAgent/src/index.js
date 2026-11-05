@@ -11,6 +11,10 @@
 
 import { runLesedi } from './engine.js';
 import { adapterHealth } from './azureAdapter.js';
+import { resolveScaffold, getSessionSummary, clearSession } from './scaffoldingEngine.js';
+import { evaluateObservation } from './evaluationEngine.js';
+import { aggregateLearnerEvidence, aggregateClassEvidence } from './analyticsEngine.js';
+import { getActivityDefinition, OBSERVATION_LEVELS } from '../../shared/activityDefinitions.js';
 
 const must = (cond, msg) => { if (!cond) throw new Error(msg); };
 
@@ -103,6 +107,165 @@ export function mountLesedi(app, opts = {}) {
   });
 
   // ------------------------------------------------------------------
+  // POST /api/lesedi/scaffold
+  // Real-time hint during gameplay. Called by the frontend when a child
+  // needs a hint during an activity round.
+  //
+  // Required body fields:
+  //   sessionId      {string}  — unique session identifier (assignment UUID)
+  //   roundIndex     {number}  — 0-based round number
+  //   activityId     {string}  — e.g. 'number-hunt'
+  //   observedEvent  {string}  — 'correct' | 'no_response' | 'wrong_selection' | 'stuck_on_word' | etc.
+  //   firstName     {string}  — child's first name
+  //
+  // Optional body fields:
+  //   learnerId          {string}
+  //   curriculumSkillId {string}
+  //   subject           {string}  'English' | 'Mathematics'
+  //
+  // Returns:
+  //   { ok, text, hintLevel, handoff, source, praise }
+  // ------------------------------------------------------------------
+  app.post('/api/lesedi/scaffold', async (req, res) => {
+    try {
+      const body = req.body ?? {};
+      must(body.sessionId,     'body.sessionId is required');
+      must(body.activityId,    'body.activityId is required');
+      must(body.observedEvent, 'body.observedEvent is required');
+      must(body.firstName,     'body.firstName is required');
+
+      const result = resolveScaffold({
+        sessionId:          body.sessionId,
+        roundIndex:         body.roundIndex ?? 0,
+        activityId:          body.activityId,
+        learnerId:           body.learnerId ?? 'anonymous',
+        curriculumSkillId:  body.curriculumSkillId ?? getActivityDefinition(body.activityId)?.curriculumSkillId,
+        observedEvent:       body.observedEvent,
+        firstName:           body.firstName,
+        subject:             body.subject ?? getActivityDefinition(body.activityId)?.subject ?? 'English',
+      });
+
+      return res.json({ ok: true, ...result });
+    } catch (err) {
+      return res.status(400).json({ ok: false, error: err.message });
+    }
+  });
+
+  // ------------------------------------------------------------------
+  // POST /api/lesedi/evaluate
+  // Evaluate a completed session and return the observation level.
+  // Called by the frontend after a session completes (or by the draft
+  // enrichment flow) to determine what level the child is at.
+  //
+  // Required body fields:
+  //   activityId   {string}
+  //   score        {number|null}  percentage 0-100, or null for participation
+  //   total        {number}       total scored rounds
+  //   correct      {number}       correct first choices
+  //   sessionId    {string}       for scaffolding summary lookup
+  //
+  // Returns:
+  //   { ok, level, reason, evidence, confidence }
+  // ------------------------------------------------------------------
+  app.post('/api/lesedi/evaluate', async (req, res) => {
+    try {
+      const body = req.body ?? {};
+      must(body.activityId, 'body.activityId is required');
+
+      const sessionSummary = body.sessionId
+        ? getSessionSummary(body.sessionId)
+        : null;
+
+      const result = evaluateObservation({
+        activityId:         body.activityId,
+        score:              body.score ?? null,
+        total:              body.total ?? 0,
+        correct:            body.correct ?? 0,
+        transcriptAvailable: body.transcriptAvailable ?? false,
+        recordingCaptured:   body.recordingCaptured ?? false,
+        sessionSummary,
+      });
+
+      return res.json({ ok: true, ...result });
+    } catch (err) {
+      return res.status(400).json({ ok: false, error: err.message });
+    }
+  });
+
+  // ------------------------------------------------------------------
+  // DELETE /api/lesedi/scaffold/:sessionId
+  // Clear scaffolding state for a completed session.
+  // ------------------------------------------------------------------
+  app.delete('/api/lesedi/scaffold/:sessionId', (req, res) => {
+    clearSession(req.params.sessionId);
+    res.json({ ok: true });
+  });
+
+  // ------------------------------------------------------------------
+  // POST /api/lesedi/analytics
+  // Aggregate evidence across sessions for a single learner.
+  // Returns structured analytics: skill groups, patterns, gaps, strengths.
+  //
+  // Required body fields:
+  //   learnerId   {string}
+  //   learnerName {string}
+  //   subject     {string}  'English' | 'Mathematics'
+  //   grade       {string}  'R' | '1' | '2' | '3'
+  //   sessions    {array}   session objects with activityId, score, total,
+  //                         correct, transcriptAvailable, hintsUsed,
+  //                         maxHintLevel, selfCorrections, createdAt
+  // ------------------------------------------------------------------
+  app.post('/api/lesedi/analytics', (req, res) => {
+    try {
+      const body = req.body ?? {};
+      must(body.learnerId, 'body.learnerId is required');
+      must(body.sessions, 'body.sessions is required (array of session results)');
+
+      const result = aggregateLearnerEvidence({
+        learnerId:   body.learnerId,
+        learnerName: body.learnerName ?? 'Learner',
+        subject:     body.subject ?? 'English',
+        grade:       body.grade ?? '2',
+        sessions:    body.sessions,
+      });
+
+      return res.json({ ok: true, ...result });
+    } catch (err) {
+      return res.status(400).json({ ok: false, error: err.message });
+    }
+  });
+
+  // ------------------------------------------------------------------
+  // POST /api/lesedi/class-analytics
+  // Aggregate evidence across all learners in a class.
+  // Returns: tier distribution, common skill gaps, teaching recommendations.
+  //
+  // Required body fields:
+  //   grade         {string}
+  //   subject       {string}
+  //   classroomName {string}
+  //   learners      {array}  array of learner analytics objects (from /analytics)
+  // ------------------------------------------------------------------
+  app.post('/api/lesedi/class-analytics', (req, res) => {
+    try {
+      const body = req.body ?? {};
+      must(body.grade, 'body.grade is required');
+      must(body.learners, 'body.learners is required (array of learner analytics)');
+
+      const result = aggregateClassEvidence({
+        grade:         body.grade,
+        subject:       body.subject ?? 'English',
+        classroomName: body.classroomName ?? `Grade ${body.grade}`,
+        learners:      body.learners,
+      });
+
+      return res.json({ ok: true, ...result });
+    } catch (err) {
+      return res.status(400).json({ ok: false, error: err.message });
+    }
+  });
+
+  // ------------------------------------------------------------------
   // GET /api/lesedi/health
   // Returns the adapter status + environment summary (no secrets).
   // ------------------------------------------------------------------
@@ -125,5 +288,5 @@ export function mountLesedi(app, opts = {}) {
     });
   });
 
-  console.log('[Lesedi] Routes mounted: POST /api/lesedi  GET /api/lesedi/health');
+  console.log('[Lesedi] Routes mounted: POST /api/lesedi  POST /api/lesedi/scaffold  POST /api/lesedi/evaluate  POST /api/lesedi/analytics  POST /api/lesedi/class-analytics  GET /api/lesedi/health');
 }

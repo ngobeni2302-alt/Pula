@@ -156,7 +156,7 @@ State your confidence and what data you are missing.`,
 }
 
 function buildGapExplanationPrompt(ctx) {
-  const { grade, term, subject = 'literacy', learner, weeks } = ctx;
+  const { grade, term, subject = 'literacy', learner, weeks, analytics } = ctx;
   const observations = learner.observations  ?? [];
   const termProgress = learner.termProgress  ?? [];
   const weeksInTier  = learner.weeksInTier   ?? null;
@@ -202,6 +202,18 @@ function buildGapExplanationPrompt(ctx) {
     ? learner.soundsToPractise?.length ? `Sounds to practise: ${learner.soundsToPractise.join(', ')}` : ''
     : learner.mathsSkillsToWork?.length ? `Maths skills to work on: ${learner.mathsSkillsToWork.join(', ')}` : '';
 
+  // Phase 3: Include analytics if available
+  const analyticsBlock = analytics
+    ? `\nAggregated analytics (from evaluation engine — verified data, not AI interpretation):
+  Total sessions: ${analytics.totalSessions}
+  Observation period: ${analytics.observationPeriod?.weeks ?? '?'} weeks
+  Overall trend: ${analytics.overallTrend ?? 'unknown'}
+  Average score: ${analytics.averageScore ?? 'N/A (participation activities)'}
+  Skill gaps: ${(analytics.skillGaps || []).map(g => `${g.activityName} (${g.level})`).join(', ') || 'none identified'}
+  Strengths: ${(analytics.strengths || []).map(s => s.activityName).join(', ') || 'none yet'}
+  Summary: ${analytics.summary || 'N/A'}`
+    : '';
+
   return {
     system: CAPS_PREAMBLE,
     user: `Task: gap_explanation
@@ -224,8 +236,10 @@ ${obs || '  (none provided)'}
 ${progress ? `Term progress:\n${progress}` : ''}
 ${learner.checkInNote ? `Teacher note: ${learner.checkInNote}` : ''}
 ${extraBlock}
+${analyticsBlock}
 
 Use the gap analysis output format. Include a parent action in "Do this".
+Where evidence is insufficient, say so explicitly. Do not invent scores or diagnosis.
 ${seedAlert ? 'The Seed 4-week HOD alert has already been flagged above — acknowledge it in your response.' : ''}`,
   };
 }
